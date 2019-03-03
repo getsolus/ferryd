@@ -1210,6 +1210,10 @@ func (r *Repository) TrimObsolete(db libdb.Database, pool *Pool) error {
 // amount of packages, which helps to combat the issue of rapidly inserting
 // many builds into a repo, i.e. removing old backversions
 func (r *Repository) TrimPackages(db libdb.Database, pool *Pool, maxKeep int) error {
+	// Check for valid maxKeep
+	if maxKeep < 1 {
+		return fmt.Errorf("maxKeep of %d is too small. It Must be greater than or equal to 1", maxKeep)
+	}
 	// All the guys who we're sending to the big bitsink in the sky
 	var removalIDs []string
 
