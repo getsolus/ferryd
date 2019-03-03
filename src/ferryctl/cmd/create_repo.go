@@ -24,7 +24,7 @@ import (
 )
 
 var createRepoCmd = &cobra.Command{
-	Use:   "create-repo",
+	Use:   "create-repo [repoName]",
 	Short: "create a new repository",
 	Long:  "Create a new repository in the ferryd instance, if it doesn't exist",
 	Run:   createRepo,
@@ -36,7 +36,7 @@ func init() {
 
 func createRepo(cmd *cobra.Command, args []string) {
 	if len(args) != 1 {
-		fmt.Fprintf(os.Stderr, "create-repo takes exactly 1 argument\n")
+		fmt.Fprintf(os.Stderr, "usage: create-repo [repoName]\n")
 		return
 	}
 
@@ -44,7 +44,7 @@ func createRepo(cmd *cobra.Command, args []string) {
 	defer client.Close()
 
 	if err := client.CreateRepo(args[0]); err != nil {
-		fmt.Fprintf(os.Stderr, "Error: %v\n", err)
+		fmt.Fprintf(os.Stderr, "Error while creating repo: %v\n", err)
 		return
 	}
 }

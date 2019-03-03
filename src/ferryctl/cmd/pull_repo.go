@@ -24,7 +24,7 @@ import (
 )
 
 var pullRepoCmd = &cobra.Command{
-	Use:   "pull [from] [into]",
+	Use:   "pull [sourceRepo] [destRepo]",
 	Short: "pull an existing repository",
 	Long:  "Clone an existing repository into a new repository",
 	Run:   pullRepo,
@@ -36,7 +36,7 @@ func init() {
 
 func pullRepo(cmd *cobra.Command, args []string) {
 	if len(args) != 2 {
-		fmt.Fprintf(os.Stderr, "pull takes exactly 2 arguments\n")
+		fmt.Fprintf(os.Stderr, "usage: pull [sourceRepo] [destRepo]\n")
 		return
 	}
 
@@ -44,7 +44,7 @@ func pullRepo(cmd *cobra.Command, args []string) {
 	defer client.Close()
 
 	if err := client.PullRepo(args[0], args[1]); err != nil {
-		fmt.Fprintf(os.Stderr, "Error: %v\n", err)
+		fmt.Fprintf(os.Stderr, "Error while pulling repo: %v\n", err)
 		return
 	}
 }

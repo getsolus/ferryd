@@ -37,7 +37,7 @@ func init() {
 
 func importEx(cmd *cobra.Command, args []string) {
 	if len(args) < 2 {
-		fmt.Fprintf(os.Stderr, "import takes exactly at least 1 argument\n")
+		fmt.Fprintf(os.Stderr, "Usage: import [repo] [packages]\n")
 		return
 	}
 
@@ -60,7 +60,7 @@ func importEx(cmd *cobra.Command, args []string) {
 	}
 
 	if err := client.ImportPackages(repoID, packages); err != nil {
-		fmt.Fprintf(os.Stderr, "Import error: %v\n", err)
+		fmt.Fprintf(os.Stderr, "Error while importing packages: %v\n", err)
 		return
 	}
 }

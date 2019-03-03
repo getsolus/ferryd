@@ -24,7 +24,7 @@ import (
 )
 
 var trimObsoleteCmd = &cobra.Command{
-	Use:   "obsolete [repo]",
+	Use:   "obsolete [repoName]",
 	Short: "remove obsolete packages in the repo",
 	Long:  "Request the repository remove any obsolete packages permanently",
 	Run:   trimObsolete,
@@ -36,7 +36,7 @@ func init() {
 
 func trimObsolete(cmd *cobra.Command, args []string) {
 	if len(args) != 1 {
-		fmt.Fprintf(os.Stderr, "trim obsolete takes exactly 1 argument\n")
+		fmt.Fprintf(os.Stderr, "usage: trim obsolete [repoName]\n")
 		return
 	}
 
@@ -44,7 +44,7 @@ func trimObsolete(cmd *cobra.Command, args []string) {
 	defer client.Close()
 
 	if err := client.TrimObsolete(args[0]); err != nil {
-		fmt.Fprintf(os.Stderr, "Error: %v\n", err)
+		fmt.Fprintf(os.Stderr, "Error while trimming obsoletes: %v\n", err)
 		return
 	}
 }

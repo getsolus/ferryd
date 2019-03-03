@@ -24,7 +24,7 @@ import (
 )
 
 var indexCmd = &cobra.Command{
-	Use:   "index",
+	Use:   "index [repoName]",
 	Short: "index the given repository",
 	Long:  "Request the index be reconstructed in the given repository",
 	Run:   index,
@@ -36,7 +36,7 @@ func init() {
 
 func index(cmd *cobra.Command, args []string) {
 	if len(args) != 1 {
-		fmt.Fprintf(os.Stderr, "index takes exactly 1 argument\n")
+		fmt.Fprintf(os.Stderr, "usage: index [repoName]\n")
 		return
 	}
 
@@ -44,7 +44,7 @@ func index(cmd *cobra.Command, args []string) {
 	defer client.Close()
 
 	if err := client.IndexRepo(args[0]); err != nil {
-		fmt.Fprintf(os.Stderr, "Error: %v\n", err)
+		fmt.Fprintf(os.Stderr, "Error while indexing: %v\n", err)
 		return
 	}
 }

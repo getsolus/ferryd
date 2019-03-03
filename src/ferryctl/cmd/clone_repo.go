@@ -28,7 +28,7 @@ var (
 )
 
 var cloneRepoCmd = &cobra.Command{
-	Use:   "clone [from] [newName]",
+	Use:   "clone [fromRepo] [newRepo]",
 	Short: "clone an existing repository",
 	Long:  "Clone an existing repository into a new repository",
 	Run:   cloneRepo,
@@ -41,7 +41,7 @@ func init() {
 
 func cloneRepo(cmd *cobra.Command, args []string) {
 	if len(args) != 2 {
-		fmt.Fprintf(os.Stderr, "clone takes exactly 2 arguments\n")
+		fmt.Fprintf(os.Stderr, "usage: clone [fromRepo] [newRepo]\n")
 		return
 	}
 
@@ -49,7 +49,7 @@ func cloneRepo(cmd *cobra.Command, args []string) {
 	defer client.Close()
 
 	if err := client.CloneRepo(args[0], args[1], fullClone); err != nil {
-		fmt.Fprintf(os.Stderr, "Error: %v\n", err)
+		fmt.Fprintf(os.Stderr, "Error while cloning repo: %v\n", err)
 		return
 	}
 }

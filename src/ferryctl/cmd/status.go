@@ -150,7 +150,7 @@ func getStatus(cmd *cobra.Command, args []string) {
 
 	status, err := client.GetStatus()
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "Error: %v\n", err)
+		fmt.Fprintf(os.Stderr, "Error while getting status: %v\n", err)
 		return
 	}
 

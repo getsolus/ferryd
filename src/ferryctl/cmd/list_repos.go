@@ -46,7 +46,7 @@ func listRepos(cmd *cobra.Command, args []string) {
 
 	repos, err := client.GetRepos()
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "Error: %v\n", err)
+		fmt.Fprintf(os.Stderr, "Error while getting repos: %v\n", err)
 		return
 	}
 	sort.Strings(repos)

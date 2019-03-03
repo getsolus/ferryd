@@ -45,7 +45,7 @@ func listPool(cmd *cobra.Command, args []string) {
 
 	pools, err := client.GetPoolItems()
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "Error: %v\n", err)
+		fmt.Fprintf(os.Stderr, "Error while getting pool items: %v\n", err)
 		return
 	}
 	if len(pools) == 0 {

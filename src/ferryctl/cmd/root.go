@@ -28,7 +28,7 @@ var RootCmd = &cobra.Command{
 
 // ListCmd is a parent for list type commands
 var ListCmd = &cobra.Command{
-	Use:   "list  [repos] [pool]",
+	Use:   "list [repos] [pool]",
 	Short: "list",
 }
 

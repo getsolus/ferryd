@@ -65,7 +65,7 @@ func copySource(cmd *cobra.Command, args []string) {
 		}
 		sourceRelease = int(release)
 	default:
-		fmt.Fprintf(os.Stderr, "usage: [sourceRepo] [targetRepo] [sourceID] [release]\n")
+		fmt.Fprintf(os.Stderr, "usage: [fromRepo] [targetRepo] [sourceName] [releaseNumber]\n")
 		return
 	}
 
@@ -73,7 +73,7 @@ func copySource(cmd *cobra.Command, args []string) {
 	defer client.Close()
 
 	if err := client.CopySource(repoID, targetID, sourceID, sourceRelease); err != nil {
-		fmt.Fprintf(os.Stderr, "Error: %v\n", err)
+		fmt.Fprintf(os.Stderr, "Error while copying source: %v\n", err)
 		return
 	}
 }

@@ -24,9 +24,9 @@ import (
 )
 
 var deltaCmd = &cobra.Command{
-	Use:   "delta [repo]",
+	Use:   "delta [repoName]",
 	Short: "Create deltas",
-	Long:  "Schedule that the repo has all deltas rebuilt",
+	Long:  "Rebuild all deltas for a repo",
 	Run:   delta,
 }
 
@@ -36,7 +36,7 @@ func init() {
 
 func delta(cmd *cobra.Command, args []string) {
 	if len(args) != 1 {
-		fmt.Fprintf(os.Stderr, "delta takes exactly 1 argument\n")
+		fmt.Fprintf(os.Stderr, "Usage: delta [repoName]\n")
 		return
 	}
 
@@ -44,7 +44,7 @@ func delta(cmd *cobra.Command, args []string) {
 	defer client.Close()
 
 	if err := client.DeltaRepo(args[0]); err != nil {
-		fmt.Fprintf(os.Stderr, "Error: %v\n", err)
+		fmt.Fprintf(os.Stderr, "Error while creating deltas: %v\n", err)
 		return
 	}
 }

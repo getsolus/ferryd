@@ -56,12 +56,12 @@ func removeSource(cmd *cobra.Command, args []string) {
 			return
 		}
 		if release < 1 {
-			fmt.Fprintf(os.Stderr, "Release should be higher than 1\n")
+			fmt.Fprintf(os.Stderr, "Release Number should be higher than 1\n")
 			return
 		}
 		sourceRelease = int(release)
 	default:
-		fmt.Fprintf(os.Stderr, "usage: [repoName] [sourceID] [release]\n")
+		fmt.Fprintf(os.Stderr, "usage: [repoName] [sourceName] [releaseNumber]\n")
 		return
 	}
 
@@ -69,7 +69,7 @@ func removeSource(cmd *cobra.Command, args []string) {
 	defer client.Close()
 
 	if err := client.RemoveSource(repoID, sourceID, sourceRelease); err != nil {
-		fmt.Fprintf(os.Stderr, "Error: %v\n", err)
+		fmt.Fprintf(os.Stderr, "Error while removing source: %v\n", err)
 		return
 	}
 }

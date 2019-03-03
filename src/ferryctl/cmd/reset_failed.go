@@ -44,7 +44,7 @@ func resetFailed(cmd *cobra.Command, args []string) {
 	defer client.Close()
 
 	if err := client.ResetFailed(); err != nil {
-		fmt.Fprintf(os.Stderr, "Error: %v\n", err)
+		fmt.Fprintf(os.Stderr, "Error while resetting failed log: %v\n", err)
 		return
 	}
 }
