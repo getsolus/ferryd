@@ -19,6 +19,7 @@ package jobs
 import (
 	"ferryd/core"
 	log "github.com/sirupsen/logrus"
+	"math/rand"
 	"sync"
 	"time"
 )
@@ -29,35 +30,22 @@ type JobFetcher func() (*JobEntry, error)
 // JobReaper will be provided by either the Async or Sequential retire functions
 type JobReaper func(j *JobEntry) error
 
-var (
-	// timeIndexes allow us to gradually increase our sleep duration
-	timeIndexes = []time.Duration{
-		time.Millisecond * 100,
-		time.Millisecond * 500,
-		time.Second * 1,
-		time.Second * 5,
-		time.Second * 10,
-		time.Second * 15,
-		time.Second * 20,
-		time.Second * 30,
-		time.Second * 40,
-		time.Second * 50,
-		time.Second * 60,
-	}
-)
+// MinWait is the minimum amount of time between retries for a worker
+const MinWait = time.Second * 2
+
+// MaxJitter sets the upper limit on the random jitter used for retry times
+const MaxJitter int64 = 512
 
 // A Worker is used to execute some portion of the incoming workload, and will
 // keep polling for the correct job type to process
 type Worker struct {
 	sequential bool
 	exit       chan int
-	ticker     *time.Ticker
+	timer      *time.Timer
 	wg         *sync.WaitGroup
 	manager    *core.Manager
 	store      *JobStore
 	processor  *Processor
-
-	timeIndex int // Increment time index to match timeIndexes, or wrap
 
 	fetcher JobFetcher // Fetch a new job
 	reaper  JobReaper  // Purge an old job
@@ -76,11 +64,10 @@ func newWorker(processor *Processor, sequential bool) *Worker {
 		sequential: sequential,
 		wg:         processor.wg,
 		exit:       make(chan int, 1),
-		ticker:     nil, // Init this when we start up
+		timer:      nil, // Init this when we start up
 		manager:    processor.manager,
 		store:      processor.store,
 		processor:  processor,
-		timeIndex:  -1,
 	}
 
 	// Set up appropriate functions for dealing with jobs
@@ -110,8 +97,8 @@ func NewWorkerSequential(processor *Processor) *Worker {
 // Stop will demand that all new requests are no longer processed
 func (w *Worker) Stop() {
 	w.exit <- 1
-	if w.ticker != nil {
-		w.ticker.Stop()
+	if w.timer != nil {
+		w.timer.Stop()
 	}
 }
 
@@ -120,8 +107,8 @@ func (w *Worker) Stop() {
 func (w *Worker) Start() {
 	defer w.wg.Done()
 
-	// Let's get our ticker initialised
-	w.setTimeIndex(0)
+	// Let's get our timer initialised
+	w.setTime()
 
 	for {
 		select {
@@ -129,7 +116,7 @@ func (w *Worker) Start() {
 			// Bail now, we've been told to go home
 			return
 
-		case <-w.ticker.C:
+		case <-w.timer.C:
 			// Try to grab a job
 			job, err := w.fetcher()
 
@@ -141,7 +128,7 @@ func (w *Worker) Start() {
 						"async": !w.sequential,
 					}).Error("Failed to grab a work queue item")
 				}
-				w.setTimeIndex(w.timeIndex + 1)
+				w.setTime()
 				continue
 			}
 
@@ -165,32 +152,18 @@ func (w *Worker) Start() {
 			}
 
 			// We had a job, so we must reset the timeout period
-			w.setTimeIndex(0)
+			w.setTime()
 		}
 	}
 }
 
-// setTimeIndex will update the time index, and reset the ticker if needed
-// so that we increment the wait period. It will cap the time index to the
-// highest index available (60)
-func (w *Worker) setTimeIndex(newTimeIndex int) {
-	maxIndex := len(timeIndexes)
-	// Sequential queue has to be more responsive
-	if w.sequential {
-		maxIndex = 4
+// setTime will update the timer resetting it to MinWait + some random jitter to help with contention
+func (w *Worker) setTime() {
+	delay := MinWait + (time.Millisecond * time.Duration(rand.Int63n(MaxJitter)))
+	if w.timer == nil {
+		w.timer = time.NewTimer(delay)
 	}
-	if newTimeIndex >= maxIndex {
-		newTimeIndex = maxIndex - 1
-	}
-	// No sense resetting our ticker
-	if w.timeIndex == newTimeIndex {
-		return
-	}
-	w.timeIndex = newTimeIndex
-	if w.ticker != nil {
-		w.ticker.Stop()
-	}
-	w.ticker = time.NewTicker(timeIndexes[w.timeIndex])
+	w.timer.Reset(delay)
 }
 
 // processJob will actually examine the given job and figure out how
