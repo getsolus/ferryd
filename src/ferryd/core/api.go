@@ -117,11 +117,7 @@ func (m *Manager) CopySource(repoID, target, sourceID string, release int) error
 		return err
 	}
 
-	if err = targetRepo.CopySourceFrom(m.db, m.pool, sourceRepo, sourceID, release); err != nil {
-		return err
-	}
-
-	return m.Index(repoID)
+	return targetRepo.CopySourceFrom(m.db, m.pool, sourceRepo, sourceID, release); err != nil {
 }
 
 // TrimObsolete will ask the repo to remove obsolete packages
