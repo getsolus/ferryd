@@ -34,7 +34,7 @@ type CopySourceJobHandler struct {
 // NewCopySourceJob will return a job suitable for adding to the job processor
 func NewCopySourceJob(repoID, target, source string, release int) *JobEntry {
 	return &JobEntry{
-		sequential: true,
+		sequential: false,
 		Type:       CopySource,
 		Params:     []string{repoID, target, source, fmt.Sprintf("%d", release)},
 	}
