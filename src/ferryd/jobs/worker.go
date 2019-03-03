@@ -162,8 +162,9 @@ func (w *Worker) setTime() {
 	delay := MinWait + (time.Millisecond * time.Duration(rand.Int63n(MaxJitter)))
 	if w.timer == nil {
 		w.timer = time.NewTimer(delay)
-	}
-	w.timer.Reset(delay)
+	} else {
+	    w.timer.Reset(delay)
+    }
 }
 
 // processJob will actually examine the given job and figure out how
