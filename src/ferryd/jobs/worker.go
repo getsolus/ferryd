@@ -163,8 +163,8 @@ func (w *Worker) setTime() {
 	if w.timer == nil {
 		w.timer = time.NewTimer(delay)
 	} else {
-	    w.timer.Reset(delay)
-    }
+		w.timer.Reset(delay)
+	}
 }
 
 // processJob will actually examine the given job and figure out how

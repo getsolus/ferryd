@@ -52,7 +52,12 @@ func NewPullRepoJobHandler(j *JobEntry) (*PullRepoJobHandler, error) {
 func (j *PullRepoJobHandler) Execute(jproc *Processor, manager *core.Manager) error {
 	changedNames, err := manager.PullRepo(j.sourceID, j.targetID)
 	if err != nil {
-		return nil
+		log.WithFields(log.Fields{
+			"source": j.sourceID,
+			"target": j.targetID,
+			"error":  err,
+		}).Warning("Failed to pull repository")
+		return err
 	}
 
 	log.WithFields(log.Fields{

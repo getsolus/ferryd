@@ -267,7 +267,10 @@ func (p *Pool) UnrefEntry(db libdb.Database, id string) error {
 	// RefCount is 0 so we now need to delete this entry
 	pkgPath := filepath.Join(p.poolDir, entry.Meta.GetPathComponent(), id)
 	if err := os.Remove(pkgPath); err != nil {
-		return err
+		log.WithFields(log.Fields{
+			"path":  pkgPath,
+			"error": err,
+		}).Warning("Failed to remove package")
 	}
 
 	// Warn if unable to delete parents

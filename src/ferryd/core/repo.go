@@ -462,7 +462,11 @@ func (r *Repository) removePackageInternal(db libdb.Database, pool *Pool, id str
 
 	// If we cant unlink the file it aint getting out of the DB either...
 	if err = os.Remove(pkgTarget); err != nil {
-		return err
+		log.WithFields(log.Fields{
+			"repo":  r.ID,
+			"id":    id,
+			"error": err,
+		}).Warning("Failed to remove target for package")
 	}
 
 	// This is a "we tried but oh noes, not fatal.
