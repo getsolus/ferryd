@@ -50,7 +50,7 @@ func NewClient(address string) *Client {
 				IdleConnTimeout:       30 * time.Second,
 				ExpectContinueTimeout: 1 * time.Second,
 			},
-			Timeout: 20 * time.Second,
+			Timeout: 60 * time.Second,
 		},
 	}
 }
