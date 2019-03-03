@@ -4,8 +4,8 @@ After=network.target
 
 [Service]
 Type=notify
-WorkingDirectory=/var/lib/ferryd
-ExecStart=/usr/bin/ferryd -d /var/lib/ferryd -s /run/ferryd.sock
+WorkingDirectory=/srv/ferryd/root
+ExecStart=/usr/bin/ferryd -d /srv/ferryd/root -s /run/ferryd.sock
 User=ferryd
 Group=ferryd
 
