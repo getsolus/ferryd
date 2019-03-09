@@ -22,55 +22,67 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
+const (
+    CloneTip  = 0
+    CloneFull = 1
+)
+
 // CloneRepoJobHandler is responsible for cloning an existing repository
-type CloneRepoJobHandler struct {
-	repoID    string
-	newClone  string
-	cloneMode string
-}
+type CloneRepoJobHandler Job
 
 // NewCloneRepoJob will return a job suitable for adding to the job processor
-func NewCloneRepoJob(repoID, newClone string, cloneAll bool) *JobEntry {
-	mode := "tip"
+func NewCloneRepoJob(srcRepo, newRepo string, cloneAll bool) *Job {
+	mode := CloneTip
 	if cloneAll {
-		mode = "full"
+		mode = CloneFull
 	}
-	return &JobEntry{
-		sequential: true,
-		Type:       CloneRepo,
-		Params:     []string{repoID, newClone, mode},
+	return &Job{
+		Type:    CloneRepo,
+        SrcRepo: srcRepo,
+        DstRepo: newRepo,
+        Mode:    mode,
 	}
 }
 
 // NewCloneRepoJobHandler will create a job handler for the input job and ensure it validates
-func NewCloneRepoJobHandler(j *JobEntry) (*CloneRepoJobHandler, error) {
-	if len(j.Params) != 3 {
-		return nil, fmt.Errorf("job has invalid parameters")
+func NewCloneRepoJobHandler(j *Job) (handler *CloneRepoJobHandler, err error) {
+	if len(j.SrcRepo) == 0 {
+		err = fmt.Errorf("job has no source repo")
+        return
 	}
-	return &CloneRepoJobHandler{
-		repoID:    j.Params[0],
-		newClone:  j.Params[1],
-		cloneMode: j.Params[2],
-	}, nil
+	if len(j.DstRepo) == 0 {
+		err = fmt.Errorf("job has no destination repo")
+        return
+	}
+	if j.Mode < CloneTip || j.Mode > CloneFull {
+		err = fmt.Errorf("job has invalid mode: %d", j.Mode)
+        return
+	}
+	h := CloneRepoJobHandler(*j)
+    handler = &h
+    return
 }
 
 // Execute attempt to clone the repoID to newClone, optionally at full depth
 func (j *CloneRepoJobHandler) Execute(_ *Processor, manager *core.Manager) error {
 	fullClone := false
-	if j.cloneMode == "full" {
+	if j.Mode == CloneFull {
 		fullClone = true
 	}
 
-	if err := manager.CloneRepo(j.repoID, j.newClone, fullClone); err != nil {
+	if err := manager.CloneRepo(j.SrcRepo, j.DstRepo, fullClone); err != nil {
 		return err
 	}
-	log.WithFields(log.Fields{"repo": j.repoID}).Info("Cloned repository")
+	log.WithFields(log.Fields{
+        "srcRepo": j.SrcRepo,
+        "dstRepo": j.DstRepo,
+    }).Info("Cloned repository %s into %s")
 	return nil
 }
 
 // Describe returns a human readable description for this job
 func (j *CloneRepoJobHandler) Describe() string {
-	return fmt.Sprintf("Clone repository '%s' into '%s'", j.repoID, j.newClone)
+	return fmt.Sprintf("Clone repository '%s' into '%s'", j.SrcRepo, j.DstRepo)
 }
 
 // IsSerial returns true if a job should not be run alongside other jobs

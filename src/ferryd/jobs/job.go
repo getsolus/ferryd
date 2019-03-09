@@ -28,6 +28,7 @@ CREATE TABLE IF NOT EXISTS jobs (
     sources    TEXT,
     release    INTEGER,
     max_keep   INTEGER,
+    mode       INTEGER,
     created    DATETIME,
     started    DATETIME,
     finished   DATETIME,
@@ -56,6 +57,7 @@ type Job struct {
     Sources    []string
     Release    int
     MaxKeep    int `db:max_keep`
+    Mode       int
     // Job tracking
     Created  time.Time
     Started  time.Time
@@ -77,11 +79,11 @@ const (
 const insertJob = `
 INSERT INTO jobs (
     id, type,
-    src_repo, dst_repo, sources, release, max_keep,
+    src_repo, dst_repo, sources, release, max_keep, mode,
     created, started, finished, status, message
 ) VALUES (
     NULL, :type,
-    :src_repo, :dst_repo, :sources, :release, :max_keep,
+    :src_repo, :dst_repo, :sources, :release, :max_keep, :mode,
     :created, NULL, NULL, :status, NULL
 )
 `
