@@ -10,3 +10,6 @@ coverage.out
 testenv/
 /ferry
 /ldbTest
+
+# docs
+*.md.backup
