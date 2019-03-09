@@ -20,58 +20,70 @@ import (
 	"ferryd/core"
 	"fmt"
 	log "github.com/sirupsen/logrus"
-	"strconv"
 )
 
 // CopySourceJobHandler is responsible for removing packages by identifiers
-type CopySourceJobHandler struct {
-	repoID  string
-	target  string
-	source  string
-	release int
-}
+type CopySourceJobHandler Job
 
 // NewCopySourceJob will return a job suitable for adding to the job processor
-func NewCopySourceJob(repoID, target, source string, release int) *JobEntry {
-	return &JobEntry{
-		sequential: false,
-		Type:       CopySource,
-		Params:     []string{repoID, target, source, fmt.Sprintf("%d", release)},
+func NewCopySourceJob(srcRepo, dstRepo, source string, release int) *Job {
+	return &Job{
+		Type:    CopySource,
+        SrcRepo: srcRepo,
+        DstRepo: dstRepo,
+        Sources: []string{source},
+        Release: release,
 	}
 }
 
 // NewCopySourceJobHandler will create a job handler for the input job and ensure it validates
-func NewCopySourceJobHandler(j *JobEntry) (*CopySourceJobHandler, error) {
-	if len(j.Params) != 4 {
-		return nil, fmt.Errorf("job has invalid parameters")
-	}
-	rel, err := strconv.ParseInt(j.Params[3], 10, 32)
-	if err != nil {
-		return nil, err
-	}
-	return &CopySourceJobHandler{
-		repoID:  j.Params[0],
-		target:  j.Params[1],
-		source:  j.Params[2],
-		release: int(rel),
-	}, nil
+func NewCopySourceJobHandler(j *Job) (handler *CopySourceJobHandler, err error) {
+    if len(j.SrcRepo) == 0 {
+		fmt.Errorf("job is missing source repo")
+        return
+    }
+    if len(j.DstRepo) == 0 {
+		fmt.Errorf("job is missing destination repo")
+        return
+    }
+    if len(j.Sources) == 0 {
+		fmt.Errorf("job is missing source name")
+        return
+    }
+    if len(j.Sources) != 1 {
+		fmt.Errorf("job should only have one source")
+        return
+    }
+    if j.Release == 0 || j.Release < -1 {
+		fmt.Errorf("job has invalid release number: %d", j.Release)
+        return
+    }
+
+	h := CopySourceJobHandler(*j)
+    handler = &h
+    return
 }
 
 // Execute will copy the source&rel match from the repo to the target
 func (j *CopySourceJobHandler) Execute(_ *Processor, manager *core.Manager) error {
-	if err := manager.CopySource(j.repoID, j.target, j.source, j.release); err != nil {
+	if err := manager.CopySource(j.SrcRepo, j.DstRepo, j.Sources[0], j.Release); err != nil {
 		return err
 	}
 	log.WithFields(log.Fields{
-		"from":          j.repoID,
-		"to":            j.target,
-		"source":        j.source,
-		"releaseNumber": j.release,
-	}).Info("Removed source")
+		"from":          j.SrcRepo,
+		"to":            j.DstRepo,
+		"source":        j.Sources[0],
+		"releaseNumber": j.Release,
+	}).Info("Copied source")
 	return nil
 }
 
 // Describe returns a human readable description for this job
 func (j *CopySourceJobHandler) Describe() string {
-	return fmt.Sprintf("Copy sources by id '%s' (rel: %d) in '%s' to '%s'", j.source, j.release, j.repoID, j.target)
+	return fmt.Sprintf("Copy sources by id '%s' (rel: %d) in '%s' to '%s'", j.Sources[0], j.Release, j.SrcRepo, j.DstRepo)
+}
+
+// IsSerial returns true if a job should not be run alongside other jobs
+func (J *CopySourceJobHandler) IsSerial() bool {
+    return false
 }

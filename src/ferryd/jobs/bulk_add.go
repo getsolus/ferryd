@@ -24,41 +24,47 @@ import (
 
 // BulkAddJobHandler is responsible for indexing repositories and should only
 // ever be used in sequential queues.
-type BulkAddJobHandler struct {
-	repoID       string
-	packagePaths []string
-}
+type BulkAddJobHandler Job
 
 // NewBulkAddJob will return a job suitable for adding to the job processor
-func NewBulkAddJob(id string, pkgs []string) *JobEntry {
-	return &JobEntry{
-		sequential: true,
-		Type:       BulkAdd,
-		Params:     append([]string{id}, pkgs...),
+func NewBulkAddJob(repo string, srcs []string) *Job {
+	return &Job{
+		Type:    BulkAdd,
+        SrcRepo: repo,
+        Sources: srcs,
 	}
 }
 
 // NewBulkAddJobHandler will create a job handler for the input job and ensure it validates
-func NewBulkAddJobHandler(j *JobEntry) (*BulkAddJobHandler, error) {
-	if len(j.Params) < 2 {
-		return nil, fmt.Errorf("job has invalid parameters")
-	}
-	return &BulkAddJobHandler{
-		repoID:       j.Params[0],
-		packagePaths: j.Params[1:],
-	}, nil
+func NewBulkAddJobHandler(j *Job) (handler *BulkAddJobHandler, err error) {
+    if len(j.SrcRepo) == 0 {
+		err = fmt.Errorf("job has no repo specified")
+        return
+    }
+    if len(j.Sources) == 0 {
+		err = fmt.Errorf("job has no sources specified")
+        return
+    }
+    h := BulkAddJobHandler(*j)
+    handler = &h
+    return
 }
 
 // Execute will attempt the mass-import of packages passed to the job
 func (j *BulkAddJobHandler) Execute(_ *Processor, manager *core.Manager) error {
-	if err := manager.AddPackages(j.repoID, j.packagePaths, false); err != nil {
+	if err := manager.AddPackages(j.SrcRepo, j.Sources, false); err != nil {
 		return err
 	}
-	log.WithFields(log.Fields{"repo": j.repoID}).Info("Added packages to repository")
+	log.WithFields(log.Fields{"repo": j.SrcRepo}).Info("Added packages to repository")
 	return nil
 }
 
 // Describe returns a human readable description for this job
 func (j *BulkAddJobHandler) Describe() string {
-	return fmt.Sprintf("Add %v packages to repository '%s'", len(j.packagePaths), j.repoID)
+	return fmt.Sprintf("Add %v packages to repository '%s'", len(j.Sources), j.SrcRepo)
+}
+
+// IsSerial returns true if a job should not be run alongside other jobs
+func (J *BulkAddJobHandler) IsSerial() bool {
+    return true
 }
