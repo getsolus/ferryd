@@ -37,12 +37,12 @@ import (
 type File struct {
 	Path      string
 	Type      string
-	Size      int64  `xml:"Size,omitempty"`
-	UID       int    `xml:"Uid,omitempty"`
-	GID       int    `xml:"Gid,omitempty"`
-	Mode      string `xml:"Mode,omitempty"`
-	Hash      string `xml:"Hash,omitempty"`
-	Permanent string `xml:"Permanent,omitempty"`
+	Size      int64  `xml:",omitempty"`
+	UID       int    `xml:"UID,omitempty"`
+	GID       int    `xml:"GID,omitempty"`
+	Mode      string `xml:",omitempty"`
+	Hash      string `xml:",omitempty"`
+	Permanent string `xml:",omitempty"`
 
 	modePrivate os.FileMode // We populate this during files.xml read
 }

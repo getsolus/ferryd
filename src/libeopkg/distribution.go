@@ -26,10 +26,7 @@ type Distribution struct {
 	SourceName string // Name of source to match source repos
 
 	// Translated description
-	Description []struct {
-		Value string `xml:",cdata"`
-		Lang  string `xml:"lang,attr,omitempty"`
-	}
+	Description []LocalisedField
 
 	Version    string // Published version number for compatibility
 	Type       string // Type of repository (should always be main, really. Just descriptive)
@@ -41,30 +38,27 @@ type Distribution struct {
 }
 
 // NewDistribution will load the Distribution data from the XML file
-func NewDistribution(xmlfile string) (*Distribution, error) {
+func NewDistribution(xmlfile string) (dist *Distribution, err error) {
 	fi, err := os.Open(xmlfile)
 	if err != nil {
-		return nil, err
+		return
 	}
 	defer fi.Close()
-	dist := &Distribution{obsmap: make(map[string]bool)}
+	dist = &Distribution{
+		obsmap: make(map[string]bool),
+	}
 	dec := xml.NewDecoder(fi)
 	if err = dec.Decode(dist); err != nil {
-		return nil, err
+		return
 	}
-	if dist.Obsoletes != nil {
-		for _, p := range dist.Obsoletes {
-			dist.obsmap[p] = true
-		}
+	for _, p := range dist.Obsoletes {
+		dist.obsmap[p] = true
 	}
-	return dist, nil
+	return
 }
 
 // IsObsolete will allow quickly determination of whether the package name
 // was marked obsolete and should be hidden from the index
 func (d *Distribution) IsObsolete(id string) bool {
-	if f, ok := d.obsmap[id]; ok {
-		return f
-	}
-	return false
+	return d.obsmap[id]
 }

@@ -48,58 +48,64 @@ var (
 
 // NewDeltaProducer will return a new delta producer for the given input packages
 // It is very important that the old and new packages are in the correct order!
-func NewDeltaProducer(baseDir string, pkgOld string, pkgNew string) (*DeltaProducer, error) {
-	var err error
-	ret := &DeltaProducer{
+func NewDeltaProducer(baseDir string, pkgOld string, pkgNew string) (dp *DeltaProducer, err error) {
+	var dirName string
+	var err2 error
+	dp = &DeltaProducer{
 		diffMap: make(map[string]int),
 	}
-	defer func() {
-		if err != nil {
-			ret.Close()
-		}
-	}()
-	ret.old, err = Open(pkgOld)
+	dp.old, err = Open(pkgOld)
 	if err != nil {
-		return nil, err
+		goto CLOSE
 	}
 
-	if err = ret.old.ReadAll(); err != nil {
-		return nil, err
+	if err = dp.old.ReadAll(); err != nil {
+		goto CLOSE
 	}
 
-	ret.new, err = Open(pkgNew)
+	dp.new, err = Open(pkgNew)
 	if err != nil {
-		return nil, err
+		goto CLOSE
 	}
 
-	if err = ret.new.ReadAll(); err != nil {
-		return nil, err
+	if err = dp.new.ReadAll(); err != nil {
+		goto CLOSE
 	}
 
-	if !IsDeltaPossible(&ret.old.Meta.Package, &ret.new.Meta.Package) {
-		return nil, ErrMismatchedDelta
+	if !IsDeltaPossible(&dp.old.Meta.Package, &dp.new.Meta.Package) {
+		err = ErrMismatchedDelta
+		goto CLOSE
 	}
 
 	// Form a unique directory entry
-	dirName := fmt.Sprintf("%s-%s-%s-%d-%d",
-		ret.new.Meta.Package.Name,
-		ret.new.Meta.Package.GetVersion(),
-		ret.new.Meta.Package.Architecture,
-		ret.old.Meta.Package.GetRelease(),
-		ret.new.Meta.Package.GetRelease())
+	dirName = fmt.Sprintf("%s-%s-%s-%d-%d",
+		dp.new.Meta.Package.Name,
+		dp.new.Meta.Package.GetVersion(),
+		dp.new.Meta.Package.Architecture,
+		dp.old.Meta.Package.GetRelease(),
+		dp.new.Meta.Package.GetRelease())
 
-	ret.baseDir = filepath.Join(baseDir, dirName)
+	dp.baseDir = filepath.Join(baseDir, dirName)
 
 	// Make sure base directory actually exists
-	if err = os.MkdirAll(ret.baseDir, 00755); err != nil {
-		return nil, err
-	}
+	err = os.MkdirAll(dp.baseDir, 00755)
 
-	return ret, nil
+CLOSE:
+	if err != nil {
+		err2 = dp.Close()
+		if err2 != nil {
+			err = err2
+		}
+		dp = nil
+	}
+	return
 }
 
 // Close the DeltaProducer
 func (d *DeltaProducer) Close() error {
+	if d == nil {
+		return nil
+	}
 	if d.old != nil {
 		d.old.Close()
 		d.old = nil

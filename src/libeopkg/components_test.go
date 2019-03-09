@@ -17,11 +17,13 @@
 package libeopkg
 
 import (
+    "io"
 	"testing"
 )
 
 const (
 	componentTestFile = "testdata/components.xml"
+	notXMLFile = "testdata/not.xml"
 )
 
 func TestComponents(t *testing.T) {
@@ -63,4 +65,14 @@ func TestComponents(t *testing.T) {
 	if want.Maintainer.Email != "root@solus-project.com" {
 		t.Fatalf("Wrong maintainer email: %s", want.Maintainer.Email)
 	}
+}
+
+func TestComponentsDecodeFail(t *testing.T) {
+	_, err := NewComponents(notXMLFile)
+	if err == nil {
+		t.Fatal("Should be an error for an invalid components.xml")
+	}
+    if err != io.EOF {
+		t.Fatalf("Should be an EOF error, found: %s", err.Error())
+    }
 }

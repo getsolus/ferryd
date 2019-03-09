@@ -25,6 +25,8 @@ import (
 const (
 	deltaOldPkg = "testdata/delta/nano-2.8.5-75-1-x86_64.eopkg"
 	deltaNewPkg = "testdata/delta/nano-2.8.6-76-1-x86_64.eopkg"
+    notAFile    = "testdata/bob"
+    notAPkg     = "testdata/not.xml"
 )
 
 func TestBasicDelta(t *testing.T) {
@@ -54,4 +56,52 @@ func TestBasicDelta(t *testing.T) {
 		t.Fatalf("Invalid release number in delta: %d", pkg.Meta.Package.GetRelease())
 	}
 
+}
+
+func TestBasicDeltaOldMissing(t *testing.T) {
+	producer, err := NewDeltaProducer("TESTING", notAFile, deltaNewPkg)
+	if err == nil {
+		t.Fatalf("Should have failed to create delta producer for non-existant pkg: %s", notAFile)
+	}
+	producer.Close()
+}
+
+func TestBasicDeltaOldInvalid(t *testing.T) {
+	producer, err := NewDeltaProducer("TESTING", notAPkg, deltaNewPkg)
+	if err == nil {
+		t.Fatalf("Should have failed to create delta producer for invalid pkg: %s", notAPkg)
+	}
+	producer.Close()
+}
+
+func TestBasicDeltaNewMissing(t *testing.T) {
+	producer, err := NewDeltaProducer("TESTING", deltaOldPkg, notAFile)
+	if err == nil {
+		t.Fatalf("Should have failed to create delta producer for non-existant pkg: %s", notAFile)
+	}
+	producer.Close()
+}
+
+func TestBasicDeltaNewInvalid(t *testing.T) {
+	producer, err := NewDeltaProducer("TESTING", deltaOldPkg, notAPkg)
+	if err == nil {
+		t.Fatalf("Should have failed to create delta producer for invalid pkg: %s", notAPkg)
+	}
+	producer.Close()
+}
+
+func TestBasicDeltaImpossibleEqual(t *testing.T) {
+	producer, err := NewDeltaProducer("TESTING", deltaOldPkg, deltaOldPkg)
+	if err == nil {
+		t.Fatalf("Should have failed to create delta producer for identical pkg: %s", deltaOldPkg)
+	}
+	producer.Close()
+}
+
+func TestBasicDeltaImpossibleGreater(t *testing.T) {
+	producer, err := NewDeltaProducer("TESTING", deltaNewPkg, deltaOldPkg)
+	if err == nil {
+		t.Fatalf("Should have failed to create delta producer for newer old pkg: %s", deltaNewPkg)
+	}
+	producer.Close()
 }

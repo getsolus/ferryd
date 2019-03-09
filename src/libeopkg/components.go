@@ -63,26 +63,26 @@ func (g ComponentSort) Swap(a, b int) {
 }
 
 // NewComponents will load the Components data from the XML file
-func NewComponents(xmlfile string) (*Components, error) {
-	fi, err := os.Open(xmlfile)
+func NewComponents(xmlfile string) (cs *Components, err error) {
+	cFile, err := os.Open(xmlfile)
 	if err != nil {
-		return nil, err
+		return
 	}
-	defer fi.Close()
-	components := &Components{}
-	dec := xml.NewDecoder(fi)
-	if err = dec.Decode(components); err != nil {
-		return nil, err
+	defer cFile.Close()
+	cs = &Components{}
+	dec := xml.NewDecoder(cFile)
+	if err = dec.Decode(cs); err != nil {
+		return
 	}
-
-	sort.Sort(ComponentSort(components.Components))
+	// Sort components by name
+	sort.Sort(ComponentSort(cs.Components))
 
 	// Ensure there are no empty Lang= fields
-	for i := range components.Components {
-		comp := &components.Components[i]
+	for i := range cs.Components {
+		comp := &cs.Components[i]
 		FixMissingLocalLanguage(&comp.LocalName)
 		FixMissingLocalLanguage(&comp.Summary)
 		FixMissingLocalLanguage(&comp.Description)
 	}
-	return components, nil
+	return
 }

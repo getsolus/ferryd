@@ -21,6 +21,7 @@ import (
 )
 
 const (
+    notAGroup     = "testdata/not.xml"
 	groupTestFile = "testdata/groups.xml"
 )
 
@@ -58,5 +59,19 @@ func TestGroups(t *testing.T) {
 	}
 	if want.Icon != "multimedia-volume-control" {
 		t.Fatalf("Wrong icon: %s", want.Icon)
+	}
+}
+
+func TestGroupsMissing(t *testing.T) {
+	_, err := NewGroups(notAFile)
+	if err == nil {
+		t.Fatalf("Should have failed to load missing file: %s", notAFile)
+	}
+}
+
+func TestGroupsInvalid(t *testing.T) {
+	_, err := NewGroups(notAGroup)
+	if err == nil {
+		t.Fatalf("Should have failed to load invalid file: %s", notAGroup)
 	}
 }

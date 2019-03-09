@@ -17,6 +17,7 @@
 package libeopkg
 
 import (
+    "path/filepath"
 	"testing"
 )
 
@@ -68,11 +69,14 @@ func TestMetadataSourceDummy(t *testing.T) {
 		"a/alsa-lib",
 		"n/nano",
 	}
-	for i := range metaDatas {
+	for i, m := range metaDatas {
 		exp := expected[i]
-		got := (&metaDatas[i]).GetPathComponent()
+		got := (&m).GetPathComponent()
 		if exp != got {
 			t.Fatalf("Expected source path '%s', got '%s'", exp, got)
 		}
+        if m.GetID() != filepath.Base(m.PackageURI) {
+            t.Fatalf("ID should be %s, found: %s", filepath.Base(m.PackageURI), m.GetID() )
+        }
 	}
 }
