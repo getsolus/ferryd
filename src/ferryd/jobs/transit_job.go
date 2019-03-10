@@ -25,33 +25,34 @@ import (
 )
 
 // TransitJobHandler is responsible for accepting new upload payloads in the repository
-type TransitJobHandler struct {
-	path     string
-	manifest *core.TransitManifest
-}
+type TransitJobHandler Job
 
 // NewTransitJob will return a job suitable for adding to the job processor
-func NewTransitJob(path string) *JobEntry {
-	return &JobEntry{
-		sequential: true,
-		Type:       TransitProcess,
-		Params:     []string{path},
+func NewTransitJob(path string) *Job {
+	return &Job{
+		Type:    TransitProcess,
+        Sources: []string{path},
 	}
 }
 
 // NewTransitJobHandler will create a job handler for the input job and ensure it validates
-func NewTransitJobHandler(j *JobEntry) (*TransitJobHandler, error) {
-	if len(j.Params) != 1 {
-		return nil, fmt.Errorf("job has invalid parameters")
+func NewTransitJobHandler(j *Job) (handler *TransitJobHandler, err error) {
+	if len(j.Sources) == 0 {
+		err = fmt.Errorf("job is missing the path to the manifest")
+        return
 	}
-	return &TransitJobHandler{
-		path: j.Params[0],
-	}, nil
+	if len(j.Sources[0]) == 0 {
+		err = fmt.Errorf("job is missing the path to the manifest")
+        return
+	}
+	h := TransitJobHandler(*j)
+    handler = &h
+    return
 }
 
 // Execute will process incoming .tram files for potential repo inclusion
 func (j *TransitJobHandler) Execute(jproc *Processor, manager *core.Manager) error {
-	tram, err := core.NewTransitManifest(j.path)
+	tram, err := core.NewTransitManifest(j.Sources[0])
 	if err != nil {
 		return err
 	}
@@ -60,10 +61,8 @@ func (j *TransitJobHandler) Execute(jproc *Processor, manager *core.Manager) err
 		return err
 	}
 
-	j.manifest = tram
-
 	// Sanity.
-	repo := j.manifest.Manifest.Target
+	repo := tram.Manifest.Target
 	if _, err := manager.GetRepo(repo); err != nil {
 		return err
 	}
@@ -76,7 +75,7 @@ func (j *TransitJobHandler) Execute(jproc *Processor, manager *core.Manager) err
 
 	log.WithFields(log.Fields{
 		"target": repo,
-		"id":     j.manifest.ID(),
+		"id":     tram.ID(),
 	}).Info("Successfully processed manifest upload")
 
 	// Append the manifest path because now we'll want to delete these
@@ -89,7 +88,7 @@ func (j *TransitJobHandler) Execute(jproc *Processor, manager *core.Manager) err
 		if err := os.Remove(p); err != nil {
 			log.WithFields(log.Fields{
 				"file":  p,
-				"id":    j.manifest.ID(),
+				"id":    tram.ID(),
 				"error": err,
 			}).Error("Failed to remove manifest file upload")
 		}
@@ -113,9 +112,10 @@ func (j *TransitJobHandler) Execute(jproc *Processor, manager *core.Manager) err
 
 // Describe returns a human readable description for this job
 func (j *TransitJobHandler) Describe() string {
-	if j.manifest == nil {
-		return fmt.Sprintf("Process manifest '%s'", j.path)
-	}
+	return fmt.Sprintf("Process manifest '%s'", j.Sources[0])
+}
 
-	return fmt.Sprintf("Process manifest '%s' for target '%s'", j.manifest.ID(), j.manifest.Manifest.Target)
+// IsSerial returns true if a job should not be run alongside other jobs
+func (J *TransitJobHandler) IsSerial() bool {
+    return true
 }

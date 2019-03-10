@@ -20,55 +20,60 @@ import (
 	"ferryd/core"
 	"fmt"
 	log "github.com/sirupsen/logrus"
-	"strconv"
 )
 
 // RemoveSourceJobHandler is responsible for removing packages by identifiers
-type RemoveSourceJobHandler struct {
-	repoID  string
-	source  string
-	release int
-}
+type RemoveSourceJobHandler Job
 
 // NewRemoveSourceJob will return a job suitable for adding to the job processor
-func NewRemoveSourceJob(repoID, source string, release int) *JobEntry {
-	return &JobEntry{
-		sequential: true,
-		Type:       RemoveSource,
-		Params:     []string{repoID, source, fmt.Sprintf("%d", release)},
+func NewRemoveSourceJob(repoID, source string, release int) *Job {
+	return &Job{
+		Type:    RemoveSource,
+        SrcRepo: repoID,
+        Sources: []string{source},
+        Release: release,
 	}
 }
 
 // NewRemoveSourceJobHandler will create a job handler for the input job and ensure it validates
-func NewRemoveSourceJobHandler(j *JobEntry) (*RemoveSourceJobHandler, error) {
-	if len(j.Params) != 3 {
-		return nil, fmt.Errorf("job has invalid parameters")
+func NewRemoveSourceJobHandler(j *Job) (handler *RemoveSourceJobHandler, err error) {
+    if len(j.SrcRepo) == 0 {
+		err = fmt.Errorf("job is missing source repo")
+        return
+    }
+    if len(j.Sources) == 0 {
+		err = fmt.Errorf("job is missing source package")
+        return
+    }
+	if j.Release == 0 {
+		err = fmt.Errorf("job has invalid release number: 0")
+        return
 	}
-	rel, err := strconv.ParseInt(j.Params[2], 10, 32)
-	if err != nil {
-		return nil, err
-	}
-	return &RemoveSourceJobHandler{
-		repoID:  j.Params[0],
-		source:  j.Params[1],
-		release: int(rel),
-	}, nil
+	h := RemoveSourceJobHandler(*j)
+    handler = &h
+    return
 }
 
 // Execute will remove the source&rel match from the repo
 func (j *RemoveSourceJobHandler) Execute(_ *Processor, manager *core.Manager) error {
-	if err := manager.RemoveSource(j.repoID, j.source, j.release); err != nil {
+	if err := manager.RemoveSource(j.SrcRepo, j.Sources[0], j.Release); err != nil {
 		return err
 	}
 	log.WithFields(log.Fields{
-		"repo":          j.repoID,
-		"source":        j.source,
-		"releaseNumber": j.release,
+		"repo":          j.SrcRepo,
+		"source":        j.Sources[0],
+		"releaseNumber": j.Release,
 	}).Info("Removed source")
 	return nil
 }
 
 // Describe returns a human readable description for this job
 func (j *RemoveSourceJobHandler) Describe() string {
-	return fmt.Sprintf("Remove sources by id '%s' (rel: %d) in '%s'", j.source, j.release, j.repoID)
+	return fmt.Sprintf("Remove sources by id '%s' (rel: %d) in '%s'", j.Sources[0], j.Release, j.SrcRepo)
 }
+
+// IsSerial returns true if a job should not be run alongside other jobs
+func (J *RemoveSourceJobHandler) IsSerial() bool {
+    return true
+}
+

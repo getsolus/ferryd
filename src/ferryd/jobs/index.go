@@ -24,39 +24,42 @@ import (
 
 // IndexRepoJobHandler is responsible for indexing repositories and should only
 // ever be used in sequential queues.
-type IndexRepoJobHandler struct {
-	repoID string
-}
+type IndexRepoJobHandler Job
 
 // NewIndexRepoJob will return a job suitable for adding to the job processor
-func NewIndexRepoJob(id string) *JobEntry {
-	return &JobEntry{
-		sequential: true,
-		Type:       IndexRepo,
-		Params:     []string{id},
+func NewIndexRepoJob(id string) *Job {
+	return &Job{
+		Type:    IndexRepo,
+        SrcRepo: id,
 	}
 }
 
 // NewIndexRepoJobHandler will create a job handler for the input job and ensure it validates
-func NewIndexRepoJobHandler(j *JobEntry) (*IndexRepoJobHandler, error) {
-	if len(j.Params) != 1 {
-		return nil, fmt.Errorf("job has invalid parameters")
+func NewIndexRepoJobHandler(j *Job) (handler *IndexRepoJobHandler, err error) {
+	if len(j.SrcRepo) == 0 {
+		err = fmt.Errorf("job is missing a source repo")
+        return
 	}
-	return &IndexRepoJobHandler{
-		repoID: j.Params[0],
-	}, nil
+	h := IndexRepoJobHandler(*j)
+    handler = &h
+    return
 }
 
 // Execute will index the given repository if possible
 func (j *IndexRepoJobHandler) Execute(_ *Processor, manager *core.Manager) error {
-	if err := manager.Index(j.repoID); err != nil {
+	if err := manager.Index(j.SrcRepo); err != nil {
 		return err
 	}
-	log.WithFields(log.Fields{"repo": j.repoID}).Info("Indexed repository")
+	log.WithFields(log.Fields{"repo": j.SrcRepo}).Info("Indexed repository")
 	return nil
 }
 
 // Describe returns a human readable description for this job
 func (j *IndexRepoJobHandler) Describe() string {
-	return fmt.Sprintf("Index repository '%s'", j.repoID)
+	return fmt.Sprintf("Index repository '%s'", j.SrcRepo)
+}
+
+// IsSerial returns true if a job should not be run alongside other jobs
+func (J *IndexRepoJobHandler) IsSerial() bool {
+    return true
 }

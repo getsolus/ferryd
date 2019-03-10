@@ -61,7 +61,7 @@ func TestBasicDelta(t *testing.T) {
 func TestBasicDeltaOldMissing(t *testing.T) {
 	producer, err := NewDeltaProducer("TESTING", notAFile, deltaNewPkg)
 	if err == nil {
-		t.Fatalf("Should have failed to create delta producer for non-existant pkg: %s", notAFile)
+		t.Fatalf("Should have failed to create delta producer for non-existent pkg: %s", notAFile)
 	}
 	producer.Close()
 }
@@ -77,7 +77,7 @@ func TestBasicDeltaOldInvalid(t *testing.T) {
 func TestBasicDeltaNewMissing(t *testing.T) {
 	producer, err := NewDeltaProducer("TESTING", deltaOldPkg, notAFile)
 	if err == nil {
-		t.Fatalf("Should have failed to create delta producer for non-existant pkg: %s", notAFile)
+		t.Fatalf("Should have failed to create delta producer for non-existent pkg: %s", notAFile)
 	}
 	producer.Close()
 }

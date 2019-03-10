@@ -24,39 +24,42 @@ import (
 
 // CreateRepoJobHandler is responsible for creating new repositories and should only
 // ever be used in sequential queues.
-type CreateRepoJobHandler struct {
-	repoID string
-}
+type CreateRepoJobHandler Job
 
 // NewCreateRepoJob will return a job suitable for adding to the job processor
-func NewCreateRepoJob(id string) *JobEntry {
-	return &JobEntry{
-		sequential: true,
-		Type:       CreateRepo,
-		Params:     []string{id},
+func NewCreateRepoJob(id string) *Job {
+	return &Job{
+		Type:    CreateRepo,
+        DstRepo: id,
 	}
 }
 
 // NewCreateRepoJobHandler will create a job handler for the input job and ensure it validates
-func NewCreateRepoJobHandler(j *JobEntry) (*CreateRepoJobHandler, error) {
-	if len(j.Params) != 1 {
-		return nil, fmt.Errorf("job has invalid parameters")
-	}
-	return &CreateRepoJobHandler{
-		repoID: j.Params[0],
-	}, nil
+func NewCreateRepoJobHandler(j *Job) (handler *CreateRepoJobHandler, err error) {
+    if len(j.DstRepo) == 0 {
+        err = fmt.Errorf("job is missing a destination repo")
+        return
+    }
+	h := CreateRepoJobHandler(*j)
+    handler = &h
+    return
 }
 
 // Execute will construct a new repository if possible
 func (j *CreateRepoJobHandler) Execute(_ *Processor, manager *core.Manager) error {
-	if err := manager.CreateRepo(j.repoID); err != nil {
+	if err := manager.CreateRepo(j.DstRepo); err != nil {
 		return err
 	}
-	log.WithFields(log.Fields{"repo": j.repoID}).Info("Created repository")
+	log.WithFields(log.Fields{"repo": j.DstRepo}).Info("Created repository")
 	return nil
 }
 
 // Describe returns a human readable description for this job
 func (j *CreateRepoJobHandler) Describe() string {
-	return fmt.Sprintf("Create repository '%s'", j.repoID)
+	return fmt.Sprintf("Create repository '%s'", j.DstRepo)
+}
+
+// IsSerial returns true if a job should not be run alongside other jobs
+func (J *CreateRepoJobHandler) IsSerial() bool {
+    return true
 }

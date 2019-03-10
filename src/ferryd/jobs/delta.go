@@ -28,60 +28,57 @@ import (
 // DeltaJobHandler is responsible for indexing repositories and should only
 // ever be used in async queues. Deltas may take some time to produce and
 // shouldn't be allowed to block the sequential processing queue.
-type DeltaJobHandler struct {
-	repoID      string
-	packageName string
-	indexRepo   bool
-	nDeltas     int // Track how many deltas we actually produce
-}
+type DeltaJobHandler Job
 
 // NewDeltaJob will return a job suitable for adding to the job processor
-func NewDeltaJob(repoID, packageID string) *JobEntry {
-	return &JobEntry{
-		sequential: false,
-		Type:       Delta,
-		Params:     []string{repoID, packageID},
+func NewDeltaJob(repoID, packageID string) *Job {
+	return &Job{
+		Type:    Delta,
+        SrcRepo: repoID,
+        Sources: []string{packageID},
 	}
 }
 
 // NewDeltaIndexJob will return a new job for creating delta packages as well
 // as scheduling an index operation when complete.
-func NewDeltaIndexJob(repoID, packageID string) *JobEntry {
-	return &JobEntry{
-		sequential: false,
-		Type:       DeltaIndex,
-		Params:     []string{repoID, packageID},
+func NewDeltaIndexJob(repoID, packageID string) *Job {
+	return &Job{
+		Type:    DeltaIndex,
+        SrcRepo: repoID,
+        Sources: []string{packageID},
 	}
 }
 
 // NewDeltaJobHandler will create a job handler for the input job and ensure it validates
-func NewDeltaJobHandler(j *JobEntry, indexRepo bool) (*DeltaJobHandler, error) {
-	if len(j.Params) != 2 {
-		return nil, fmt.Errorf("job has invalid parameters")
+func NewDeltaJobHandler(j *Job) (handler *DeltaJobHandler, err error) {
+    if len(j.SrcRepo) == 0 {
+		err = fmt.Errorf("job is missing source repo")
+        return
+    }
+	if len(j.Sources) == 0 {
+		err = fmt.Errorf("job is missing a source package")
+        return
 	}
-	return &DeltaJobHandler{
-		repoID:      j.Params[0],
-		packageName: j.Params[1],
-		indexRepo:   indexRepo,
-		nDeltas:     0,
-	}, nil
+	h := DeltaJobHandler(*j)
+    handler = &h
+    return
 }
 
 // executeInternal is the common code shared in the delta jobs, and is
 // split out to save duplication.
-func (j *DeltaJobHandler) executeInternal(manager *core.Manager) error {
-	pkgs, err := manager.GetPackages(j.repoID, j.packageName)
+func (j *DeltaJobHandler) executeInternal(manager *core.Manager) (nDeltas int, err error) {
+	pkgs, err := manager.GetPackages(j.SrcRepo, j.Sources[0])
 	if err != nil {
-		return err
+		return
 	}
 
 	// Need at least 2 packages for a delta op.
 	if len(pkgs) < 2 {
 		log.WithFields(log.Fields{
-			"repo":    j.repoID,
-			"package": j.packageName,
+			"repo":    j.SrcRepo,
+			"package": j.Sources[0],
 		}).Debug("No delta is possible")
-		return nil
+		return
 	}
 
 	sort.Sort(libeopkg.PackageSet(pkgs))
@@ -93,7 +90,7 @@ func (j *DeltaJobHandler) executeInternal(manager *core.Manager) error {
 		fields := log.Fields{
 			"old":  old.GetID(),
 			"new":  tip.GetID(),
-			"repo": j.repoID,
+			"repo": j.SrcRepo,
 		}
 
 		deltaID := libeopkg.ComputeDeltaName(old, tip)
@@ -103,9 +100,10 @@ func (j *DeltaJobHandler) executeInternal(manager *core.Manager) error {
 			continue
 		}
 
-		hasDelta, err := manager.HasDelta(j.repoID, j.packageName, deltaID)
-		if err != nil {
-			return err
+		hasDelta, e := manager.HasDelta(j.SrcRepo, j.Sources[0], deltaID)
+		if e != nil {
+            err = e
+			return
 		}
 
 		// Package has this delta already? Continue.
@@ -122,27 +120,29 @@ func (j *DeltaJobHandler) executeInternal(manager *core.Manager) error {
 
 		// Before we go off creating it - does the delta package exist already?
 		// If so, just re-ref it for usage within the new repo
-		entry, err := manager.GetPoolEntry(deltaID)
-		if entry != nil && err == nil {
-			if err := manager.RefDelta(j.repoID, deltaID); err != nil {
-				fields["error"] = err
+		entry, e := manager.GetPoolEntry(deltaID)
+		if entry != nil && e == nil {
+			if e := manager.RefDelta(j.SrcRepo, deltaID); e != nil {
+				fields["error"] = e
 				log.WithFields(fields).Error("Failed to ref existing delta")
-				return err
+                err = e
+				return
 			}
 			log.WithFields(fields).Info("Reused existing delta")
 			continue
 		}
 
-		deltaPath, err := manager.CreateDelta(j.repoID, old, tip)
-		if err != nil {
-			fields["error"] = err
+		deltaPath, e := manager.CreateDelta(j.SrcRepo, old, tip)
+		if e != nil {
+			fields["error"] = e
 			if err == libeopkg.ErrDeltaPointless {
 				// Non-fatal, ask the manager to record this delta as a no-go
 				log.WithFields(fields).Info("Delta not possible, marked permanently")
-				if err := manager.MarkDeltaFailed(deltaID, mapping); err != nil {
-					fields["error"] = err
+				if e = manager.MarkDeltaFailed(deltaID, mapping); e != nil {
+					fields["error"] = e
 					log.WithFields(fields).Error("Failed to mark delta failure")
-					return err
+                    err = e
+                    return
 				}
 				continue
 			} else if err == libeopkg.ErrMismatchedDelta {
@@ -151,11 +151,11 @@ func (j *DeltaJobHandler) executeInternal(manager *core.Manager) error {
 			} else {
 				// Genuinely an issue now
 				log.WithFields(fields).Error("Error in delta production")
-				return err
+				return
 			}
 		}
 
-		j.nDeltas++
+		nDeltas++
 
 		fields["path"] = deltaPath
 		// Produced a delta!
@@ -165,18 +165,17 @@ func (j *DeltaJobHandler) executeInternal(manager *core.Manager) error {
 		if err = j.includeDelta(manager, mapping, deltaPath); err != nil {
 			fields["error"] = err
 			log.WithFields(fields).Error("Failed to include delta package")
-			return err
+			return
 		}
 	}
-
-	return nil
+	return
 }
 
 // includeDelta will wrap up the basic functionality to get a delta package
 // imported into a target repository.
 func (j *DeltaJobHandler) includeDelta(manager *core.Manager, mapping *core.DeltaInformation, deltaPath string) error {
 	// Try to insert the delta
-	if err := manager.AddDelta(j.repoID, deltaPath, mapping); err != nil {
+	if err := manager.AddDelta(j.SrcRepo, deltaPath, mapping); err != nil {
 		return err
 	}
 
@@ -186,22 +185,22 @@ func (j *DeltaJobHandler) includeDelta(manager *core.Manager, mapping *core.Delt
 
 // Execute will delta the target package within the target repository.
 func (j *DeltaJobHandler) Execute(_ *Processor, manager *core.Manager) error {
-	err := j.executeInternal(manager)
+	nDeltas, err := j.executeInternal(manager)
 	if err != nil {
 		return err
 	}
-	if !j.indexRepo {
+	if j.Type != DeltaIndex {
 		return nil
 	}
 	// Ask that our repository now be reindexed because we've added deltas but
 	// only if we've successfully produced some delta packages
-	if j.nDeltas < 1 {
+	if nDeltas < 1 {
 		return nil
 	}
 
-	if err := manager.Index(j.repoID); err != nil {
+	if err := manager.Index(j.SrcRepo); err != nil {
 		log.WithFields(log.Fields{
-			"repo":  j.repoID,
+			"repo":  j.SrcRepo,
 			"error": err,
 		}).Error("Failed to index repository")
 		return err
@@ -212,8 +211,13 @@ func (j *DeltaJobHandler) Execute(_ *Processor, manager *core.Manager) error {
 
 // Describe returns a human readable description for this job
 func (j *DeltaJobHandler) Describe() string {
-	if j.indexRepo {
-		return fmt.Sprintf("Delta package '%s' on '%s', then re-index", j.packageName, j.repoID)
+	if j.Type == DeltaIndex {
+		return fmt.Sprintf("Delta package '%s' on '%s', then re-index", j.Sources[0], j.SrcRepo)
 	}
-	return fmt.Sprintf("Delta package '%s' on '%s'", j.packageName, j.repoID)
+	return fmt.Sprintf("Delta package '%s' on '%s'", j.Sources[0], j.SrcRepo)
+}
+
+// IsSerial returns true if a job should not be run alongside other jobs
+func (J *DeltaJobHandler) IsSerial() bool {
+    return false
 }

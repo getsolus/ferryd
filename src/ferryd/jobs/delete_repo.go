@@ -24,39 +24,42 @@ import (
 
 // DeleteRepoJobHandler is responsible for creating new repositories and should only
 // ever be used in sequential queues.
-type DeleteRepoJobHandler struct {
-	repoID string
-}
+type DeleteRepoJobHandler Job
 
 // NewDeleteRepoJob will return a job suitable for adding to the job processor
-func NewDeleteRepoJob(id string) *JobEntry {
-	return &JobEntry{
-		sequential: true,
-		Type:       DeleteRepo,
-		Params:     []string{id},
+func NewDeleteRepoJob(id string) *Job {
+	return &Job{
+		Type:    DeleteRepo,
+        SrcRepo: id,
 	}
 }
 
 // NewDeleteRepoJobHandler will create a job handler for the input job and ensure it validates
-func NewDeleteRepoJobHandler(j *JobEntry) (*DeleteRepoJobHandler, error) {
-	if len(j.Params) != 1 {
-		return nil, fmt.Errorf("job has invalid parameters")
+func NewDeleteRepoJobHandler(j *Job) (handler *DeleteRepoJobHandler, err error) {
+	if len(j.SrcRepo) == 0 {
+		err = fmt.Errorf("job is missing a source repo")
+        return
 	}
-	return &DeleteRepoJobHandler{
-		repoID: j.Params[0],
-	}, nil
+	h := DeleteRepoJobHandler(*j)
+    handler = &h
+    return
 }
 
 // Execute will delete an existing repository
 func (j *DeleteRepoJobHandler) Execute(_ *Processor, manager *core.Manager) error {
-	if err := manager.DeleteRepo(j.repoID); err != nil {
+	if err := manager.DeleteRepo(j.SrcRepo); err != nil {
 		return err
 	}
-	log.WithFields(log.Fields{"repo": j.repoID}).Info("Deleted repository")
+	log.WithFields(log.Fields{"repo": j.SrcRepo}).Info("Deleted repository")
 	return nil
 }
 
 // Describe returns a human readable description for this job
 func (j *DeleteRepoJobHandler) Describe() string {
-	return fmt.Sprintf("Delete repository '%s'", j.repoID)
+	return fmt.Sprintf("Delete repository '%s'", j.SrcRepo)
+}
+
+// IsSerial returns true if a job should not be run alongside other jobs
+func (J *DeleteRepoJobHandler) IsSerial() bool {
+    return true
 }

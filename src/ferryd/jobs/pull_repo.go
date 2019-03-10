@@ -23,52 +23,53 @@ import (
 )
 
 // PullRepoJobHandler is responsible for cloning an existing repository
-type PullRepoJobHandler struct {
-	sourceID string
-	targetID string
-}
+type PullRepoJobHandler Job
 
 // NewPullRepoJob will return a job suitable for adding to the job processor
-func NewPullRepoJob(sourceID, targetID string) *JobEntry {
-	return &JobEntry{
-		sequential: true,
-		Type:       PullRepo,
-		Params:     []string{sourceID, targetID},
+func NewPullRepoJob(sourceID, targetID string) *Job {
+	return &Job{
+		Type:    PullRepo,
+        SrcRepo: sourceID,
+        DstRepo: targetID,
 	}
 }
 
 // NewPullRepoJobHandler will create a job handler for the input job and ensure it validates
-func NewPullRepoJobHandler(j *JobEntry) (*PullRepoJobHandler, error) {
-	if len(j.Params) != 2 {
-		return nil, fmt.Errorf("job has invalid parameters")
+func NewPullRepoJobHandler(j *Job) (handler *PullRepoJobHandler, err error) {
+    if len(j.SrcRepo) == 0 {
+        err = fmt.Errorf("job is missing source repo")
+        return
+    }
+	if len(j.DstRepo) == 0 {
+		err = fmt.Errorf("job is missing destination repo")
+        return
 	}
-	return &PullRepoJobHandler{
-		sourceID: j.Params[0],
-		targetID: j.Params[1],
-	}, nil
+	h := PullRepoJobHandler(*j)
+    handler = &h
+    return
 }
 
 // Execute will attempt to pull the repos
 func (j *PullRepoJobHandler) Execute(jproc *Processor, manager *core.Manager) error {
-	changedNames, err := manager.PullRepo(j.sourceID, j.targetID)
+	changedNames, err := manager.PullRepo(j.SrcRepo, j.DstRepo)
 	if err != nil {
 		log.WithFields(log.Fields{
-			"source": j.sourceID,
-			"target": j.targetID,
+			"source": j.SrcRepo,
+			"target": j.DstRepo,
 			"error":  err,
 		}).Warning("Failed to pull repository")
 		return err
 	}
 
 	log.WithFields(log.Fields{
-		"source": j.sourceID,
-		"target": j.targetID,
+		"source": j.SrcRepo,
+		"target": j.DstRepo,
 	}).Info("Pulled repository")
 
 	// Create delta job in this repository on the changed names
 	// Don't cause indexing because it causes noise
 	for _, pkg := range changedNames {
-		jproc.PushJob(NewDeltaIndexJob(j.targetID, pkg))
+		jproc.PushJob(NewDeltaIndexJob(j.DstRepo, pkg))
 	}
 
 	return nil
@@ -76,5 +77,10 @@ func (j *PullRepoJobHandler) Execute(jproc *Processor, manager *core.Manager) er
 
 // Describe returns a human readable description for this job
 func (j *PullRepoJobHandler) Describe() string {
-	return fmt.Sprintf("Pull repository '%s' into '%s'", j.sourceID, j.targetID)
+	return fmt.Sprintf("Pull repository '%s' into '%s'", j.SrcRepo, j.DstRepo)
+}
+
+// IsSerial returns true if a job should not be run alongside other jobs
+func (J *PullRepoJobHandler) IsSerial() bool {
+    return true
 }

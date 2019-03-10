@@ -20,52 +20,54 @@ import (
 	"ferryd/core"
 	"fmt"
 	log "github.com/sirupsen/logrus"
-	"strconv"
 )
 
 // TrimPackagesJobHandler is responsible for removing packages by identifiers
-type TrimPackagesJobHandler struct {
-	repoID  string
-	maxKeep int
-}
+type TrimPackagesJobHandler Job
 
 // NewTrimPackagesJob will return a job suitable for adding to the job processor
-func NewTrimPackagesJob(repoID string, maxKeep int) *JobEntry {
-	return &JobEntry{
-		sequential: true,
-		Type:       TrimPackages,
-		Params:     []string{repoID, fmt.Sprintf("%d", maxKeep)},
+func NewTrimPackagesJob(repoID string, maxKeep int) *Job {
+	return &Job{
+		Type:    TrimPackages,
+        SrcRepo: repoID,
+        MaxKeep: maxKeep,
 	}
 }
 
 // NewTrimPackagesJobHandler will create a job handler for the input job and ensure it validates
-func NewTrimPackagesJobHandler(j *JobEntry) (*TrimPackagesJobHandler, error) {
-	if len(j.Params) != 2 {
-		return nil, fmt.Errorf("job has invalid parameters")
+func NewTrimPackagesJobHandler(j *Job) (handler *TrimPackagesJobHandler, err error) {
+	if len(j.SrcRepo) == 0 {
+		err = fmt.Errorf("job is missing a source repository")
+        return
 	}
-	keep, err := strconv.ParseInt(j.Params[1], 10, 32)
-	if err != nil {
-		return nil, err
+	if j.MaxKeep < 1 {
+		err = fmt.Errorf("must keep at least one release of a package")
+        return
 	}
-	return &TrimPackagesJobHandler{
-		repoID:  j.Params[0],
-		maxKeep: int(keep),
-	}, nil
+	h := TrimPackagesJobHandler(*j)
+    handler = &h
+    return
 }
 
 // Execute will attempt removal of excessive packages in the index
 func (j *TrimPackagesJobHandler) Execute(_ *Processor, manager *core.Manager) error {
-	if err := manager.TrimPackages(j.repoID, j.maxKeep); err != nil {
+	if err := manager.TrimPackages(j.SrcRepo, j.MaxKeep); err != nil {
 		return err
 	}
 	log.WithFields(log.Fields{
-		"repo":    j.repoID,
-		"maxKeep": j.maxKeep,
+		"repo":    j.SrcRepo,
+		"maxKeep": j.MaxKeep,
 	}).Info("Trimmed packages in repository")
 	return nil
 }
 
 // Describe returns a human readable description for this job
 func (j *TrimPackagesJobHandler) Describe() string {
-	return fmt.Sprintf("Trim packages to maximum of %d in '%s'", j.maxKeep, j.repoID)
+	return fmt.Sprintf("Trim packages to maximum of %d in '%s'", j.MaxKeep, j.SrcRepo)
 }
+
+// IsSerial returns true if a job should not be run alongside other jobs
+func (J *TrimPackagesJobHandler) IsSerial() bool {
+    return true
+}
+

@@ -105,8 +105,8 @@ func (j *Processor) Begin() {
 
 // PushJob will automatically determine which queue to push a job to and place
 // it there for immediate execution
-func (j *Processor) PushJob(job *JobEntry) {
-	if job.sequential {
+func (j *Processor) PushJob(job *Job) {
+	if job.IsSerial {
 		j.store.PushSequentialJob(job)
 	} else {
 		j.store.PushAsyncJob(job)

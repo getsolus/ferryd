@@ -20,7 +20,6 @@ import (
 	"bytes"
 	"encoding/binary"
 	"encoding/gob"
-	"ferryd/core"
 	"fmt"
 	"libferry"
 )

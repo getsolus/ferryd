@@ -24,27 +24,25 @@ import (
 
 // DeltaRepoJobHandler is responsible for delta'ing repositories and should only
 // ever be used in sequential queues.
-type DeltaRepoJobHandler struct {
-	repoID string
-}
+type DeltaRepoJobHandler Job
 
 // NewDeltaRepoJob will return a job suitable for adding to the job processor
-func NewDeltaRepoJob(id string) *JobEntry {
-	return &JobEntry{
-		sequential: true,
-		Type:       DeltaRepo,
-		Params:     []string{id},
+func NewDeltaRepoJob(id string) *Job {
+	return &Job{
+		Type:    DeltaRepo,
+        SrcRepo: id,
 	}
 }
 
 // NewDeltaRepoJobHandler will create a job handler for the input job and ensure it validates
-func NewDeltaRepoJobHandler(j *JobEntry) (*DeltaRepoJobHandler, error) {
-	if len(j.Params) != 1 {
-		return nil, fmt.Errorf("job has invalid parameters")
+func NewDeltaRepoJobHandler(j *Job) (handler *DeltaRepoJobHandler, err error) {
+	if len(j.SrcRepo) == 0 {
+		err = fmt.Errorf("job is missing a source repo")
+        return
 	}
-	return &DeltaRepoJobHandler{
-		repoID: j.Params[0],
-	}, nil
+	h := DeltaRepoJobHandler(*j)
+    handler = &h
+    return
 }
 
 // Execute will delta the given repository if possible
@@ -55,7 +53,7 @@ func NewDeltaRepoJobHandler(j *JobEntry) (*DeltaRepoJobHandler, error) {
 // This operation is ideally only used after the first import of a repository,
 // after then deltas will be produced on the fly.
 func (j *DeltaRepoJobHandler) Execute(jproc *Processor, manager *core.Manager) error {
-	packageNames, err := manager.GetPackageNames(j.repoID)
+	packageNames, err := manager.GetPackageNames(j.SrcRepo)
 	if err != nil {
 		return err
 	}
@@ -63,14 +61,14 @@ func (j *DeltaRepoJobHandler) Execute(jproc *Processor, manager *core.Manager) e
 	// Skip an empty repository
 	if len(packageNames) < 1 {
 		log.WithFields(log.Fields{
-			"repo": j.repoID,
+			"repo": j.SrcRepo,
 		}).Warning("Requested delta for empty repository")
 		return nil
 	}
 
 	// Fire off parallel delta jobs for every package in this repository
 	for _, name := range packageNames {
-		jproc.PushJob(NewDeltaJob(j.repoID, name))
+		jproc.PushJob(NewDeltaJob(j.SrcRepo, name))
 	}
 
 	return nil
@@ -78,5 +76,10 @@ func (j *DeltaRepoJobHandler) Execute(jproc *Processor, manager *core.Manager) e
 
 // Describe returns a human readable description for this job
 func (j *DeltaRepoJobHandler) Describe() string {
-	return fmt.Sprintf("Produce deltas for '%s'", j.repoID)
+	return fmt.Sprintf("Produce deltas for '%s'", j.SrcRepo)
+}
+
+// IsSerial returns true if a job should not be run alongside other jobs
+func (J *DeltaRepoJobHandler) IsSerial() bool {
+    return true
 }
