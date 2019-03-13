@@ -144,6 +144,7 @@ func (w *Worker) processJob(job *Job) {
 		log.Error("Job '%v' failed with error: '%s'\n", job.ID, err.Error())
 		return
 	}
+	job.Status = Completed
 
 	// Succeeded
 	log.Infof("Job '%v' completed successfully", job.ID)

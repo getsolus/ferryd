@@ -68,3 +68,10 @@ const (
 	// TrimPackages is a sequential job to trim fat from a repository
 	TrimPackages = 13
 )
+
+// IsParallel tells us if a particular JobType can be done in parallel
+var IsParallel = map[JobType]bool{
+	CopySource: true,
+	Delta:      true,
+	DeltaIndex: true,
+}

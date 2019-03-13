@@ -17,6 +17,7 @@
 package jobs
 
 import (
+    "libferry"
 	"time"
 )
 
@@ -90,17 +91,55 @@ INSERT INTO jobs (
 )
 `
 
+const (
+	nextJob = "SELECT * FROM jobs WHERE status=0 ORDER BY id LIMIT 1"
+)
+
 // Queries for updating the status of a job
 const (
-	markRunning   = "UPDATE jobs SET status=:status, started=:started WHERE id=:id"
-	markFailed    = "UPDATE jobs SET status=:status, finished=:finished, message=:message WHERE id=:id"
-	markCancelled = "UPDATE jobs SET status=:status, finished=:finished, message=:message WHERE id=:id"
-	markCompleted = "UPDATE jobs SET status=:status, finished=:finished, message=:message WHERE id=:id"
+	markRunning  = "UPDATE jobs SET status=:status, started=:started WHERE id=:id"
+	markFinished = "UPDATE jobs SET status=:status, finished=:finished, message=:message WHERE id=:id"
 )
 
 // Queries for Cleaning up the Job queue
 const (
+	clearRunningJobs   = "UPDATE jobs SET status=0 WHERE status=1"
 	clearFailedJobs    = "DELETE FROM jobs WHERE status=2"
 	clearCancelledJobs = "DELETE FROM jobs WHERE status=3"
 	clearCompletedJobs = "DELETE FROM jobs WHERE status=4"
 )
+
+
+// Convert turns a ferryd job into a libferry job
+func (j *Job) Convert() *libferry.Job {
+    h, err := NewJobHandler(j)
+    if err != nil {
+        return nil
+    }
+    job := &libferry.Job{
+        Description: h.Describe(),
+        Timing: libferry.TimingInformation {
+            Queued: j.Created,
+            Begin:  j.Started,
+            End:    j.Finished,
+        },
+    }
+    if j.Status == Failed {
+        job.Failed = true
+        job.Error  = j.Message
+    }
+    return job
+}
+
+type JobList []*Job
+
+// Convert turns a ferryd job list into a libferry job set
+func (l JobList) Convert() libferry.JobSet {
+    var set libferry.JobSet
+    for _, job := range l {
+        if curr := job.Convert(); curr != nil {
+            set = append(set, curr)
+        }
+    }
+    return set
+}
