@@ -38,80 +38,37 @@ import (
 // Server sits on a unix socket accepting connections from authenticated
 // client, i.e. root or those in the "ferry" group
 type Server struct {
-	srv     *http.Server
 	running bool
-	router  *httprouter.Router
-	socket  net.Listener
+	api     *ApiListener     // the HTTP socket handler
+	manager *core.Manager    // heart of the story
+	store   *jobs.JobStore   // Storage for jobs processor
+	jproc   *jobs.Processor  // Allow scheduling jobs
+	tl      *TransitListener //Listener for TRAM files
 
 	// We store a global lock file ..
 	lockFile *LockFile
 	lockPath string
-
-	// When we first started up.
-	timeStarted time.Time
-
-	manager    *core.Manager    // heart of the story
-	store      *jobs.JobStore   // Storage for jobs processor
-	jproc      *jobs.Processor  // Allow scheduling jobs
-	tl         *TransitListener //Listener for TRAM files
-	socketPath string
 }
 
 // NewServer will return a newly initialised Server which is currently unbound
 func NewServer() (*Server, error) {
-	router := httprouter.New()
-	s := &Server{
-		srv: &http.Server{
-			Handler: router,
-		},
-		running:     false,
-		router:      router,
-		timeStarted: time.Now().UTC(),
-	}
-
 	// Before we can actually bind the socket, we must lock the file
-	s.lockPath = filepath.Join(baseDir, LockFilePath)
-	lfile, err := NewLockFile(s.lockPath)
-	s.lockFile = lfile
+	api.lockPath = filepath.Join(baseDir, LockFilePath)
+	lfile, err := NewLockFile(api.lockPath)
+	api.lockFile = lfile
 
 	if err != nil {
 		return nil, err
 	}
 
 	// Try to lock our lockfile now
-	if err := s.lockFile.Lock(); err != nil {
+	if err := api.lockFile.Lock(); err != nil {
 		return nil, err
 	}
 
-	// Set up the API bits
-	router.GET("/api/v1/status", s.GetStatus)
-
-	// Repo management
-	router.GET("/api/v1/create/repo/:id", s.CreateRepo)
-	router.GET("/api/v1/remove/repo/:id", s.DeleteRepo)
-	router.GET("/api/v1/delta/repo/:id", s.DeltaRepo)
-	router.GET("/api/v1/index/repo/:id", s.IndexRepo)
-
-	// Client sends us data
-	router.POST("/api/v1/import/:id", s.ImportPackages)
-	router.POST("/api/v1/clone/:id", s.CloneRepo)
-	router.POST("/api/v1/copy/source/:id", s.CopySource)
-	router.POST("/api/v1/pull/:id", s.PullRepo)
-
-	// Removal
-	router.POST("/api/v1/remove/source/:id", s.RemoveSource)
-	router.POST("/api/v1/trim/packages/:id", s.TrimPackages)
-	router.GET("/api/v1/trim/obsoletes/:id", s.TrimObsolete)
-
-	// Reset jobs are special and go straight to the store
-	// We can't queue them as a job because we'd be in catch 22..
-	router.GET("/api/v1/reset/completed", s.ResetCompleted)
-	router.GET("/api/v1/reset/failed", s.ResetFailed)
-
-	// List commands
-	router.GET("/api/v1/list/repos", s.GetRepos)
-	router.GET("/api/v1/list/pool", s.GetPoolItems)
-	return s, nil
+	return &Server{
+		running: false,
+	}, nil
 }
 
 // killHandler will ensure we cleanly tear down on a ctrl+c/sigint
@@ -130,49 +87,21 @@ func (s *Server) killHandler() {
 // Bind will attempt to set up the listener on the unix socket
 // prior to serving.
 func (s *Server) Bind() error {
-	var listener net.Listener
-
-	// Set from global CLI flag
-	s.socketPath = socketPath
-
-	// Check if we're systemd activated.
-	if _, b := os.LookupEnv("LISTEN_FDS"); b {
-		listeners, err := activation.Listeners(true)
-		if err != nil {
-			return err
-		}
-		if len(listeners) != 1 {
-			return errors.New("expected a single unix socket")
-		}
-		// listener will be sockets[0], now we'll need to follow systemd activation path
-		listener = listeners[0]
-		// Mustn't delete!
-		if unix, ok := listener.(*net.UnixListener); ok {
-			unix.SetUnlinkOnClose(false)
-		} else {
-			return errors.New("expected unix socket")
-		}
-		systemdEnabled = true
-	} else {
-		l, e := net.Listen("unix", s.socketPath)
-		if e != nil {
-			return e
-		}
-		listener = l
-	}
-
+	// manager
 	m, e := core.NewManager(baseDir)
 	if e != nil {
 		return e
 	}
 	s.manager = m
 
+	// jobstore
 	st, e := jobs.NewStore(baseDir)
 	if e != nil {
 		return e
 	}
 	s.store = st
 
+	// processor
 	s.jproc = jobs.NewProcessor(s.manager, s.store, backgroundJobCount)
 
 	// Set up watching the manager's incoming directory
@@ -180,27 +109,17 @@ func (s *Server) Bind() error {
 		return err
 	}
 
-	uid := os.Getuid()
-	gid := os.Getgid()
-	if !systemdEnabled {
-		// Avoid umask issues
-		if e = os.Chown(s.socketPath, uid, gid); e != nil {
-			return e
-		}
-		// Fatal if we cannot chmod the socket to be ours only
-		if e = os.Chmod(s.socketPath, 0660); e != nil {
-			return e
-		}
+	// api
+	api, err = NewAPIListener(s.store)
+	if err != nil {
+		return err
 	}
-	s.socket = listener
-	return nil
+	s.api = api
+	return s.api.Bind()
 }
 
 // Serve will continuously serve on the unix socket until dead
 func (s *Server) Serve() error {
-	if s.socket == nil {
-		return errors.New("Cannot serve without a bound server socket")
-	}
 	s.running = true
 	s.killHandler()
 	defer func() {
@@ -209,14 +128,13 @@ func (s *Server) Serve() error {
 	// Serve the job queue
 	s.jproc.Begin()
 	s.tl.Start()
+	err = s.api.Start()
+	if err != nil {
+		return err
+	}
 
 	if systemdEnabled {
 		daemon.SdNotify(false, "READY=1")
-	}
-
-	// Don't treat Shutdown/Close as an error, it's intended by us.
-	if e := s.srv.Serve(s.socket); e != http.ErrServerClosed {
-		return e
 	}
 	return nil
 }
@@ -231,12 +149,12 @@ func (s *Server) Close() {
 		s.lockFile.Clean()
 		s.lockFile = nil
 	}
+	s.api.Stop()
 	s.tl.Stop()
 	s.jproc.Close()
 	s.store.Close()
 	s.manager.Close()
 	s.running = false
-	s.srv.Shutdown(nil)
 
 	// We don't technically fully own it if systemd created it
 	if !systemdEnabled {

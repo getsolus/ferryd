@@ -76,7 +76,7 @@ func (j *TransitJobHandler) Execute(jproc *Processor, manager *core.Manager) err
 	log.Infof("Successfully processed manifest '%v' upload to repo '%s'\n", tram.ID(), repo)
 
 	// Append the manifest path because now we'll want to delete these
-	pkgs = append(pkgs, j.path)
+	pkgs = append(pkgs, tram.Path)
 
 	for _, p := range pkgs {
 		if !core.PathExists(p) {

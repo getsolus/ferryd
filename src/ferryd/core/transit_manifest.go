@@ -70,7 +70,7 @@ type TransitManifest struct {
 	// A list of files that accompanied this .tram upload
 	File []TransitManifestFile `toml:"file"`
 
-	path string // Privately held path to the file
+	Path string // Privately held path to the file
 	dir  string // Where the .tram was loaded from
 	id   string // Effectively our basename
 }
@@ -110,12 +110,12 @@ func NewTransitManifest(path string) (*TransitManifest, error) {
 	}
 
 	ret := &TransitManifest{
-		path: abs,
+		Path: abs,
 		dir:  filepath.Dir(abs),
 		id:   filepath.Base(abs),
 	}
 
-	blob, err := ioutil.ReadFile(ret.path)
+	blob, err := ioutil.ReadFile(ret.Path)
 	if err != nil {
 		return nil, err
 	}
