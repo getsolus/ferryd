@@ -20,7 +20,7 @@ import (
 	"ferryd/core"
 	"fmt"
 	log "github.com/DataDrake/waterlog"
-    "strings"
+	"strings"
 )
 
 // BulkAddJobHandler is responsible for indexing repositories and should only
@@ -30,10 +30,10 @@ type BulkAddJobHandler Job
 // NewBulkAddJob will return a job suitable for adding to the job processor
 func NewBulkAddJob(repo string, srcs []string) *Job {
 	return &Job{
-		Type:    BulkAdd,
-		SrcRepo: repo,
+		Type:        BulkAdd,
+		SrcRepo:     repo,
 		SourcesList: srcs,
-        Sources: strings.Join(srcs, ";"),
+		Sources:     strings.Join(srcs, ";"),
 	}
 }
 
@@ -43,7 +43,7 @@ func NewBulkAddJobHandler(j *Job) (handler *BulkAddJobHandler, err error) {
 		err = fmt.Errorf("job has no repo specified")
 		return
 	}
-    j.SourcesList = strings.Split(j.Sources, ";")
+	j.SourcesList = strings.Split(j.Sources, ";")
 	if len(j.SourcesList) == 0 {
 		err = fmt.Errorf("job has no sources specified")
 		return

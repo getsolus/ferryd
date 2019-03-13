@@ -20,11 +20,11 @@ import (
 	"ferryd/core"
 	"fmt"
 	log "github.com/DataDrake/waterlog"
-    log2 "log"
-	"github.com/DataDrake/waterlog/level"
 	"github.com/DataDrake/waterlog/format"
+	"github.com/DataDrake/waterlog/level"
 	_ "github.com/mattn/go-sqlite3"
 	"github.com/spf13/pflag"
+	log2 "log"
 	"os"
 	"path/filepath"
 )
@@ -56,9 +56,8 @@ func mainLoop() {
 
 	// We write to a logfile..
 	log.SetFormat(format.Partial)
-    log.SetFlags(log2.Ltime | log2.Ldate | log2.LUTC)
-    log.SetLevel(level.Debug)
-
+	log.SetFlags(log2.Ltime | log2.Ldate | log2.LUTC)
+	log.SetLevel(level.Debug)
 
 	// Ensure all joined directories are correct
 	b, err := filepath.Abs(baseDir)

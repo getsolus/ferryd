@@ -19,9 +19,9 @@ package jobs
 import (
 	"errors"
 	"fmt"
+	log "github.com/DataDrake/waterlog"
 	"github.com/jmoiron/sqlx"
 	"libferry"
-    log "github.com/DataDrake/waterlog"
 	"path/filepath"
 	"sync"
 	"time"
@@ -98,7 +98,7 @@ func (s *JobStore) Push(j *Job) error {
 	_, err := s.db.NamedExec(insertJob, j)
 	if err != nil {
 		err = fmt.Errorf("Failed to add new job, reason: '%s'", err.Error())
-        log.Errorln(err.Error())
+		log.Errorln(err.Error())
 	}
 	s.wLock.Unlock()
 	return err
@@ -172,16 +172,16 @@ func (s *JobStore) Active() (libferry.JobSet, error) {
 	err := s.db.Select(&list, newJobs)
 	if err != nil {
 		err = fmt.Errorf("Failed to read new jobs, reason: '%s'", err.Error())
-        log.Errorln(err.Error())
-        return nil, err
+		log.Errorln(err.Error())
+		return nil, err
 	}
 	err = s.db.Select(&list2, runningJobs)
 	if err != nil {
 		err = fmt.Errorf("Failed to read active jobs, reason: '%s'", err.Error())
-        log.Errorln(err.Error())
-        return nil, err
+		log.Errorln(err.Error())
+		return nil, err
 	}
-    list = append(list, list2...)
+	list = append(list, list2...)
 	return list.Convert(), err
 }
 
