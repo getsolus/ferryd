@@ -50,12 +50,10 @@ type Server struct {
 	// When we first started up.
 	timeStarted time.Time
 
-	manager    *core.Manager     // heart of the story
-	store      *jobs.JobStore    // Storage for jobs processor
-	jproc      *jobs.Processor   // Allow scheduling jobs
-	watcher    *fsnotify.Watcher // Monitor incoming uploads
-	watchChan  chan bool         // Allow terminating the watcher
-	watchGroup *sync.WaitGroup   // Allow blocking watch terminate.
+	manager    *core.Manager    // heart of the story
+	store      *jobs.JobStore   // Storage for jobs processor
+	jproc      *jobs.Processor  // Allow scheduling jobs
+	tl         *TransitListener //Listener for TRAM files
 	socketPath string
 }
 
@@ -69,7 +67,6 @@ func NewServer() (*Server, error) {
 		running:     false,
 		router:      router,
 		timeStarted: time.Now().UTC(),
-		watchGroup:  &sync.WaitGroup{},
 	}
 
 	// Before we can actually bind the socket, we must lock the file
@@ -179,7 +176,7 @@ func (s *Server) Bind() error {
 	s.jproc = jobs.NewProcessor(s.manager, s.store, backgroundJobCount)
 
 	// Set up watching the manager's incoming directory
-	if err := s.InitWatcher(); err != nil {
+	if tl, err := NewTransitListener(s.manager.IncomingPath, s.store); err != nil {
 		return err
 	}
 
@@ -211,7 +208,7 @@ func (s *Server) Serve() error {
 	}()
 	// Serve the job queue
 	s.jproc.Begin()
-	s.WatchIncoming()
+	s.tl.Start()
 
 	if systemdEnabled {
 		daemon.SdNotify(false, "READY=1")
@@ -234,7 +231,7 @@ func (s *Server) Close() {
 		s.lockFile.Clean()
 		s.lockFile = nil
 	}
-	s.StopWatching()
+	s.tl.Stop()
 	s.jproc.Close()
 	s.store.Close()
 	s.manager.Close()

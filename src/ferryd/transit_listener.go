@@ -26,32 +26,44 @@ import (
 	"strings"
 )
 
-// InitWatcher will set up the watcher for the first time
-func (s *Server) InitWatcher() error {
-	watcher, err := fsnotify.NewWatcher()
-	if err != nil {
-		return err
-	}
-	// Monitor the incoming dir
-	if err = watcher.Add(s.manager.IncomingPath); err != nil {
-		return err
-	}
-	s.watchChan = make(chan bool)
-	s.watcher = watcher
-	return nil
+// TransitListener is a process that creates jobs in response to new TRAM files
+type TransitListener struct {
+	base    string
+	watcher *fsnotify.Watcher
+	store   *JobStore
+	stop    chan bool
+	done    chan bool
 }
 
-// WatchIncoming will wait for events on the incoming directory
+// NewTransitListener creates and sets up a new TransitListener
+func NewTransitListener(base string, store *JobStore) (tl *TransitListener, err error) {
+	tl = &TtransitListener{
+		base:  base,
+		store: store,
+		stop:  make(chan bool),
+		done:  make(chan bool),
+	}
+	tl.watcher, err = fsnotify.NewWatcher()
+	if err != nil {
+		return
+	}
+	// Monitor the incoming dir
+	if err = tl.watcher.Add(tl.base); err != nil {
+		return err
+	}
+	return
+}
+
+// Start creates a gorouting than will wait for events on the incoming directory
 // and process incoming .tram files
-func (s *Server) WatchIncoming() {
-	s.watchGroup.Add(1)
+func (tl *TransitListener) Start() {
 	go func() {
 		defer s.watchGroup.Done()
 		for {
 			select {
 			case event := <-s.watcher.Events:
 				// Not interested in subdirs
-				if filepath.Dir(event.Name) != s.manager.IncomingPath {
+				if filepath.Dir(event.Name) != tl.base {
 					continue
 				}
 				if event.Op&fsnotify.Update == fsnotify.Update {
@@ -59,23 +71,24 @@ func (s *Server) WatchIncoming() {
 						s.processTransitManifest(filepath.Base(event.Name))
 					}
 				}
-			case <-s.watchChan:
+			case <-tl.stop:
+				tl.done <- true
 				return
 			}
 		}
 	}()
 }
 
-// StopWatching will force the fsnotify code to shut down
-func (s *Server) StopWatching() {
-	s.watchChan <- true
-	s.watchGroup.Wait()
+// Stop will force the fsnotify code to shut down
+func (tl *TransitListener) Stop() bool {
+	s.stop <- true
+	return <-s.done
 }
 
 // processTransitManifest is invoked when a .tram file is closed in our incoming
 // directory. We'll now push it for further processing
-func (s *Server) processTransitManifest(name string) {
-	fullpath := filepath.Join(s.manager.IncomingPath, name)
+func (tl *TransitListener) processTransitManifest(name string) {
+	fullpath := filepath.Join(tl.base, name)
 
 	st, err := os.Stat(fullpath)
 	if err != nil {
@@ -87,5 +100,5 @@ func (s *Server) processTransitManifest(name string) {
 	}
 
 	log.Infof("Received transit manifest upload: '%s'\n", name)
-	s.jproc.PushJob(jobs.NewTransitJob(fullpath))
+	s.store.PushJob(jobs.NewTransitJob(fullpath))
 }
