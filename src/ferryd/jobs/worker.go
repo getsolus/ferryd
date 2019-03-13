@@ -95,9 +95,6 @@ func (w *Worker) Start() {
 			// Got a job, now process it
 			w.processJob(job)
 
-			// Now we mark end time so we can calculate how long it took
-			job.Finished = time.Now().UTC()
-
 			// Mark the job as dealt with
 			err = w.store.Retire(job)
 
@@ -129,23 +126,23 @@ func (w *Worker) processJob(job *Job) {
 
 	if err != nil {
 		job.Status = Failed
-		job.Message = err.Error()
+		job.Message.String = err.Error()
 		log.Errorf("No known job handler, cannot continue with job '%v'\n", job.ID)
 		return
 	}
 
 	// Safely have a handler now
-	job.Message = handler.Describe()
+	job.Message.String = handler.Describe()
 
 	// Try to execute it, report the error
 	if err := handler.Execute(w.store, w.manager); err != nil {
 		job.Status = Failed
-		job.Message = err.Error()
-		log.Error("Job '%v' failed with error: '%s'\n", job.ID, err.Error())
+		job.Message.String = err.Error()
+		log.Errorf("Job '%d' failed with error: '%s'\n", job.ID, err.Error())
 		return
 	}
 	job.Status = Completed
 
 	// Succeeded
-	log.Infof("Job '%v' completed successfully", job.ID)
+	log.Infof("Job '%d' completed successfully\n", job.ID)
 }

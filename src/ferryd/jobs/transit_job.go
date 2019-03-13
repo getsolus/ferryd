@@ -31,17 +31,13 @@ type TransitJobHandler Job
 func NewTransitJob(path string) *Job {
 	return &Job{
 		Type:    TransitProcess,
-		Sources: []string{path},
+		Sources: path,
 	}
 }
 
 // NewTransitJobHandler will create a job handler for the input job and ensure it validates
 func NewTransitJobHandler(j *Job) (handler *TransitJobHandler, err error) {
 	if len(j.Sources) == 0 {
-		err = fmt.Errorf("job is missing the path to the manifest")
-		return
-	}
-	if len(j.Sources[0]) == 0 {
 		err = fmt.Errorf("job is missing the path to the manifest")
 		return
 	}
@@ -52,7 +48,7 @@ func NewTransitJobHandler(j *Job) (handler *TransitJobHandler, err error) {
 
 // Execute will process incoming .tram files for potential repo inclusion
 func (j *TransitJobHandler) Execute(s *JobStore, manager *core.Manager) error {
-	tram, err := core.NewTransitManifest(j.Sources[0])
+	tram, err := core.NewTransitManifest(j.Sources)
 	if err != nil {
 		return err
 	}
@@ -105,7 +101,7 @@ func (j *TransitJobHandler) Execute(s *JobStore, manager *core.Manager) error {
 
 // Describe returns a human readable description for this job
 func (j *TransitJobHandler) Describe() string {
-	return fmt.Sprintf("Process manifest '%s'", j.Sources[0])
+	return fmt.Sprintf("Process manifest '%s'", j.Sources)
 }
 
 // IsSerial returns true if a job should not be run alongside other jobs

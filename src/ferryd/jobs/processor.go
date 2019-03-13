@@ -40,7 +40,7 @@ func NewProcessor(store *JobStore, manager *core.Manager, njobs int) *Processor 
 		njobs = runtime.NumCPU() / 2
 	}
 
-	log.Info("Set runtime job limit: %d\n", njobs)
+	log.Infof("Set runtime job limit: %d\n", njobs)
 
 	ret := &Processor{
 		closed: false,

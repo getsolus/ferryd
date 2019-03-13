@@ -35,7 +35,7 @@ func NewDeltaJob(repoID, packageID string) *Job {
 	return &Job{
 		Type:    Delta,
 		SrcRepo: repoID,
-		Sources: []string{packageID},
+		Sources: packageID,
 	}
 }
 
@@ -45,7 +45,7 @@ func NewDeltaIndexJob(repoID, packageID string) *Job {
 	return &Job{
 		Type:    DeltaIndex,
 		SrcRepo: repoID,
-		Sources: []string{packageID},
+		Sources: packageID,
 	}
 }
 
@@ -67,14 +67,14 @@ func NewDeltaJobHandler(j *Job) (handler *DeltaJobHandler, err error) {
 // executeInternal is the common code shared in the delta jobs, and is
 // split out to save duplication.
 func (j *DeltaJobHandler) executeInternal(manager *core.Manager) (nDeltas int, err error) {
-	pkgs, err := manager.GetPackages(j.SrcRepo, j.Sources[0])
+	pkgs, err := manager.GetPackages(j.SrcRepo, j.Sources)
 	if err != nil {
 		return
 	}
 
 	// Need at least 2 packages for a delta op.
 	if len(pkgs) < 2 {
-		log.Debugf("No delta is possible for package '%s' in repo '%s'\n", j.Sources[0], j.SrcRepo)
+		log.Debugf("No delta is possible for package '%s' in repo '%s'\n", j.Sources, j.SrcRepo)
 		return
 	}
 
@@ -92,7 +92,7 @@ func (j *DeltaJobHandler) executeInternal(manager *core.Manager) (nDeltas int, e
 			continue
 		}
 
-		hasDelta, e := manager.HasDelta(j.SrcRepo, j.Sources[0], deltaID)
+		hasDelta, e := manager.HasDelta(j.SrcRepo, j.Sources, deltaID)
 		if e != nil {
 			err = e
 			return
@@ -196,9 +196,9 @@ func (j *DeltaJobHandler) Execute(_ *JobStore, manager *core.Manager) error {
 // Describe returns a human readable description for this job
 func (j *DeltaJobHandler) Describe() string {
 	if j.Type == DeltaIndex {
-		return fmt.Sprintf("Delta package '%s' on '%s', then re-index", j.Sources[0], j.SrcRepo)
+		return fmt.Sprintf("Delta package '%s' on '%s', then re-index", j.Sources, j.SrcRepo)
 	}
-	return fmt.Sprintf("Delta package '%s' on '%s'", j.Sources[0], j.SrcRepo)
+	return fmt.Sprintf("Delta package '%s' on '%s'", j.Sources, j.SrcRepo)
 }
 
 // IsSerial returns true if a job should not be run alongside other jobs

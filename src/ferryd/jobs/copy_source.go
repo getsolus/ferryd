@@ -31,7 +31,7 @@ func NewCopySourceJob(srcRepo, dstRepo, source string, release int) *Job {
 		Type:    CopySource,
 		SrcRepo: srcRepo,
 		DstRepo: dstRepo,
-		Sources: []string{source},
+		Sources: source,
 		Release: release,
 	}
 }
@@ -50,10 +50,6 @@ func NewCopySourceJobHandler(j *Job) (handler *CopySourceJobHandler, err error) 
 		log.Errorf("job '%d' is missing source name\n", j.ID)
 		return
 	}
-	if len(j.Sources) != 1 {
-		log.Errorf("job '%d' should have exactly one source, found '%d'", j.ID, len(j.Sources))
-		return
-	}
 	if j.Release == 0 || j.Release < -1 {
 		log.Errorf("job '%d' has invalid release number: '%d'", j.ID, j.Release)
 		return
@@ -66,16 +62,16 @@ func NewCopySourceJobHandler(j *Job) (handler *CopySourceJobHandler, err error) 
 
 // Execute will copy the source&rel match from the repo to the target
 func (j *CopySourceJobHandler) Execute(_ *JobStore, manager *core.Manager) error {
-	if err := manager.CopySource(j.SrcRepo, j.DstRepo, j.Sources[0], j.Release); err != nil {
+	if err := manager.CopySource(j.SrcRepo, j.DstRepo, j.Sources, j.Release); err != nil {
 		return err
 	}
-	log.Goodf("Successfully copied release '%d' of source '%s' from repo '%s' to '%s'\n", j.Release, j.Sources[0], j.SrcRepo, j.DstRepo)
+	log.Goodf("Successfully copied release '%d' of source '%s' from repo '%s' to '%s'\n", j.Release, j.Sources, j.SrcRepo, j.DstRepo)
 	return nil
 }
 
 // Describe returns a human readable description for this job
 func (j *CopySourceJobHandler) Describe() string {
-	return fmt.Sprintf("Copy sources by id '%s' (rel: %d) in '%s' to '%s'", j.Sources[0], j.Release, j.SrcRepo, j.DstRepo)
+	return fmt.Sprintf("Copy sources by id '%s' (rel: %d) in '%s' to '%s'", j.Sources, j.Release, j.SrcRepo, j.DstRepo)
 }
 
 // IsSerial returns true if a job should not be run alongside other jobs

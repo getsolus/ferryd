@@ -17,6 +17,8 @@
 package jobs
 
 import (
+    "database/sql"
+    "database/sql/driver"
 	"libferry"
 	"time"
 )
@@ -49,24 +51,43 @@ const (
 	Completed = 4
 )
 
+type NullTime struct {
+    Time  time.Time
+    Valid bool // Valid is true if Time is not NULL
+}
+
+// Scan implements the Scanner interface.
+func (nt *NullTime) Scan(value interface{}) error {
+    nt.Time, nt.Valid = value.(time.Time)
+    return nil
+}
+
+// Value implements the driver Valuer interface.
+func (nt NullTime) Value() (driver.Value, error) {
+    if !nt.Valid {
+        return nil, nil
+    }
+    return nt.Time, nil
+}
+
 // Job is an entry in the Job Table
 type Job struct {
 	ID   int
 	Type JobType
 	// Job-specific arguments
-	SrcRepo    string `db:"src_repo"`
-	DstRepo    string `db:"dst_repo"`
-	SourcesRaw string `db:"sources"`
-	Sources    []string
-	Release    int
-	MaxKeep    int `db:"max_keep"`
-	Mode       int
+	SrcRepo     string `db:"src_repo"`
+	DstRepo     string `db:"dst_repo"`
+	Sources     string `db:"sources"`
+	SourcesList []string
+	Release     int
+	MaxKeep     int `db:"max_keep"`
+	Mode        int
 	// Job tracking
-	Created  time.Time
-	Started  time.Time
-	Finished time.Time
+	Created  NullTime
+	Started  NullTime
+	Finished NullTime
 	Status   int
-	Message  string
+	Message  sql.NullString
 }
 
 // Queries for retrieving Jobs of a particular status
@@ -118,14 +139,14 @@ func (j *Job) Convert() *libferry.Job {
 	job := &libferry.Job{
 		Description: h.Describe(),
 		Timing: libferry.TimingInformation{
-			Queued: j.Created,
-			Begin:  j.Started,
-			End:    j.Finished,
+			Queued: j.Created.Time,
+			Begin:  j.Started.Time,
+			End:    j.Finished.Time,
 		},
 	}
 	if j.Status == Failed {
 		job.Failed = true
-		job.Error = j.Message
+		job.Error = j.Message.String
 	}
 	return job
 }

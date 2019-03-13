@@ -21,6 +21,7 @@ import (
 	"fmt"
 	"github.com/jmoiron/sqlx"
 	"libferry"
+    log "github.com/DataDrake/waterlog"
 	"path/filepath"
 	"sync"
 	"time"
@@ -93,10 +94,11 @@ func (s *JobStore) UnclaimRunning() error {
 func (s *JobStore) Push(j *Job) error {
 	s.wLock.Lock()
 	j.Status = New
-	j.Created = time.Now().UTC()
+	j.Created.Time = time.Now().UTC()
 	_, err := s.db.NamedExec(insertJob, j)
 	if err != nil {
 		err = fmt.Errorf("Failed to add new job, reason: '%s'", err.Error())
+        log.Errorln(err.Error())
 	}
 	s.wLock.Unlock()
 	return err
@@ -111,6 +113,7 @@ func (s *JobStore) findNewJob() {
 	}
 	// Check for serial jobs that are blocking
 	for _, j := range active {
+        log.Warnf("Length of active: %d\n", len(active))
 		if !IsParallel[j.Type] {
 			return
 		}
@@ -133,20 +136,19 @@ func (s *JobStore) Claim() (j *Job, err error) {
 	s.wLock.Lock()
 	if s.next == nil {
 		err = ErrNoJobReady
-		s.findNewJob()
 		goto UNLOCK
 	}
 	// claim the next job
 	s.next.Status = Running
-	s.next.Started = time.Now().UTC()
+	s.next.Started.Time = time.Now().UTC()
 	_, err = s.db.NamedExec(markRunning, s.next)
 	if err != nil {
 		goto UNLOCK
 	}
 	// find the next replacement job
 	j, s.next = s.next, nil
-	s.findNewJob()
 UNLOCK:
+	s.findNewJob()
 	s.wLock.Unlock()
 	return
 }
@@ -154,7 +156,7 @@ UNLOCK:
 // Retire marks a job as completed and updates the DB record
 func (s *JobStore) Retire(j *Job) error {
 	s.wLock.Lock()
-	j.Finished = time.Now().UTC()
+	j.Finished.Time = time.Now().UTC()
 	_, err := s.db.NamedExec(markFinished, j)
 	if err != nil {
 		err = fmt.Errorf("Failed to retire job, reason: '%s'", err.Error())
@@ -167,10 +169,20 @@ func (s *JobStore) Retire(j *Job) error {
 // the scheduler suitable for consumption by the CLI client
 func (s *JobStore) Active() (libferry.JobSet, error) {
 	var list JobList
-	err := s.db.Select(&list, runningJobs)
+	var list2 JobList
+	err := s.db.Select(&list, newJobs)
+	if err != nil {
+		err = fmt.Errorf("Failed to read new jobs, reason: '%s'", err.Error())
+        log.Errorln(err.Error())
+        return nil, err
+	}
+	err = s.db.Select(&list2, runningJobs)
 	if err != nil {
 		err = fmt.Errorf("Failed to read active jobs, reason: '%s'", err.Error())
+        log.Errorln(err.Error())
+        return nil, err
 	}
+    list = append(list, list2...)
 	return list.Convert(), err
 }
 

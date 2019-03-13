@@ -20,6 +20,7 @@ import (
 	"ferryd/core"
 	"fmt"
 	log "github.com/DataDrake/waterlog"
+    "strings"
 )
 
 // BulkAddJobHandler is responsible for indexing repositories and should only
@@ -31,7 +32,8 @@ func NewBulkAddJob(repo string, srcs []string) *Job {
 	return &Job{
 		Type:    BulkAdd,
 		SrcRepo: repo,
-		Sources: srcs,
+		SourcesList: srcs,
+        Sources: strings.Join(srcs, ";"),
 	}
 }
 
@@ -41,7 +43,8 @@ func NewBulkAddJobHandler(j *Job) (handler *BulkAddJobHandler, err error) {
 		err = fmt.Errorf("job has no repo specified")
 		return
 	}
-	if len(j.Sources) == 0 {
+    j.SourcesList = strings.Split(j.Sources, ";")
+	if len(j.SourcesList) == 0 {
 		err = fmt.Errorf("job has no sources specified")
 		return
 	}
@@ -52,16 +55,16 @@ func NewBulkAddJobHandler(j *Job) (handler *BulkAddJobHandler, err error) {
 
 // Execute will attempt the mass-import of packages passed to the job
 func (j *BulkAddJobHandler) Execute(_ *JobStore, manager *core.Manager) error {
-	if err := manager.AddPackages(j.SrcRepo, j.Sources, false); err != nil {
+	if err := manager.AddPackages(j.SrcRepo, j.SourcesList, false); err != nil {
 		return err
 	}
-	log.Infof("Added packages '%v' to repository '%s'\n", j.Sources, j.SrcRepo)
+	log.Infof("Added packages '%v' to repository '%s'\n", j.SourcesList, j.SrcRepo)
 	return nil
 }
 
 // Describe returns a human readable description for this job
 func (j *BulkAddJobHandler) Describe() string {
-	return fmt.Sprintf("Add %v packages to repository '%s'", len(j.Sources), j.SrcRepo)
+	return fmt.Sprintf("Add %v packages to repository '%s'", len(j.SourcesList), j.SrcRepo)
 }
 
 // IsSerial returns true if a job should not be run alongside other jobs

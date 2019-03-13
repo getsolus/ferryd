@@ -30,7 +30,7 @@ func NewRemoveSourceJob(repoID, source string, release int) *Job {
 	return &Job{
 		Type:    RemoveSource,
 		SrcRepo: repoID,
-		Sources: []string{source},
+		Sources: source,
 		Release: release,
 	}
 }
@@ -56,16 +56,16 @@ func NewRemoveSourceJobHandler(j *Job) (handler *RemoveSourceJobHandler, err err
 
 // Execute will remove the source&rel match from the repo
 func (j *RemoveSourceJobHandler) Execute(_ *JobStore, manager *core.Manager) error {
-	if err := manager.RemoveSource(j.SrcRepo, j.Sources[0], j.Release); err != nil {
+	if err := manager.RemoveSource(j.SrcRepo, j.Sources, j.Release); err != nil {
 		return err
 	}
-	log.Goodf("Successfully removed release '%d' of source '%s' from repo '%s'\n", j.Release, j.Sources[0], j.SrcRepo)
+	log.Goodf("Successfully removed release '%d' of source '%s' from repo '%s'\n", j.Release, j.Sources, j.SrcRepo)
 	return nil
 }
 
 // Describe returns a human readable description for this job
 func (j *RemoveSourceJobHandler) Describe() string {
-	return fmt.Sprintf("Remove sources by id '%s' (rel: %d) in '%s'", j.Sources[0], j.Release, j.SrcRepo)
+	return fmt.Sprintf("Remove sources by id '%s' (rel: %d) in '%s'", j.Sources, j.Release, j.SrcRepo)
 }
 
 // IsSerial returns true if a job should not be run alongside other jobs
