@@ -22,18 +22,18 @@ import (
 	"runtime"
 )
 
-// A Processor is responsible for the main dispatch and bulking of jobs
+// A Pool is responsible for the main dispatch and bulking of jobs
 // to ensure they're handled in the most optimal fashion.
-type Processor struct {
+type Pool struct {
 	closed  bool
 	njobs   int
 	workers []*Worker
 }
 
-// NewProcessor will return a new Processor with the specified number
+// NewPool will return a new Pool with the specified number
 // of jobs. Note that "njobs" only refers to the number of *background jobs*,
 // the majority of operations will run sequentially
-func NewProcessor(store *JobStore, manager *core.Manager, njobs int) *Processor {
+func NewPool(store *JobStore, manager *core.Manager, njobs int) *Pool {
 	// If we set to -1, we'll automatically set to half of the system core count
 	// because we use xz -T 2 (so twice the number of threads ..)
 	if njobs < 0 {
@@ -42,7 +42,7 @@ func NewProcessor(store *JobStore, manager *core.Manager, njobs int) *Processor 
 
 	log.Infof("Set runtime job limit: %d\n", njobs)
 
-	ret := &Processor{
+	ret := &Pool{
 		closed: false,
 		njobs:  njobs,
 	}
@@ -54,8 +54,8 @@ func NewProcessor(store *JobStore, manager *core.Manager, njobs int) *Processor 
 	return ret
 }
 
-// Close an existing Processor, waiting for all jobs to complete
-func (j *Processor) Close() {
+// Close an existing Pool, waiting for all jobs to complete
+func (j *Pool) Close() {
 	if j.closed {
 		return
 	}
@@ -67,8 +67,8 @@ func (j *Processor) Close() {
 	}
 }
 
-// Begin will start the main job processor in parallel
-func (j *Processor) Begin() {
+// Begin will start the main job pool in parallel
+func (j *Pool) Begin() {
 	if j.closed {
 		return
 	}

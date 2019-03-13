@@ -34,7 +34,7 @@ type Server struct {
 	api     *APIListener     // the HTTP socket handler
 	manager *core.Manager    // heart of the story
 	store   *jobs.JobStore   // Storage for jobs processor
-	jproc   *jobs.Processor  // Allow scheduling jobs
+	pool    *jobs.Pool       // Allow scheduling jobs
 	tl      *TransitListener //Listener for TRAM files
 
 	// We store a global lock file ..
@@ -95,7 +95,7 @@ func (s *Server) Bind() error {
 	s.store = st
 
 	// processor
-	s.jproc = jobs.NewProcessor(s.store, s.manager, backgroundJobCount)
+	s.pool = jobs.NewPool(s.store, s.manager, backgroundJobCount)
 
 	// Set up watching the manager's incoming directory
 	tl, err := NewTransitListener(s.manager.IncomingPath, s.store)
@@ -121,7 +121,7 @@ func (s *Server) Serve() error {
 		s.running = false
 	}()
 	// Serve the job queue
-	s.jproc.Begin()
+	s.pool.Begin()
 	s.tl.Start()
 	err := s.api.Start()
 	if err != nil {
@@ -146,7 +146,7 @@ func (s *Server) Close() {
 	}
 	s.api.Close()
 	s.tl.Stop()
-	s.jproc.Close()
+	s.pool.Close()
 	s.store.Close()
 	s.manager.Close()
 	s.running = false
