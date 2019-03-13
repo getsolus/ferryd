@@ -113,7 +113,6 @@ func (s *JobStore) findNewJob() {
 	}
 	// Check for serial jobs that are blocking
 	for _, j := range active {
-        log.Warnf("Length of active: %d\n", len(active))
 		if !IsParallel[j.Type] {
 			return
 		}
