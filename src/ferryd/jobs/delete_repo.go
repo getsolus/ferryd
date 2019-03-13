@@ -58,8 +58,3 @@ func (j *DeleteRepoJobHandler) Execute(_ *JobStore, manager *core.Manager) error
 func (j *DeleteRepoJobHandler) Describe() string {
 	return fmt.Sprintf("Delete repository '%s'", j.SrcRepo)
 }
-
-// IsSerial returns true if a job should not be run alongside other jobs
-func (j *DeleteRepoJobHandler) IsSerial() bool {
-	return true
-}

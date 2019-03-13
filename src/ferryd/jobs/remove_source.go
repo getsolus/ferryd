@@ -67,8 +67,3 @@ func (j *RemoveSourceJobHandler) Execute(_ *JobStore, manager *core.Manager) err
 func (j *RemoveSourceJobHandler) Describe() string {
 	return fmt.Sprintf("Remove sources by id '%s' (rel: %d) in '%s'", j.Sources, j.Release, j.SrcRepo)
 }
-
-// IsSerial returns true if a job should not be run alongside other jobs
-func (j *RemoveSourceJobHandler) IsSerial() bool {
-	return true
-}

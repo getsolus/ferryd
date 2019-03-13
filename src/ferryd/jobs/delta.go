@@ -200,8 +200,3 @@ func (j *DeltaJobHandler) Describe() string {
 	}
 	return fmt.Sprintf("Delta package '%s' on '%s'", j.Sources, j.SrcRepo)
 }
-
-// IsSerial returns true if a job should not be run alongside other jobs
-func (j *DeltaJobHandler) IsSerial() bool {
-	return false
-}

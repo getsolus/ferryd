@@ -66,8 +66,3 @@ func (j *BulkAddJobHandler) Execute(_ *JobStore, manager *core.Manager) error {
 func (j *BulkAddJobHandler) Describe() string {
 	return fmt.Sprintf("Add %v packages to repository '%s'", len(j.SourcesList), j.SrcRepo)
 }
-
-// IsSerial returns true if a job should not be run alongside other jobs
-func (j *BulkAddJobHandler) IsSerial() bool {
-	return true
-}

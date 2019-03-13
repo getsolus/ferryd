@@ -72,8 +72,3 @@ func (j *PullRepoJobHandler) Execute(s *JobStore, manager *core.Manager) error {
 func (j *PullRepoJobHandler) Describe() string {
 	return fmt.Sprintf("Pull repository '%s' into '%s'", j.SrcRepo, j.DstRepo)
 }
-
-// IsSerial returns true if a job should not be run alongside other jobs
-func (j *PullRepoJobHandler) IsSerial() bool {
-	return true
-}

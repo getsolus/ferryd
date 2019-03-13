@@ -103,8 +103,3 @@ func (j *TransitJobHandler) Execute(s *JobStore, manager *core.Manager) error {
 func (j *TransitJobHandler) Describe() string {
 	return fmt.Sprintf("Process manifest '%s'", j.Sources)
 }
-
-// IsSerial returns true if a job should not be run alongside other jobs
-func (j *TransitJobHandler) IsSerial() bool {
-	return true
-}

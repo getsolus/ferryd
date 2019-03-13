@@ -73,8 +73,3 @@ func (j *CopySourceJobHandler) Execute(_ *JobStore, manager *core.Manager) error
 func (j *CopySourceJobHandler) Describe() string {
 	return fmt.Sprintf("Copy sources by id '%s' (rel: %d) in '%s' to '%s'", j.Sources, j.Release, j.SrcRepo, j.DstRepo)
 }
-
-// IsSerial returns true if a job should not be run alongside other jobs
-func (j *CopySourceJobHandler) IsSerial() bool {
-	return false
-}

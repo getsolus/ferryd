@@ -58,8 +58,3 @@ func (j *TrimObsoleteJobHandler) Execute(_ *JobStore, manager *core.Manager) err
 func (j *TrimObsoleteJobHandler) Describe() string {
 	return fmt.Sprintf("Trim obsoletes from repository '%s'", j.SrcRepo)
 }
-
-// IsSerial returns true if a job should not be run alongside other jobs
-func (j *TrimObsoleteJobHandler) IsSerial() bool {
-	return true
-}

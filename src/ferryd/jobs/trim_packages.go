@@ -62,8 +62,3 @@ func (j *TrimPackagesJobHandler) Execute(_ *JobStore, manager *core.Manager) err
 func (j *TrimPackagesJobHandler) Describe() string {
 	return fmt.Sprintf("Trim packages to maximum of %d in '%s'", j.MaxKeep, j.SrcRepo)
 }
-
-// IsSerial returns true if a job should not be run alongside other jobs
-func (j *TrimPackagesJobHandler) IsSerial() bool {
-	return true
-}

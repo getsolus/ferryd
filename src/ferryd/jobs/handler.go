@@ -30,9 +30,6 @@ type JobHandler interface {
 
 	// Describe will return an appropriate description for the job
 	Describe() string
-
-	// IsSerial returns true if a job should not be run alongside other jobs
-	IsSerial() bool
 }
 
 // NewJobHandler will return a handler that is loaded only during the execution

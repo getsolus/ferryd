@@ -76,8 +76,3 @@ func (j *DeltaRepoJobHandler) Execute(s *JobStore, manager *core.Manager) error 
 func (j *DeltaRepoJobHandler) Describe() string {
 	return fmt.Sprintf("Produce deltas for '%s'", j.SrcRepo)
 }
-
-// IsSerial returns true if a job should not be run alongside other jobs
-func (j *DeltaRepoJobHandler) IsSerial() bool {
-	return true
-}

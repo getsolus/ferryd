@@ -58,8 +58,3 @@ func (j *CreateRepoJobHandler) Execute(_ *JobStore, manager *core.Manager) error
 func (j *CreateRepoJobHandler) Describe() string {
 	return fmt.Sprintf("Create repository '%s'", j.DstRepo)
 }
-
-// IsSerial returns true if a job should not be run alongside other jobs
-func (j *CreateRepoJobHandler) IsSerial() bool {
-	return true
-}

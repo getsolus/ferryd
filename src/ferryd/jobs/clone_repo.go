@@ -83,8 +83,3 @@ func (j *CloneRepoJobHandler) Execute(_ *JobStore, manager *core.Manager) error 
 func (j *CloneRepoJobHandler) Describe() string {
 	return fmt.Sprintf("Clone repository '%s' into '%s'", j.SrcRepo, j.DstRepo)
 }
-
-// IsSerial returns true if a job should not be run alongside other jobs
-func (j *CloneRepoJobHandler) IsSerial() bool {
-	return true
-}

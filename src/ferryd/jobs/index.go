@@ -58,8 +58,3 @@ func (j *IndexRepoJobHandler) Execute(_ *JobStore, manager *core.Manager) error 
 func (j *IndexRepoJobHandler) Describe() string {
 	return fmt.Sprintf("Index repository '%s'", j.SrcRepo)
 }
-
-// IsSerial returns true if a job should not be run alongside other jobs
-func (j *IndexRepoJobHandler) IsSerial() bool {
-	return true
-}
