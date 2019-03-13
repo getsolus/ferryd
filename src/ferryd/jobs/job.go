@@ -17,7 +17,7 @@
 package jobs
 
 import (
-    "libferry"
+	"libferry"
 	"time"
 )
 
@@ -109,37 +109,37 @@ const (
 	clearCompletedJobs = "DELETE FROM jobs WHERE status=4"
 )
 
-
 // Convert turns a ferryd job into a libferry job
 func (j *Job) Convert() *libferry.Job {
-    h, err := NewJobHandler(j)
-    if err != nil {
-        return nil
-    }
-    job := &libferry.Job{
-        Description: h.Describe(),
-        Timing: libferry.TimingInformation {
-            Queued: j.Created,
-            Begin:  j.Started,
-            End:    j.Finished,
-        },
-    }
-    if j.Status == Failed {
-        job.Failed = true
-        job.Error  = j.Message
-    }
-    return job
+	h, err := NewJobHandler(j)
+	if err != nil {
+		return nil
+	}
+	job := &libferry.Job{
+		Description: h.Describe(),
+		Timing: libferry.TimingInformation{
+			Queued: j.Created,
+			Begin:  j.Started,
+			End:    j.Finished,
+		},
+	}
+	if j.Status == Failed {
+		job.Failed = true
+		job.Error = j.Message
+	}
+	return job
 }
 
+// JobList is a list of Jobs
 type JobList []*Job
 
 // Convert turns a ferryd job list into a libferry job set
 func (l JobList) Convert() libferry.JobSet {
-    var set libferry.JobSet
-    for _, job := range l {
-        if curr := job.Convert(); curr != nil {
-            set = append(set, curr)
-        }
-    }
-    return set
+	var set libferry.JobSet
+	for _, job := range l {
+		if curr := job.Convert(); curr != nil {
+			set = append(set, curr)
+		}
+	}
+	return set
 }

@@ -22,7 +22,7 @@ import (
 	"github.com/jmoiron/sqlx"
 	"libferry"
 	"path/filepath"
-    "sync"
+	"sync"
 	"time"
 )
 
@@ -44,7 +44,7 @@ type JobStore struct {
 	next  *Job
 	stop  chan bool
 	done  chan bool
-    wLock sync.Mutex
+	wLock sync.Mutex
 }
 
 // NewStore creates a fully initialized JobStore and sets up Bolt Buckets as needed
@@ -80,25 +80,25 @@ func (s *JobStore) Close() {
 
 // UnclaimRunning will find all claimed jobs and unclaim them again
 func (s *JobStore) UnclaimRunning() error {
-    s.wLock.Lock()
+	s.wLock.Lock()
 	_, err := s.db.Exec(clearRunningJobs)
 	if err != nil {
 		err = fmt.Errorf("Failed to unclaim running jobs, reason: '%s'", err.Error())
 	}
-    s.wLock.Unlock()
+	s.wLock.Unlock()
 	return err
 }
 
 // Push inserts a new Job into the queue
 func (s *JobStore) Push(j *Job) error {
-    s.wLock.Lock()
+	s.wLock.Lock()
 	j.Status = New
 	j.Created = time.Now().UTC()
 	_, err := s.db.NamedExec(insertJob, j)
 	if err != nil {
 		err = fmt.Errorf("Failed to add new job, reason: '%s'", err.Error())
 	}
-    s.wLock.Unlock()
+	s.wLock.Unlock()
 	return err
 }
 
@@ -130,7 +130,7 @@ func (s *JobStore) findNewJob() {
 
 // Claim gets the first available job, if one exists and is not blocked by running jobs
 func (s *JobStore) Claim() (j *Job, err error) {
-    s.wLock.Lock()
+	s.wLock.Lock()
 	if s.next == nil {
 		err = ErrNoJobReady
 		s.findNewJob()
@@ -147,26 +147,26 @@ func (s *JobStore) Claim() (j *Job, err error) {
 	j, s.next = s.next, nil
 	s.findNewJob()
 UNLOCK:
-    s.wLock.Unlock()
+	s.wLock.Unlock()
 	return
 }
 
 // Retire marks a job as completed and updates the DB record
 func (s *JobStore) Retire(j *Job) error {
-    s.wLock.Lock()
+	s.wLock.Lock()
 	j.Finished = time.Now().UTC()
 	_, err := s.db.NamedExec(markFinished, j)
 	if err != nil {
 		err = fmt.Errorf("Failed to retire job, reason: '%s'", err.Error())
 	}
-    s.wLock.Unlock()
+	s.wLock.Unlock()
 	return err
 }
 
 // Active will attempt to return a list of active jobs within
 // the scheduler suitable for consumption by the CLI client
 func (s *JobStore) Active() (libferry.JobSet, error) {
-    var list JobList
+	var list JobList
 	err := s.db.Select(&list, runningJobs)
 	if err != nil {
 		err = fmt.Errorf("Failed to read active jobs, reason: '%s'", err.Error())
@@ -176,7 +176,7 @@ func (s *JobStore) Active() (libferry.JobSet, error) {
 
 // Completed will return all successfully completed jobs still stored
 func (s *JobStore) Completed() (libferry.JobSet, error) {
-    var list JobList
+	var list JobList
 	err := s.db.Select(&list, completedJobs)
 	if err != nil {
 		err = fmt.Errorf("Failed to read completed jobs, reason: '%s'", err.Error())
@@ -186,7 +186,7 @@ func (s *JobStore) Completed() (libferry.JobSet, error) {
 
 // Failed will return all failed jobs that are still stored
 func (s *JobStore) Failed() (libferry.JobSet, error) {
-    var list JobList
+	var list JobList
 	err := s.db.Select(&list, failedJobs)
 	if err != nil {
 		err = fmt.Errorf("Failed to read failed jobs, reason: '%s'", err.Error())
@@ -196,22 +196,22 @@ func (s *JobStore) Failed() (libferry.JobSet, error) {
 
 // ResetCompleted will remove all completion records from our store and reset the pointer
 func (s *JobStore) ResetCompleted() error {
-    s.wLock.Lock()
+	s.wLock.Lock()
 	_, err := s.db.Exec(clearCompletedJobs)
 	if err != nil {
 		err = fmt.Errorf("Failed to clear completed jobs, reason: '%s'", err.Error())
 	}
-    s.wLock.Unlock()
+	s.wLock.Unlock()
 	return err
 }
 
 // ResetFailed will remove all fail records from our store and reset the pointer
 func (s *JobStore) ResetFailed() error {
-    s.wLock.Lock()
+	s.wLock.Lock()
 	_, err := s.db.Exec(clearFailedJobs)
 	if err != nil {
 		err = fmt.Errorf("Failed to clear failed jobs, reason: '%s'", err.Error())
 	}
-    s.wLock.Unlock()
+	s.wLock.Unlock()
 	return err
 }
