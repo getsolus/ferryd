@@ -55,7 +55,7 @@ func NewRemoveSourceJobHandler(j *Job) (handler *RemoveSourceJobHandler, err err
 }
 
 // Execute will remove the source&rel match from the repo
-func (j *RemoveSourceJobHandler) Execute(_ *Processor, manager *core.Manager) error {
+func (j *RemoveSourceJobHandler) Execute(_ *JobStore, manager *core.Manager) error {
 	if err := manager.RemoveSource(j.SrcRepo, j.Sources[0], j.Release); err != nil {
 		return err
 	}
@@ -69,6 +69,6 @@ func (j *RemoveSourceJobHandler) Describe() string {
 }
 
 // IsSerial returns true if a job should not be run alongside other jobs
-func (J *RemoveSourceJobHandler) IsSerial() bool {
+func (j *RemoveSourceJobHandler) IsSerial() bool {
 	return true
 }

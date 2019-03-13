@@ -37,3 +37,9 @@
 [submodule "src/vendor/github.com/DataDrake/waterlog"]
 	path = src/vendor/github.com/DataDrake/waterlog
 	url = https://github.com/DataDrake/waterlog
+[submodule "src/vendor/github.com/jmoiron/sqlx"]
+	path = src/vendor/github.com/jmoiron/sqlx
+	url = https://github.com/jmoiron/sqlx
+[submodule "src/vendor/github.com/mattn/go-sqlite3"]
+	path = src/vendor/github.com/mattn/go-sqlite3
+	url = https://github.com/mattn/go-sqlite3

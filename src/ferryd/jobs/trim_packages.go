@@ -50,7 +50,7 @@ func NewTrimPackagesJobHandler(j *Job) (handler *TrimPackagesJobHandler, err err
 }
 
 // Execute will attempt removal of excessive packages in the index
-func (j *TrimPackagesJobHandler) Execute(_ *Processor, manager *core.Manager) error {
+func (j *TrimPackagesJobHandler) Execute(_ *JobStore, manager *core.Manager) error {
 	if err := manager.TrimPackages(j.SrcRepo, j.MaxKeep); err != nil {
 		return err
 	}
@@ -64,6 +64,6 @@ func (j *TrimPackagesJobHandler) Describe() string {
 }
 
 // IsSerial returns true if a job should not be run alongside other jobs
-func (J *TrimPackagesJobHandler) IsSerial() bool {
+func (j *TrimPackagesJobHandler) IsSerial() bool {
 	return true
 }

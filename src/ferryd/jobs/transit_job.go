@@ -51,7 +51,7 @@ func NewTransitJobHandler(j *Job) (handler *TransitJobHandler, err error) {
 }
 
 // Execute will process incoming .tram files for potential repo inclusion
-func (j *TransitJobHandler) Execute(jproc *Processor, manager *core.Manager) error {
+func (j *TransitJobHandler) Execute(s *JobStore, manager *core.Manager) error {
 	tram, err := core.NewTransitManifest(j.Sources[0])
 	if err != nil {
 		return err
@@ -97,7 +97,7 @@ func (j *TransitJobHandler) Execute(jproc *Processor, manager *core.Manager) err
 		if ent != nil {
 			return err
 		}
-		jproc.PushJob(NewDeltaIndexJob(repo, p.Name))
+		s.Push(NewDeltaIndexJob(repo, p.Name))
 	}
 
 	return nil
@@ -109,6 +109,6 @@ func (j *TransitJobHandler) Describe() string {
 }
 
 // IsSerial returns true if a job should not be run alongside other jobs
-func (J *TransitJobHandler) IsSerial() bool {
+func (j *TransitJobHandler) IsSerial() bool {
 	return true
 }

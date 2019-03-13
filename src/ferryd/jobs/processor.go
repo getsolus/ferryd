@@ -20,15 +20,11 @@ import (
 	"ferryd/core"
 	log "github.com/DataDrake/waterlog"
 	"runtime"
-	"sync"
 )
 
 // A Processor is responsible for the main dispatch and bulking of jobs
 // to ensure they're handled in the most optimal fashion.
 type Processor struct {
-	manager *core.Manager
-	store   *JobStore
-	wg      *sync.WaitGroup
 	closed  bool
 	njobs   int
 	workers []*Worker
@@ -37,42 +33,24 @@ type Processor struct {
 // NewProcessor will return a new Processor with the specified number
 // of jobs. Note that "njobs" only refers to the number of *background jobs*,
 // the majority of operations will run sequentially
-func NewProcessor(m *core.Manager, store *JobStore, njobs int) *Processor {
+func NewProcessor(store *JobStore, manager *core.Manager, njobs int) *Processor {
 	// If we set to -1, we'll automatically set to half of the system core count
 	// because we use xz -T 2 (so twice the number of threads ..)
 	if njobs < 0 {
 		njobs = runtime.NumCPU() / 2
 	}
 
-	if njobs < 2 {
-		njobs = runtime.NumCPU()
-	}
-
-	oldJobs := runtime.GOMAXPROCS(njobs + 5)
-	// Don't intentionally break things.
-	if oldJobs < njobs+5 {
-		oldJobs = runtime.GOMAXPROCS(oldJobs)
-	}
-
-	log.Infoln("Set runtime job limits:")
-	log.Infof("\tMax Jobs:            %d\n", njobs)
-	log.Infof("\tGo Max Procs:        %d\n", oldJobs)
-	log.Infof("\tRequested Max Procs: %d\n", nJobs+5)
+	log.Info("Set runtime job limit: %d\n", njobs)
 
 	ret := &Processor{
-		manager: m,
-		store:   store,
-		wg:      &sync.WaitGroup{},
-		closed:  false,
-		njobs:   njobs,
+		closed: false,
+		njobs:  njobs,
 	}
 
 	// Construct worker pool
-	ret.workers = append(ret.workers, NewWorkerSequential(ret))
 	for i := 0; i < njobs; i++ {
-		ret.workers = append(ret.workers, NewWorkerAsync(ret))
+		ret.workers = append(ret.workers, NewWorker(store, manager))
 	}
-
 	return ret
 }
 
@@ -87,8 +65,6 @@ func (j *Processor) Close() {
 	for _, j := range j.workers {
 		j.Stop()
 	}
-
-	j.wg.Wait()
 }
 
 // Begin will start the main job processor in parallel
@@ -96,14 +72,7 @@ func (j *Processor) Begin() {
 	if j.closed {
 		return
 	}
-	j.wg.Add(j.njobs + 1)
 	for _, j := range j.workers {
 		go j.Start()
 	}
-}
-
-// PushJob will automatically determine which queue to push a job to and place
-// it there for immediate execution
-func (j *Processor) PushJob(job *Job) {
-	j.store.PushJob(job)
 }

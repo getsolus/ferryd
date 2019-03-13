@@ -50,7 +50,7 @@ func NewPullRepoJobHandler(j *Job) (handler *PullRepoJobHandler, err error) {
 }
 
 // Execute will attempt to pull the repos
-func (j *PullRepoJobHandler) Execute(jproc *Processor, manager *core.Manager) error {
+func (j *PullRepoJobHandler) Execute(s *JobStore, manager *core.Manager) error {
 	changedNames, err := manager.PullRepo(j.SrcRepo, j.DstRepo)
 	if err != nil {
 		log.Warnf("Failed to pull repo '%s' into '%s', reason: '%s'\n", j.SrcRepo, j.DstRepo, err.Error())
@@ -62,7 +62,7 @@ func (j *PullRepoJobHandler) Execute(jproc *Processor, manager *core.Manager) er
 	// Create delta job in this repository on the changed names
 	// Don't cause indexing because it causes noise
 	for _, pkg := range changedNames {
-		jproc.PushJob(NewDeltaIndexJob(j.DstRepo, pkg))
+		s.Push(NewDeltaIndexJob(j.DstRepo, pkg))
 	}
 
 	return nil
@@ -74,6 +74,6 @@ func (j *PullRepoJobHandler) Describe() string {
 }
 
 // IsSerial returns true if a job should not be run alongside other jobs
-func (J *PullRepoJobHandler) IsSerial() bool {
+func (j *PullRepoJobHandler) IsSerial() bool {
 	return true
 }

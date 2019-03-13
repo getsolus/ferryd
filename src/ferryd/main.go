@@ -20,6 +20,8 @@ import (
 	"ferryd/core"
 	"fmt"
 	log "github.com/DataDrake/waterlog"
+	"github.com/DataDrake/waterlog/format"
+	_ "github.com/mattn/go-sqlite3"
 	"github.com/spf13/pflag"
 	"os"
 	"path/filepath"
@@ -91,12 +93,12 @@ func mainLoop() {
 	log.Infoln("Initialising server")
 
 	if err := srv.Bind(); err != nil {
-		log.Errorf("Error in binding server socket '%s', message: '%s'\n", srv.socketPath, err.Error())
+		log.Errorf("Error in binding server socket '%s', message: '%s'\n", srv.api.socketPath, err.Error())
 		fmt.Fprintf(os.Stderr, "Fatal error in socket bind, check logs: %v\n", err)
 		return
 	}
 	if err := srv.Serve(); err != nil {
-		log.Errorf("Error in serving on socket '%s', message: '%s'\n", srv.socketPath, err.Error())
+		log.Errorf("Error in serving on socket '%s', message: '%s'\n", srv.api.socketPath, err.Error())
 		fmt.Fprintf(os.Stderr, "Fatal error in runtime execution, check logs: %v\n", err)
 		return
 	}

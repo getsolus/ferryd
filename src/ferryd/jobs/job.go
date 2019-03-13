@@ -20,6 +20,7 @@ import (
 	"time"
 )
 
+// JobSchema is the SQLite3 schema for the Jobs table
 const JobSchema = `
 CREATE TABLE IF NOT EXISTS jobs (
     id         INTEGER PRIMARY KEY,
@@ -52,12 +53,12 @@ type Job struct {
 	ID   int
 	Type JobType
 	// Job-specific arguments
-	SrcRepo    string `db:src_repo`
-	DstRepo    string `db:dst_repo`
-	SourcesRaw string `db:sources`
+	SrcRepo    string `db:"src_repo"`
+	DstRepo    string `db:"dst_repo"`
+	SourcesRaw string `db:"sources"`
 	Sources    []string
 	Release    int
-	MaxKeep    int `db:max_keep`
+	MaxKeep    int `db:"max_keep"`
 	Mode       int
 	// Job tracking
 	Created  time.Time

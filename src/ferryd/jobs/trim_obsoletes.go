@@ -46,7 +46,7 @@ func NewTrimObsoleteJobHandler(j *Job) (handler *TrimObsoleteJobHandler, err err
 }
 
 // Execute will try to remove any excessive packages marked as Obsolete
-func (j *TrimObsoleteJobHandler) Execute(_ *Processor, manager *core.Manager) error {
+func (j *TrimObsoleteJobHandler) Execute(_ *JobStore, manager *core.Manager) error {
 	if err := manager.TrimObsolete(j.SrcRepo); err != nil {
 		return err
 	}
@@ -60,6 +60,6 @@ func (j *TrimObsoleteJobHandler) Describe() string {
 }
 
 // IsSerial returns true if a job should not be run alongside other jobs
-func (J *TrimObsoleteJobHandler) IsSerial() bool {
+func (j *TrimObsoleteJobHandler) IsSerial() bool {
 	return true
 }

@@ -171,7 +171,7 @@ func (j *DeltaJobHandler) includeDelta(manager *core.Manager, mapping *core.Delt
 }
 
 // Execute will delta the target package within the target repository.
-func (j *DeltaJobHandler) Execute(_ *Processor, manager *core.Manager) error {
+func (j *DeltaJobHandler) Execute(_ *JobStore, manager *core.Manager) error {
 	nDeltas, err := j.executeInternal(manager)
 	if err != nil {
 		return err
@@ -202,6 +202,6 @@ func (j *DeltaJobHandler) Describe() string {
 }
 
 // IsSerial returns true if a job should not be run alongside other jobs
-func (J *DeltaJobHandler) IsSerial() bool {
+func (j *DeltaJobHandler) IsSerial() bool {
 	return false
 }

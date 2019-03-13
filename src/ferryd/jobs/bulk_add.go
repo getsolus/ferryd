@@ -51,7 +51,7 @@ func NewBulkAddJobHandler(j *Job) (handler *BulkAddJobHandler, err error) {
 }
 
 // Execute will attempt the mass-import of packages passed to the job
-func (j *BulkAddJobHandler) Execute(_ *Processor, manager *core.Manager) error {
+func (j *BulkAddJobHandler) Execute(_ *JobStore, manager *core.Manager) error {
 	if err := manager.AddPackages(j.SrcRepo, j.Sources, false); err != nil {
 		return err
 	}
@@ -65,6 +65,6 @@ func (j *BulkAddJobHandler) Describe() string {
 }
 
 // IsSerial returns true if a job should not be run alongside other jobs
-func (J *BulkAddJobHandler) IsSerial() bool {
+func (j *BulkAddJobHandler) IsSerial() bool {
 	return true
 }

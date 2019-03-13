@@ -60,26 +60,26 @@ func (api *APIListener) sendStockError(err error, w http.ResponseWriter, r *http
 // GetStatus will return the current status of the ferryd instance
 func (api *APIListener) GetStatus(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
 	ret := libferry.StatusRequest{
-		TimeStarted: s.timeStarted,
+		TimeStarted: api.timeStarted,
 		Version:     libferry.Version,
 	}
 
 	// Stuff the active jobs in
-	jo, err := s.store.ActiveJobs()
+	jo, err := api.store.Active()
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
 	ret.CurrentJobs = jo
 
-	fj, err := s.store.FailedJobs()
+	fj, err := api.store.Failed()
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
 	ret.FailedJobs = fj
 
-	cj, err := s.store.CompletedJobs()
+	cj, err := api.store.Completed()
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
@@ -97,7 +97,7 @@ func (api *APIListener) GetStatus(w http.ResponseWriter, r *http.Request, _ http
 // GetRepos will attempt to serialise our known repositories into a response
 func (api *APIListener) GetRepos(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
 	req := libferry.RepoListingRequest{}
-	repos, err := s.manager.GetRepos()
+	repos, err := api.manager.GetRepos()
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
@@ -116,7 +116,7 @@ func (api *APIListener) GetRepos(w http.ResponseWriter, r *http.Request, _ httpr
 // GetPoolItems will handle responding with the currently known pool items
 func (api *APIListener) GetPoolItems(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
 	req := libferry.PoolListingRequest{}
-	pools, err := s.manager.GetPoolItems()
+	pools, err := api.manager.GetPoolItems()
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
@@ -139,28 +139,28 @@ func (api *APIListener) GetPoolItems(w http.ResponseWriter, r *http.Request, _ h
 func (api *APIListener) CreateRepo(w http.ResponseWriter, r *http.Request, p httprouter.Params) {
 	id := p.ByName("id")
 	log.Infof("Creation of repo '%s' requested\n", id)
-	api.store.PushJob(jobs.NewCreateRepoJob(id))
+	api.store.Push(jobs.NewCreateRepoJob(id))
 }
 
 // DeleteRepo will handle remote requests for repository deletion
 func (api *APIListener) DeleteRepo(w http.ResponseWriter, r *http.Request, p httprouter.Params) {
 	id := p.ByName("id")
 	log.Infof("Deletion of repo '%s' requested\n", id)
-	api.store.PushJob(jobs.NewDeleteRepoJob(id))
+	api.store.Push(jobs.NewDeleteRepoJob(id))
 }
 
 // DeltaRepo will handle remote requests for repository deltaing
 func (api *APIListener) DeltaRepo(w http.ResponseWriter, r *http.Request, p httprouter.Params) {
 	id := p.ByName("id")
 	log.Infof("Delta of repo '%s' requested\n", id)
-	api.store.PushJob(jobs.NewDeltaRepoJob(id))
+	api.store.Push(jobs.NewDeltaRepoJob(id))
 }
 
 // IndexRepo will handle remote requests for repository indexing
 func (api *APIListener) IndexRepo(w http.ResponseWriter, r *http.Request, p httprouter.Params) {
 	id := p.ByName("id")
 	log.Infof("Index of repo '%s' requested\n", id)
-	api.store.PushJob(jobs.NewIndexRepoJob(id))
+	api.store.Push(jobs.NewIndexRepoJob(id))
 }
 
 // ImportPackages will bulk-import the packages in the request
@@ -174,9 +174,9 @@ func (api *APIListener) ImportPackages(w http.ResponseWriter, r *http.Request, p
 		return
 	}
 
-	log.Infof("Bulk import of '%d' packages for repo '%s' requested: '%v'\n", len(req.Path), id)
+	log.Infof("Bulk import of '%d' packages for repo '%s' requested: '%v'\n", len(req.Path), id, req.Path)
 
-	api.store.PushJob(jobs.NewBulkAddJob(id, req.Path))
+	api.store.Push(jobs.NewBulkAddJob(id, req.Path))
 }
 
 // CloneRepo will proxy a job to clone an existing repository
@@ -190,9 +190,9 @@ func (api *APIListener) CloneRepo(w http.ResponseWriter, r *http.Request, p http
 		return
 	}
 
-	log.Infof("Clone of repo '%s' into '%s' requested, full? '%b'\n", id, req.CloneName, req.CopyAll)
+	log.Infof("Clone of repo '%s' into '%s' requested, full? '%t'\n", id, req.CloneName, req.CopyAll)
 
-	api.store.PushJob(jobs.NewCloneRepoJob(id, req.CloneName, req.CopyAll))
+	api.store.Push(jobs.NewCloneRepoJob(id, req.CloneName, req.CopyAll))
 }
 
 // PullRepo will proxy a job to pull an existing repository
@@ -208,7 +208,7 @@ func (api *APIListener) PullRepo(w http.ResponseWriter, r *http.Request, p httpr
 
 	log.Infof("Pulll of repo '%s' into '%s' requested\n", req.Source, target)
 
-	api.store.PushJob(jobs.NewPullRepoJob(req.Source, target))
+	api.store.Push(jobs.NewPullRepoJob(req.Source, target))
 }
 
 // RemoveSource will proxy a job to remove an existing set of packages by source name + relno
@@ -224,7 +224,7 @@ func (api *APIListener) RemoveSource(w http.ResponseWriter, r *http.Request, p h
 
 	log.Infof("Removal of release '%d' of source '%s' in repo '%s' requested", req.Release, req.Source, target)
 
-	api.store.PushJob(jobs.NewRemoveSourceJob(target, req.Source, req.Release))
+	api.store.Push(jobs.NewRemoveSourceJob(target, req.Source, req.Release))
 }
 
 // CopySource will proxy a job to copy a package by source&relno into target
@@ -240,7 +240,7 @@ func (api *APIListener) CopySource(w http.ResponseWriter, r *http.Request, p htt
 
 	log.Info("Copy of release '%d' of source '%s' from repo '%s' to '%s' requested\n", req.Release, req.Source, sourceRepo, req.Target)
 
-	api.store.PushJob(jobs.NewCopySourceJob(sourceRepo, req.Target, req.Source, req.Release))
+	api.store.Push(jobs.NewCopySourceJob(sourceRepo, req.Target, req.Source, req.Release))
 }
 
 // TrimPackages will proxy a job to remove excess fat from a repo
@@ -256,26 +256,26 @@ func (api *APIListener) TrimPackages(w http.ResponseWriter, r *http.Request, p h
 
 	log.Infof("Trim of packages with more than '%d' releases in repo '%s' requested\n", req.MaxKeep, target)
 
-	api.store.PushJob(jobs.NewTrimPackagesJob(target, req.MaxKeep))
+	api.store.Push(jobs.NewTrimPackagesJob(target, req.MaxKeep))
 }
 
 // TrimObsolete will proxy a job to remove obsolete packages from a repo
 func (api *APIListener) TrimObsolete(w http.ResponseWriter, r *http.Request, p httprouter.Params) {
 	id := p.ByName("id")
 	log.Infof("Trim of obsoletes in repo '%s' requested\n", id)
-	api.store.PushJob(jobs.NewTrimObsoleteJob(id))
+	api.store.Push(jobs.NewTrimObsoleteJob(id))
 }
 
 // ResetCompleted will ask the job store to remove completed jobs. This is blocking.
 func (api *APIListener) ResetCompleted(w http.ResponseWriter, r *http.Request, p httprouter.Params) {
-	if err := s.store.ResetCompleted(); err != nil {
+	if err := api.store.ResetCompleted(); err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 	}
 }
 
 // ResetFailed will ask the job store to remove failed jobs. This is blocking.
 func (api *APIListener) ResetFailed(w http.ResponseWriter, r *http.Request, p httprouter.Params) {
-	if err := s.store.ResetFailed(); err != nil {
+	if err := api.store.ResetFailed(); err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 	}
 }

@@ -20,18 +20,11 @@ import (
 	"errors"
 	"ferryd/core"
 	"ferryd/jobs"
-	log "github.com/DataDrake/waterlog"
 	"github.com/coreos/go-systemd/activation"
-	"github.com/coreos/go-systemd/daemon"
 	"github.com/julienschmidt/httprouter"
-	"github.com/radu-munteanu/fsnotify"
 	"net"
 	"net/http"
 	"os"
-	"os/signal"
-	"path/filepath"
-	"sync"
-	"syscall"
 	"time"
 )
 
@@ -46,11 +39,12 @@ type APIListener struct {
 	// When we first started up.
 	timeStarted time.Time
 
-	store *jobs.JobStore // Storage for jobs processor
+	store   *jobs.JobStore // Storage for jobs processor
+	manager *core.Manager  // manager of the repos
 }
 
 // NewAPIListener will return a newly initialised Server which is currently unbound
-func NewAPIListener(store *JobStore) (api *APIListener, err error) {
+func NewAPIListener(store *jobs.JobStore, manager *core.Manager) (api *APIListener, err error) {
 	router := httprouter.New()
 	api = &APIListener{
 		srv: &http.Server{
@@ -59,6 +53,7 @@ func NewAPIListener(store *JobStore) (api *APIListener, err error) {
 		router:      router,
 		timeStarted: time.Now().UTC(),
 		store:       store,
+		manager:     manager,
 	}
 
 	// Set up the API bits
@@ -89,7 +84,7 @@ func NewAPIListener(store *JobStore) (api *APIListener, err error) {
 	// List commands
 	router.GET("/api/v1/list/repos", api.GetRepos)
 	router.GET("/api/v1/list/pool", api.GetPoolItems)
-	return s, nil
+	return api, nil
 }
 
 // Bind will attempt to set up the listener on the unix socket
@@ -102,7 +97,7 @@ func (api *APIListener) Bind() error {
 
 	// Check if we're systemd activated.
 	if _, b := os.LookupEnv("LISTEN_FDS"); b {
-		listeners, err := activation.Listeners(true)
+		listeners, err := activation.Listeners()
 		if err != nil {
 			return err
 		}
@@ -130,11 +125,11 @@ func (api *APIListener) Bind() error {
 	gid := os.Getgid()
 	if !systemdEnabled {
 		// Avoid umask issues
-		if e = os.Chown(s.socketPath, uid, gid); e != nil {
+		if e := os.Chown(api.socketPath, uid, gid); e != nil {
 			return e
 		}
 		// Fatal if we cannot chmod the socket to be ours only
-		if e = os.Chmod(api.socketPath, 0660); e != nil {
+		if e := os.Chmod(api.socketPath, 0660); e != nil {
 			return e
 		}
 	}
@@ -142,7 +137,7 @@ func (api *APIListener) Bind() error {
 	return nil
 }
 
-// Serve will continuously serve on the unix socket until dead
+// Start will continuously serve on the unix socket until dead
 func (api *APIListener) Start() error {
 	if api.socket == nil {
 		return errors.New("Cannot serve without a bound server socket")
@@ -156,7 +151,7 @@ func (api *APIListener) Start() error {
 }
 
 // Close will shut down and cleanup the socket
-func (s *Server) Close() {
+func (api *APIListener) Close() {
 	api.srv.Shutdown(nil)
 
 	// We don't technically fully own it if systemd created it

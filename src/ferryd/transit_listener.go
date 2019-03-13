@@ -30,14 +30,14 @@ import (
 type TransitListener struct {
 	base    string
 	watcher *fsnotify.Watcher
-	store   *JobStore
+	store   *jobs.JobStore
 	stop    chan bool
 	done    chan bool
 }
 
 // NewTransitListener creates and sets up a new TransitListener
-func NewTransitListener(base string, store *JobStore) (tl *TransitListener, err error) {
-	tl = &TtransitListener{
+func NewTransitListener(base string, store *jobs.JobStore) (tl *TransitListener, err error) {
+	tl = &TransitListener{
 		base:  base,
 		store: store,
 		stop:  make(chan bool),
@@ -48,9 +48,7 @@ func NewTransitListener(base string, store *JobStore) (tl *TransitListener, err 
 		return
 	}
 	// Monitor the incoming dir
-	if err = tl.watcher.Add(tl.base); err != nil {
-		return err
-	}
+	err = tl.watcher.Add(tl.base)
 	return
 }
 
@@ -58,17 +56,16 @@ func NewTransitListener(base string, store *JobStore) (tl *TransitListener, err 
 // and process incoming .tram files
 func (tl *TransitListener) Start() {
 	go func() {
-		defer s.watchGroup.Done()
 		for {
 			select {
-			case event := <-s.watcher.Events:
+			case event := <-tl.watcher.Events:
 				// Not interested in subdirs
 				if filepath.Dir(event.Name) != tl.base {
 					continue
 				}
 				if event.Op&fsnotify.Update == fsnotify.Update {
 					if strings.HasSuffix(event.Name, core.TransitManifestSuffix) {
-						s.processTransitManifest(filepath.Base(event.Name))
+						tl.processTransitManifest(filepath.Base(event.Name))
 					}
 				}
 			case <-tl.stop:
@@ -81,8 +78,8 @@ func (tl *TransitListener) Start() {
 
 // Stop will force the fsnotify code to shut down
 func (tl *TransitListener) Stop() bool {
-	s.stop <- true
-	return <-s.done
+	tl.stop <- true
+	return <-tl.done
 }
 
 // processTransitManifest is invoked when a .tram file is closed in our incoming
@@ -100,5 +97,5 @@ func (tl *TransitListener) processTransitManifest(name string) {
 	}
 
 	log.Infof("Received transit manifest upload: '%s'\n", name)
-	s.store.PushJob(jobs.NewTransitJob(fullpath))
+	tl.store.Push(jobs.NewTransitJob(fullpath))
 }

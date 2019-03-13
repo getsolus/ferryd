@@ -52,7 +52,7 @@ func NewDeltaRepoJobHandler(j *Job) (handler *DeltaRepoJobHandler, err error) {
 //
 // This operation is ideally only used after the first import of a repository,
 // after then deltas will be produced on the fly.
-func (j *DeltaRepoJobHandler) Execute(jproc *Processor, manager *core.Manager) error {
+func (j *DeltaRepoJobHandler) Execute(s *JobStore, manager *core.Manager) error {
 	packageNames, err := manager.GetPackageNames(j.SrcRepo)
 	if err != nil {
 		return err
@@ -66,7 +66,7 @@ func (j *DeltaRepoJobHandler) Execute(jproc *Processor, manager *core.Manager) e
 
 	// Fire off parallel delta jobs for every package in this repository
 	for _, name := range packageNames {
-		jproc.PushJob(NewDeltaJob(j.SrcRepo, name))
+		s.Push(NewDeltaJob(j.SrcRepo, name))
 	}
 
 	return nil
@@ -78,6 +78,6 @@ func (j *DeltaRepoJobHandler) Describe() string {
 }
 
 // IsSerial returns true if a job should not be run alongside other jobs
-func (J *DeltaRepoJobHandler) IsSerial() bool {
+func (j *DeltaRepoJobHandler) IsSerial() bool {
 	return true
 }

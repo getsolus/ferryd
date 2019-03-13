@@ -26,7 +26,7 @@ import (
 type JobHandler interface {
 
 	// Execute will attempt to execute the given job
-	Execute(proc *Processor, m *core.Manager) error
+	Execute(s *JobStore, m *core.Manager) error
 
 	// Describe will return an appropriate description for the job
 	Describe() string
@@ -68,6 +68,6 @@ func NewJobHandler(j *Job) (JobHandler, error) {
 	case TrimPackages:
 		return NewTrimPackagesJobHandler(j)
 	default:
-		return nil, fmt.Errorf("unknown job type '%s'", j.Type)
+		return nil, fmt.Errorf("unknown job type '%d'", j.Type)
 	}
 }

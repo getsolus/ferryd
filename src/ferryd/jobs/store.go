@@ -17,76 +17,39 @@
 package jobs
 
 import (
-	"encoding/binary"
 	"errors"
-	"ferryd/core"
-	"libdb"
+	"github.com/jmoiron/sqlx"
 	"libferry"
-	"sync"
-	"time"
 )
 
 var (
-	// BucketAsyncJobs holds all asynchronous jobs
-	BucketAsyncJobs = []byte("Async")
-
-	// BucketSequentialJobs holds all sequential jobs
-	BucketSequentialJobs = []byte("Sync")
-
-	// BucketSuccessJobs contains jobs that have completed successfully
-	BucketSuccessJobs = []byte("CompletedSuccess")
-
-	// BucketFailJobs contains jobs that completed with failure
-	BucketFailJobs = []byte("CompletedFailure")
-
-	// ErrEmptyQueue is returned to indicate a job is not available yet
-	ErrEmptyQueue = errors.New("Queue is empty")
-
-	// ErrBreakLoop is used only to break the foreach internally.
-	ErrBreakLoop = errors.New("loop breaker")
-
-	// BucketRecord is used as a subbucket for records
-	BucketRecord = []byte("Record")
-
-	// IndexRecordKey is used in the job store to mark the next write location
-	IndexRecordKey = []byte("IndexRecord00")
-)
-
-const (
-	// MaxJobsStored is the maximum amount of jobs we can store before rotating
-	MaxJobsStored = 100
+	// ErrNoJobReady is returned when there are no available jobs or the next job is blocked by a running job
+	ErrNoJobReady = errors.New("No jobs ready to run")
 )
 
 // JobStore handles the storage and manipulation of incomplete jobs
 type JobStore struct {
-	db     libdb.Database
-	modMut *sync.Mutex
-}
-
-// IndexRecord is just a simple helper to store the index record..
-type IndexRecord struct {
-	Index uint64
+	db   *sqlx.DB
+	next chan *Job
+	stop chan bool
+	done chan bool
 }
 
 // NewStore creates a fully initialized JobStore and sets up Bolt Buckets as needed
 func NewStore(path string) (*JobStore, error) {
-	ctx, err := core.NewContext(path)
-
 	// Open the database if we can
-	db, err := libdb.Open(ctx.JobDbPath)
+	db, err := sqlx.Open("sqlite3", path)
 	if err != nil {
 		return nil, err
 	}
 
 	s := &JobStore{
-		db:     db,
-		modMut: &sync.Mutex{},
+		db:   db,
+		next: make(chan *Job),
+		stop: make(chan bool),
+		done: make(chan bool),
 	}
 
-	if err := s.setup(); err != nil {
-		defer s.Close()
-		return nil, err
-	}
 	return s, nil
 }
 
@@ -98,349 +61,48 @@ func (s *JobStore) Close() {
 	}
 }
 
-// setup is called during our early start to perform any relevant cleanup
-// and repairs from previous runs.
-func (s *JobStore) setup() error {
-	if err := s.UnclaimSequential(); err != nil {
-		return err
-	}
-	return s.UnclaimAsync()
+// UnclaimRunning will find all claimed jobs and unclaim them again
+func (s *JobStore) UnclaimRunning() error {
+	return nil
 }
 
-// unclaimJobs will mark any previously claimed jobs as unclaimed again.
-// This is only used during the initial start up ferryd as part of a
-// recovery option
-func (s *JobStore) unclaimJobs(bucketID []byte) error {
-	s.modMut.Lock()
-	defer s.modMut.Unlock()
-
-	return s.db.Update(func(db libdb.Database) error {
-		bucket := db.Bucket(bucketID)
-
-		// Loop all claimed jobs, unclaim them
-		return bucket.ForEach(func(id, value []byte) error {
-			j := &JobEntry{}
-			if err := bucket.Decode(value, j); err != nil {
-				return err
-			}
-			if !j.Claimed {
-				return nil
-			}
-			j.Timing.Begin = time.Time{}
-			j.Timing.End = time.Time{}
-			j.Claimed = false
-
-			return bucket.PutObject(id, j)
-		})
-	})
+// Push inserts a new Job into the queue
+func (s *JobStore) Push(j *Job) error {
+	return nil
 }
 
-// UnclaimSequential will find all claimed sequential jobs and unclaim them again
-func (s *JobStore) UnclaimSequential() error {
-	return s.unclaimJobs([]byte(BucketSequentialJobs))
+// Claim gets the first available job, if one exists and is not blocked by running jobs
+func (s *JobStore) Claim() (*Job, error) {
+	return nil, nil
 }
 
-// UnclaimAsync will find all claimed async jobs and unclaim them again
-func (s *JobStore) UnclaimAsync() error {
-	return s.unclaimJobs([]byte(BucketAsyncJobs))
+// Retire marks a job as completed and updates the DB record
+func (s *JobStore) Retire(j *Job) error {
+	return nil
 }
 
-// claimJobInternal handles the similarity of the async/sync operations, grabbing
-// the first available job and stuffing it back in as a claimed job. Note that
-// in order to preserve order + sanity, we actually employ a mutex internally
-// to mutate the state of each job, and return them sequentially.
-//
-// While more than one async job may be running at a time, we funnel job
-// claim/retire calls.
-func (s *JobStore) claimJobInternal(bucketID []byte) (*JobEntry, error) {
-	s.modMut.Lock()
-	defer s.modMut.Unlock()
-
-	var job *JobEntry
-
-	err := s.db.Update(func(db libdb.Database) error {
-		bucket := db.Bucket(bucketID)
-
-		// Attempt to find relevant job, break when we have it + id
-		err := bucket.ForEach(func(id, value []byte) error {
-			j := &JobEntry{}
-			if err := bucket.Decode(value, j); err != nil {
-				return err
-			}
-			if !j.Claimed {
-				j.Claimed = true
-
-				// Got the job so mark our begin time
-				j.Timing.Begin = time.Now().UTC()
-				// Got a usable job now.
-				job = j
-				job.id = make([]byte, len(id))
-				copy(job.id, id)
-				return ErrBreakLoop
-			}
-			return nil
-		})
-
-		if err != ErrBreakLoop {
-			return err
-		}
-
-		// Serialise the new guy
-		return bucket.PutObject(job.id, job)
-	})
-
-	if err != nil {
-		return nil, err
-	}
-
-	if job == nil {
-		return nil, ErrEmptyQueue
-	}
-
-	return job, nil
-}
-
-// ClaimAsyncJob gets the first available asynchronous job, if one exists
-func (s *JobStore) ClaimAsyncJob() (*JobEntry, error) {
-	return s.claimJobInternal([]byte(BucketAsyncJobs))
-}
-
-// ClaimSequentialJob gets the first available synchronous job, if one exists
-func (s *JobStore) ClaimSequentialJob() (*JobEntry, error) {
-	return s.claimJobInternal([]byte(BucketSequentialJobs))
-}
-
-// Used to mark the completion of a job and store in the appropriate bucket
-func (s *JobStore) markCompletion(j *JobEntry) error {
-	var bucketID []byte
-	if j.failure != nil {
-		bucketID = BucketFailJobs
-	} else {
-		bucketID = BucketSuccessJobs
-	}
-
-	// We're already locked at this point so its safe to work out our next
-	// index
-	bucket := s.db.Bucket(bucketID).Bucket(BucketRecord)
-	record := IndexRecord{
-		Index: 0,
-	}
-
-	// Try to grab it, otherwise reset it
-	if err := bucket.GetObject(IndexRecordKey, &record); err != nil {
-		record.Index = 0
-	} else {
-		// Grabbed an existing record, so increment the key
-		record.Index++
-	}
-
-	// Wrap the index round if we hit too high
-	if record.Index >= MaxJobsStored {
-		record.Index = 0
-	}
-
-	// Ensure we update the pointer
-	if err := bucket.PutObject(IndexRecordKey, &record); err != nil {
-		return err
-	}
-
-	// now stuff it into a new key object
-	nextID := make([]byte, 8)
-	binary.BigEndian.PutUint64(nextID, record.Index)
-
-	// We'll need to figure out how to truncate our buckets..
-	return s.db.Update(func(db libdb.Database) error {
-		bucket := db.Bucket(bucketID)
-
-		storeJob := libferry.Job{
-			Timing:      j.Timing,
-			Description: j.description,
-		}
-
-		// Mark relevant failure fields
-		if j.failure != nil {
-			storeJob.Error = j.failure.Error()
-			storeJob.Failed = true
-		}
-
-		return bucket.PutObject(nextID, &storeJob)
-	})
-}
-
-// RetireAsyncJob removes a completed asynchronous job
-func (s *JobStore) RetireAsyncJob(j *JobEntry) error {
-	s.modMut.Lock()
-	defer s.modMut.Unlock()
-
-	err := s.db.Update(func(db libdb.Database) error {
-		return db.Bucket(BucketAsyncJobs).DeleteObject(j.id)
-	})
-
-	if err != nil {
-		return err
-	}
-	return s.markCompletion(j)
-}
-
-// RetireSequentialJob removes a completed synchronous job
-func (s *JobStore) RetireSequentialJob(j *JobEntry) error {
-	s.modMut.Lock()
-	defer s.modMut.Unlock()
-
-	err := s.db.Update(func(db libdb.Database) error {
-		return db.Bucket(BucketSequentialJobs).DeleteObject(j.id)
-	})
-
-	if err != nil {
-		return err
-	}
-	return s.markCompletion(j)
-}
-
-// pushJobInternal is identical between sync and async jobs, it
-// just needs to know which bucket to store the job in.
-func (s *JobStore) pushJobInternal(j *JobEntry, bk []byte) error {
-	// Prep the job prior to insertion
-	j.Timing.Queued = time.Now().UTC()
-	j.Claimed = false
-
-	j.id = s.db.Bucket(bk).NextSequence()
-
-	s.modMut.Lock()
-	defer s.modMut.Unlock()
-
-	return s.db.Update(func(db libdb.Database) error {
-		bucket := db.Bucket(bk)
-		// Use next natural sequence in the bucket
-
-		j.id = bucket.NextSequence()
-		return bucket.PutObject(j.id, j)
-	})
-}
-
-// PushSequentialJob will enqueue a new sequential job
-func (s *JobStore) PushSequentialJob(j *JobEntry) error {
-	return s.pushJobInternal(j, BucketSequentialJobs)
-}
-
-// PushAsyncJob will enqueue a new asynchronous job
-func (s *JobStore) PushAsyncJob(j *JobEntry) error {
-	return s.pushJobInternal(j, BucketAsyncJobs)
-}
-
-// ActiveJobs will attempt to return a list of active jobs within
+// Active will attempt to return a list of active jobs within
 // the scheduler suitable for consumption by the CLI client
-func (s *JobStore) ActiveJobs() ([]*libferry.Job, error) {
-	var ret []*libferry.Job
-
-	if err := s.cloneCurrentJobs(&ret, []byte(BucketSequentialJobs)); err != nil {
-		return nil, err
-	}
-
-	if err := s.cloneCurrentJobs(&ret, []byte(BucketAsyncJobs)); err != nil {
-		return nil, err
-	}
-
-	return ret, nil
+func (s *JobStore) Active() (libferry.JobSet, error) {
+	return nil, nil
 }
 
-// cloneCurrentJobs will push clones of our jobs out to the libferry API
-func (s *JobStore) cloneCurrentJobs(ret *[]*libferry.Job, bucketID []byte) error {
-	s.modMut.Lock()
-	defer s.modMut.Unlock()
-
-	return s.db.Bucket(bucketID).View(func(db libdb.ReadOnlyView) error {
-		return db.ForEach(func(k, v []byte) error {
-			j := &JobEntry{}
-			if err := db.Decode(v, j); err != nil {
-				return err
-			}
-
-			// Now stuff the job into the ret
-			hnd, err := NewJobHandler(j)
-			if err != nil {
-				return err
-			}
-
-			r := &libferry.Job{
-				Description: hnd.Describe(),
-				Timing:      j.Timing,
-			}
-			*ret = append(*ret, r)
-
-			return nil
-		})
-	})
+// Completed will return all successfully completed jobs still stored
+func (s *JobStore) Completed() (libferry.JobSet, error) {
+	return nil, nil
 }
 
-// CompletedJobs will return all successfully completed jobs still stored
-func (s *JobStore) CompletedJobs() ([]*libferry.Job, error) {
-	var ret []*libferry.Job
-	if err := s.clonePastJobs(&ret, BucketSuccessJobs); err != nil {
-		return nil, err
-	}
-	return ret, nil
-}
-
-// FailedJobs will return all failed jobs that are still stored
-func (s *JobStore) FailedJobs() ([]*libferry.Job, error) {
-	var ret []*libferry.Job
-	if err := s.clonePastJobs(&ret, BucketFailJobs); err != nil {
-		return nil, err
-	}
-	return ret, nil
-}
-
-// clonePastJobs will pull the libferry.Job references from the DB and return
-// clones
-func (s *JobStore) clonePastJobs(ret *[]*libferry.Job, bucketID []byte) error {
-	s.modMut.Lock()
-	defer s.modMut.Unlock()
-
-	return s.db.Bucket(bucketID).View(func(db libdb.ReadOnlyView) error {
-		return db.ForEach(func(k, v []byte) error {
-			j := &libferry.Job{}
-			if err := db.Decode(v, j); err != nil {
-				return err
-			}
-			*ret = append(*ret, j)
-
-			return nil
-		})
-	})
-}
-
-// resetInternal is a blocking call to nuke all records from a bucket, as well
-// as the special sub-bucket index key
-func (s *JobStore) resetInternal(bucketID []byte) error {
-	s.modMut.Lock()
-	defer s.modMut.Unlock()
-
-	bucket := s.db.Bucket(bucketID).Bucket(BucketRecord)
-	hasIndex, err := bucket.HasObject(IndexRecordKey)
-	if err != nil {
-		return err
-	}
-	if hasIndex {
-		if err := bucket.DeleteObject(IndexRecordKey); err != nil {
-			return err
-		}
-	}
-
-	// batch delete the jobs
-	return s.db.Bucket(bucketID).Update(func(db libdb.Database) error {
-		return db.ForEach(func(k, v []byte) error {
-			return db.DeleteObject(k)
-		})
-	})
+// Failed will return all failed jobs that are still stored
+func (s *JobStore) Failed() (libferry.JobSet, error) {
+	return nil, nil
 }
 
 // ResetCompleted will remove all completion records from our store and reset the pointer
 func (s *JobStore) ResetCompleted() error {
-	return s.resetInternal(BucketSuccessJobs)
+	return nil
 }
 
 // ResetFailed will remove all fail records from our store and reset the pointer
 func (s *JobStore) ResetFailed() error {
-	return s.resetInternal(BucketFailJobs)
+	return nil
 }

@@ -46,7 +46,7 @@ func NewCreateRepoJobHandler(j *Job) (handler *CreateRepoJobHandler, err error) 
 }
 
 // Execute will construct a new repository if possible
-func (j *CreateRepoJobHandler) Execute(_ *Processor, manager *core.Manager) error {
+func (j *CreateRepoJobHandler) Execute(_ *JobStore, manager *core.Manager) error {
 	if err := manager.CreateRepo(j.DstRepo); err != nil {
 		return err
 	}
@@ -60,6 +60,6 @@ func (j *CreateRepoJobHandler) Describe() string {
 }
 
 // IsSerial returns true if a job should not be run alongside other jobs
-func (J *CreateRepoJobHandler) IsSerial() bool {
+func (j *CreateRepoJobHandler) IsSerial() bool {
 	return true
 }

@@ -39,23 +39,23 @@ func NewCopySourceJob(srcRepo, dstRepo, source string, release int) *Job {
 // NewCopySourceJobHandler will create a job handler for the input job and ensure it validates
 func NewCopySourceJobHandler(j *Job) (handler *CopySourceJobHandler, err error) {
 	if len(j.SrcRepo) == 0 {
-		fmt.Errorf("job is missing source repo")
+		log.Errorf("job '%d' is missing source repo\n", j.ID)
 		return
 	}
 	if len(j.DstRepo) == 0 {
-		fmt.Errorf("job is missing destination repo")
+		log.Errorf("job '%d' is missing destination repo\n", j.ID)
 		return
 	}
 	if len(j.Sources) == 0 {
-		fmt.Errorf("job is missing source name")
+		log.Errorf("job '%d' is missing source name\n", j.ID)
 		return
 	}
 	if len(j.Sources) != 1 {
-		fmt.Errorf("job should only have one source")
+		log.Errorf("job '%d' should have exactly one source, found '%d'", j.ID, len(j.Sources))
 		return
 	}
 	if j.Release == 0 || j.Release < -1 {
-		fmt.Errorf("job has invalid release number: %d", j.Release)
+		log.Errorf("job '%d' has invalid release number: '%d'", j.ID, j.Release)
 		return
 	}
 
@@ -65,7 +65,7 @@ func NewCopySourceJobHandler(j *Job) (handler *CopySourceJobHandler, err error) 
 }
 
 // Execute will copy the source&rel match from the repo to the target
-func (j *CopySourceJobHandler) Execute(_ *Processor, manager *core.Manager) error {
+func (j *CopySourceJobHandler) Execute(_ *JobStore, manager *core.Manager) error {
 	if err := manager.CopySource(j.SrcRepo, j.DstRepo, j.Sources[0], j.Release); err != nil {
 		return err
 	}
@@ -79,6 +79,6 @@ func (j *CopySourceJobHandler) Describe() string {
 }
 
 // IsSerial returns true if a job should not be run alongside other jobs
-func (J *CopySourceJobHandler) IsSerial() bool {
+func (j *CopySourceJobHandler) IsSerial() bool {
 	return false
 }

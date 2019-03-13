@@ -23,7 +23,9 @@ import (
 )
 
 const (
-	CloneTip  = 0
+	// CloneTip only clones the latest release
+	CloneTip = 0
+	// CloneFull clones all the releases
 	CloneFull = 1
 )
 
@@ -64,7 +66,7 @@ func NewCloneRepoJobHandler(j *Job) (handler *CloneRepoJobHandler, err error) {
 }
 
 // Execute attempt to clone the repoID to newClone, optionally at full depth
-func (j *CloneRepoJobHandler) Execute(_ *Processor, manager *core.Manager) error {
+func (j *CloneRepoJobHandler) Execute(_ *JobStore, manager *core.Manager) error {
 	fullClone := false
 	if j.Mode == CloneFull {
 		fullClone = true
@@ -83,6 +85,6 @@ func (j *CloneRepoJobHandler) Describe() string {
 }
 
 // IsSerial returns true if a job should not be run alongside other jobs
-func (J *CloneRepoJobHandler) IsSerial() bool {
+func (j *CloneRepoJobHandler) IsSerial() bool {
 	return true
 }

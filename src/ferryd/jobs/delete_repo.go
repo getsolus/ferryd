@@ -46,7 +46,7 @@ func NewDeleteRepoJobHandler(j *Job) (handler *DeleteRepoJobHandler, err error) 
 }
 
 // Execute will delete an existing repository
-func (j *DeleteRepoJobHandler) Execute(_ *Processor, manager *core.Manager) error {
+func (j *DeleteRepoJobHandler) Execute(_ *JobStore, manager *core.Manager) error {
 	if err := manager.DeleteRepo(j.SrcRepo); err != nil {
 		return err
 	}
@@ -60,6 +60,6 @@ func (j *DeleteRepoJobHandler) Describe() string {
 }
 
 // IsSerial returns true if a job should not be run alongside other jobs
-func (J *DeleteRepoJobHandler) IsSerial() bool {
+func (j *DeleteRepoJobHandler) IsSerial() bool {
 	return true
 }

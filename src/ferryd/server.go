@@ -17,29 +17,21 @@
 package main
 
 import (
-	"errors"
 	"ferryd/core"
 	"ferryd/jobs"
 	log "github.com/DataDrake/waterlog"
-	"github.com/coreos/go-systemd/activation"
 	"github.com/coreos/go-systemd/daemon"
-	"github.com/julienschmidt/httprouter"
-	"github.com/radu-munteanu/fsnotify"
-	"net"
-	"net/http"
 	"os"
 	"os/signal"
 	"path/filepath"
-	"sync"
 	"syscall"
-	"time"
 )
 
 // Server sits on a unix socket accepting connections from authenticated
 // client, i.e. root or those in the "ferry" group
 type Server struct {
 	running bool
-	api     *ApiListener     // the HTTP socket handler
+	api     *APIListener     // the HTTP socket handler
 	manager *core.Manager    // heart of the story
 	store   *jobs.JobStore   // Storage for jobs processor
 	jproc   *jobs.Processor  // Allow scheduling jobs
@@ -53,21 +45,22 @@ type Server struct {
 // NewServer will return a newly initialised Server which is currently unbound
 func NewServer() (*Server, error) {
 	// Before we can actually bind the socket, we must lock the file
-	api.lockPath = filepath.Join(baseDir, LockFilePath)
-	lfile, err := NewLockFile(api.lockPath)
-	api.lockFile = lfile
+	lockPath := filepath.Join(baseDir, LockFilePath)
+	lfile, err := NewLockFile(lockPath)
 
 	if err != nil {
 		return nil, err
 	}
 
 	// Try to lock our lockfile now
-	if err := api.lockFile.Lock(); err != nil {
+	if err := lfile.Lock(); err != nil {
 		return nil, err
 	}
 
 	return &Server{
-		running: false,
+		running:  false,
+		lockPath: lockPath,
+		lockFile: lfile,
 	}, nil
 }
 
@@ -102,15 +95,17 @@ func (s *Server) Bind() error {
 	s.store = st
 
 	// processor
-	s.jproc = jobs.NewProcessor(s.manager, s.store, backgroundJobCount)
+	s.jproc = jobs.NewProcessor(s.store, s.manager, backgroundJobCount)
 
 	// Set up watching the manager's incoming directory
-	if tl, err := NewTransitListener(s.manager.IncomingPath, s.store); err != nil {
+	tl, err := NewTransitListener(s.manager.IncomingPath, s.store)
+	if err != nil {
 		return err
 	}
+	s.tl = tl
 
 	// api
-	api, err = NewAPIListener(s.store)
+	api, err := NewAPIListener(s.store, s.manager)
 	if err != nil {
 		return err
 	}
@@ -128,7 +123,7 @@ func (s *Server) Serve() error {
 	// Serve the job queue
 	s.jproc.Begin()
 	s.tl.Start()
-	err = s.api.Start()
+	err := s.api.Start()
 	if err != nil {
 		return err
 	}
@@ -149,15 +144,10 @@ func (s *Server) Close() {
 		s.lockFile.Clean()
 		s.lockFile = nil
 	}
-	s.api.Stop()
+	s.api.Close()
 	s.tl.Stop()
 	s.jproc.Close()
 	s.store.Close()
 	s.manager.Close()
 	s.running = false
-
-	// We don't technically fully own it if systemd created it
-	if !systemdEnabled {
-		os.Remove(s.socketPath)
-	}
 }

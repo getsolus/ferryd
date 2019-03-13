@@ -46,7 +46,7 @@ func NewIndexRepoJobHandler(j *Job) (handler *IndexRepoJobHandler, err error) {
 }
 
 // Execute will index the given repository if possible
-func (j *IndexRepoJobHandler) Execute(_ *Processor, manager *core.Manager) error {
+func (j *IndexRepoJobHandler) Execute(_ *JobStore, manager *core.Manager) error {
 	if err := manager.Index(j.SrcRepo); err != nil {
 		return err
 	}
@@ -60,6 +60,6 @@ func (j *IndexRepoJobHandler) Describe() string {
 }
 
 // IsSerial returns true if a job should not be run alongside other jobs
-func (J *IndexRepoJobHandler) IsSerial() bool {
+func (j *IndexRepoJobHandler) IsSerial() bool {
 	return true
 }
