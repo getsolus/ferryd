@@ -30,7 +30,7 @@ type DeleteRepoJobHandler Job
 func NewDeleteRepoJob(id string) *Job {
 	return &Job{
 		Type:    DeleteRepo,
-        SrcRepo: id,
+		SrcRepo: id,
 	}
 }
 
@@ -38,11 +38,11 @@ func NewDeleteRepoJob(id string) *Job {
 func NewDeleteRepoJobHandler(j *Job) (handler *DeleteRepoJobHandler, err error) {
 	if len(j.SrcRepo) == 0 {
 		err = fmt.Errorf("job is missing a source repo")
-        return
+		return
 	}
 	h := DeleteRepoJobHandler(*j)
-    handler = &h
-    return
+	handler = &h
+	return
 }
 
 // Execute will delete an existing repository
@@ -61,5 +61,5 @@ func (j *DeleteRepoJobHandler) Describe() string {
 
 // IsSerial returns true if a job should not be run alongside other jobs
 func (J *DeleteRepoJobHandler) IsSerial() bool {
-    return true
+	return true
 }

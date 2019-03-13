@@ -29,24 +29,24 @@ type PullRepoJobHandler Job
 func NewPullRepoJob(sourceID, targetID string) *Job {
 	return &Job{
 		Type:    PullRepo,
-        SrcRepo: sourceID,
-        DstRepo: targetID,
+		SrcRepo: sourceID,
+		DstRepo: targetID,
 	}
 }
 
 // NewPullRepoJobHandler will create a job handler for the input job and ensure it validates
 func NewPullRepoJobHandler(j *Job) (handler *PullRepoJobHandler, err error) {
-    if len(j.SrcRepo) == 0 {
-        err = fmt.Errorf("job is missing source repo")
-        return
-    }
+	if len(j.SrcRepo) == 0 {
+		err = fmt.Errorf("job is missing source repo")
+		return
+	}
 	if len(j.DstRepo) == 0 {
 		err = fmt.Errorf("job is missing destination repo")
-        return
+		return
 	}
 	h := PullRepoJobHandler(*j)
-    handler = &h
-    return
+	handler = &h
+	return
 }
 
 // Execute will attempt to pull the repos
@@ -75,5 +75,5 @@ func (j *PullRepoJobHandler) Describe() string {
 
 // IsSerial returns true if a job should not be run alongside other jobs
 func (J *PullRepoJobHandler) IsSerial() bool {
-    return true
+	return true
 }

@@ -19,8 +19,8 @@ package main
 import (
 	"ferryd/core"
 	"ferryd/jobs"
-	"github.com/radu-munteanu/fsnotify"
 	log "github.com/DataDrake/waterlog"
+	"github.com/radu-munteanu/fsnotify"
 	"os"
 	"path/filepath"
 	"strings"

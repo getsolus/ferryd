@@ -34,8 +34,8 @@ type DeltaJobHandler Job
 func NewDeltaJob(repoID, packageID string) *Job {
 	return &Job{
 		Type:    Delta,
-        SrcRepo: repoID,
-        Sources: []string{packageID},
+		SrcRepo: repoID,
+		Sources: []string{packageID},
 	}
 }
 
@@ -44,24 +44,24 @@ func NewDeltaJob(repoID, packageID string) *Job {
 func NewDeltaIndexJob(repoID, packageID string) *Job {
 	return &Job{
 		Type:    DeltaIndex,
-        SrcRepo: repoID,
-        Sources: []string{packageID},
+		SrcRepo: repoID,
+		Sources: []string{packageID},
 	}
 }
 
 // NewDeltaJobHandler will create a job handler for the input job and ensure it validates
 func NewDeltaJobHandler(j *Job) (handler *DeltaJobHandler, err error) {
-    if len(j.SrcRepo) == 0 {
+	if len(j.SrcRepo) == 0 {
 		err = fmt.Errorf("job is missing source repo")
-        return
-    }
+		return
+	}
 	if len(j.Sources) == 0 {
 		err = fmt.Errorf("job is missing a source package")
-        return
+		return
 	}
 	h := DeltaJobHandler(*j)
-    handler = &h
-    return
+	handler = &h
+	return
 }
 
 // executeInternal is the common code shared in the delta jobs, and is
@@ -94,7 +94,7 @@ func (j *DeltaJobHandler) executeInternal(manager *core.Manager) (nDeltas int, e
 
 		hasDelta, e := manager.HasDelta(j.SrcRepo, j.Sources[0], deltaID)
 		if e != nil {
-            err = e
+			err = e
 			return
 		}
 
@@ -116,7 +116,7 @@ func (j *DeltaJobHandler) executeInternal(manager *core.Manager) (nDeltas int, e
 		if entry != nil && e == nil {
 			if e := manager.RefDelta(j.SrcRepo, deltaID); e != nil {
 				log.Errorf("Failed to ref existing delta, id: %v\n", deltaID)
-                err = e
+				err = e
 				return
 			}
 			log.Debugf("Reused existing delta, id: %v\n", deltaID)
@@ -130,8 +130,8 @@ func (j *DeltaJobHandler) executeInternal(manager *core.Manager) (nDeltas int, e
 				log.Infof("Delta not possible, marked permanently: %v\n", deltaID)
 				if e = manager.MarkDeltaFailed(deltaID, mapping); e != nil {
 					log.Errorf("Failed to mark delta failure, id: %v\n", deltaID)
-                    err = e
-                    return
+					err = e
+					return
 				}
 				continue
 			} else if err == libeopkg.ErrMismatchedDelta {
@@ -203,5 +203,5 @@ func (j *DeltaJobHandler) Describe() string {
 
 // IsSerial returns true if a job should not be run alongside other jobs
 func (J *DeltaJobHandler) IsSerial() bool {
-    return false
+	return false
 }

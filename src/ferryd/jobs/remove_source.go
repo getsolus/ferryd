@@ -29,29 +29,29 @@ type RemoveSourceJobHandler Job
 func NewRemoveSourceJob(repoID, source string, release int) *Job {
 	return &Job{
 		Type:    RemoveSource,
-        SrcRepo: repoID,
-        Sources: []string{source},
-        Release: release,
+		SrcRepo: repoID,
+		Sources: []string{source},
+		Release: release,
 	}
 }
 
 // NewRemoveSourceJobHandler will create a job handler for the input job and ensure it validates
 func NewRemoveSourceJobHandler(j *Job) (handler *RemoveSourceJobHandler, err error) {
-    if len(j.SrcRepo) == 0 {
+	if len(j.SrcRepo) == 0 {
 		err = fmt.Errorf("job is missing source repo")
-        return
-    }
-    if len(j.Sources) == 0 {
+		return
+	}
+	if len(j.Sources) == 0 {
 		err = fmt.Errorf("job is missing source package")
-        return
-    }
+		return
+	}
 	if j.Release == 0 {
 		err = fmt.Errorf("job has invalid release number: 0")
-        return
+		return
 	}
 	h := RemoveSourceJobHandler(*j)
-    handler = &h
-    return
+	handler = &h
+	return
 }
 
 // Execute will remove the source&rel match from the repo
@@ -70,6 +70,5 @@ func (j *RemoveSourceJobHandler) Describe() string {
 
 // IsSerial returns true if a job should not be run alongside other jobs
 func (J *RemoveSourceJobHandler) IsSerial() bool {
-    return true
+	return true
 }
-

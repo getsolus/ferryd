@@ -17,7 +17,7 @@
 package libeopkg
 
 import (
-    "path/filepath"
+	"path/filepath"
 	"testing"
 )
 
@@ -75,8 +75,8 @@ func TestMetadataSourceDummy(t *testing.T) {
 		if exp != got {
 			t.Fatalf("Expected source path '%s', got '%s'", exp, got)
 		}
-        if m.GetID() != filepath.Base(m.PackageURI) {
-            t.Fatalf("ID should be %s, found: %s", filepath.Base(m.PackageURI), m.GetID() )
-        }
+		if m.GetID() != filepath.Base(m.PackageURI) {
+			t.Fatalf("ID should be %s, found: %s", filepath.Base(m.PackageURI), m.GetID())
+		}
 	}
 }

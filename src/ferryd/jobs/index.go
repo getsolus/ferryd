@@ -30,7 +30,7 @@ type IndexRepoJobHandler Job
 func NewIndexRepoJob(id string) *Job {
 	return &Job{
 		Type:    IndexRepo,
-        SrcRepo: id,
+		SrcRepo: id,
 	}
 }
 
@@ -38,11 +38,11 @@ func NewIndexRepoJob(id string) *Job {
 func NewIndexRepoJobHandler(j *Job) (handler *IndexRepoJobHandler, err error) {
 	if len(j.SrcRepo) == 0 {
 		err = fmt.Errorf("job is missing a source repo")
-        return
+		return
 	}
 	h := IndexRepoJobHandler(*j)
-    handler = &h
-    return
+	handler = &h
+	return
 }
 
 // Execute will index the given repository if possible
@@ -61,5 +61,5 @@ func (j *IndexRepoJobHandler) Describe() string {
 
 // IsSerial returns true if a job should not be run alongside other jobs
 func (J *IndexRepoJobHandler) IsSerial() bool {
-    return true
+	return true
 }

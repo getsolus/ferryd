@@ -30,7 +30,7 @@ type TrimObsoleteJobHandler Job
 func NewTrimObsoleteJob(id string) *Job {
 	return &Job{
 		Type:    TrimObsolete,
-        SrcRepo: id,
+		SrcRepo: id,
 	}
 }
 
@@ -38,11 +38,11 @@ func NewTrimObsoleteJob(id string) *Job {
 func NewTrimObsoleteJobHandler(j *Job) (handler *TrimObsoleteJobHandler, err error) {
 	if len(j.SrcRepo) == 0 {
 		err = fmt.Errorf("job is missing a source repository")
-        return
+		return
 	}
 	h := TrimObsoleteJobHandler(*j)
-    handler = &h
-    return
+	handler = &h
+	return
 }
 
 // Execute will try to remove any excessive packages marked as Obsolete
@@ -61,5 +61,5 @@ func (j *TrimObsoleteJobHandler) Describe() string {
 
 // IsSerial returns true if a job should not be run alongside other jobs
 func (J *TrimObsoleteJobHandler) IsSerial() bool {
-    return true
+	return true
 }

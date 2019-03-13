@@ -54,10 +54,10 @@ func NewProcessor(m *core.Manager, store *JobStore, njobs int) *Processor {
 		oldJobs = runtime.GOMAXPROCS(oldJobs)
 	}
 
-    log.Infoln("Set runtime job limits:")
-    log.Infof("\tMax Jobs:            %d\n", njobs)
-    log.Infof("\tGo Max Procs:        %d\n", oldJobs)
-    log.Infof("\tRequested Max Procs: %d\n", nJobs + 5)
+	log.Infoln("Set runtime job limits:")
+	log.Infof("\tMax Jobs:            %d\n", njobs)
+	log.Infof("\tGo Max Procs:        %d\n", oldJobs)
+	log.Infof("\tRequested Max Procs: %d\n", nJobs+5)
 
 	ret := &Processor{
 		manager: m,
@@ -105,5 +105,5 @@ func (j *Processor) Begin() {
 // PushJob will automatically determine which queue to push a job to and place
 // it there for immediate execution
 func (j *Processor) PushJob(job *Job) {
-    j.store.PushJob(job)
+	j.store.PushJob(job)
 }

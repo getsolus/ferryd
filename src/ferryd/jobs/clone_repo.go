@@ -23,8 +23,8 @@ import (
 )
 
 const (
-    CloneTip  = 0
-    CloneFull = 1
+	CloneTip  = 0
+	CloneFull = 1
 )
 
 // CloneRepoJobHandler is responsible for cloning an existing repository
@@ -38,9 +38,9 @@ func NewCloneRepoJob(srcRepo, newRepo string, cloneAll bool) *Job {
 	}
 	return &Job{
 		Type:    CloneRepo,
-        SrcRepo: srcRepo,
-        DstRepo: newRepo,
-        Mode:    mode,
+		SrcRepo: srcRepo,
+		DstRepo: newRepo,
+		Mode:    mode,
 	}
 }
 
@@ -48,19 +48,19 @@ func NewCloneRepoJob(srcRepo, newRepo string, cloneAll bool) *Job {
 func NewCloneRepoJobHandler(j *Job) (handler *CloneRepoJobHandler, err error) {
 	if len(j.SrcRepo) == 0 {
 		err = fmt.Errorf("job has no source repo")
-        return
+		return
 	}
 	if len(j.DstRepo) == 0 {
 		err = fmt.Errorf("job has no destination repo")
-        return
+		return
 	}
 	if j.Mode < CloneTip || j.Mode > CloneFull {
 		err = fmt.Errorf("job has invalid mode: %d", j.Mode)
-        return
+		return
 	}
 	h := CloneRepoJobHandler(*j)
-    handler = &h
-    return
+	handler = &h
+	return
 }
 
 // Execute attempt to clone the repoID to newClone, optionally at full depth
@@ -73,7 +73,7 @@ func (j *CloneRepoJobHandler) Execute(_ *Processor, manager *core.Manager) error
 	if err := manager.CloneRepo(j.SrcRepo, j.DstRepo, fullClone); err != nil {
 		return err
 	}
-    log.Goodf("Successfully cloned repository '%s' into '%s'\n", j.SrcRepo, j.DstRepo)
+	log.Goodf("Successfully cloned repository '%s' into '%s'\n", j.SrcRepo, j.DstRepo)
 	return nil
 }
 
@@ -84,5 +84,5 @@ func (j *CloneRepoJobHandler) Describe() string {
 
 // IsSerial returns true if a job should not be run alongside other jobs
 func (J *CloneRepoJobHandler) IsSerial() bool {
-    return true
+	return true
 }

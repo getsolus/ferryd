@@ -40,7 +40,6 @@ type JobEntry struct {
 	failure error
 }
 
-
 // Serialize uses Gob encoding to convert a JobEntry to a byte slice
 func (j *JobEntry) Serialize() (result []byte, err error) {
 	buff := &bytes.Buffer{}

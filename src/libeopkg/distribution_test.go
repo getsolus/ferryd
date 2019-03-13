@@ -21,7 +21,7 @@ import (
 )
 
 const (
-    notADist     = "testdata/not.xml"
+	notADist     = "testdata/not.xml"
 	distTestFile = "testdata/distribution.xml"
 )
 
@@ -58,11 +58,11 @@ func TestDistribution(t *testing.T) {
 	if dist.Obsoletes[0] != "pcre" {
 		t.Fatalf("Invalid first obsolete: %s", dist.Obsoletes[0])
 	}
-    for _, pkg := range dist.Obsoletes {
-        if !dist.IsObsolete(pkg) {
-            t.Errorf("Package %s not marked as obsolete", pkg)
-        }
-    }
+	for _, pkg := range dist.Obsoletes {
+		if !dist.IsObsolete(pkg) {
+			t.Errorf("Package %s not marked as obsolete", pkg)
+		}
+	}
 }
 
 func TestDistributionMissing(t *testing.T) {

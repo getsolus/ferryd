@@ -25,8 +25,8 @@ import (
 const (
 	deltaOldPkg = "testdata/delta/nano-2.8.5-75-1-x86_64.eopkg"
 	deltaNewPkg = "testdata/delta/nano-2.8.6-76-1-x86_64.eopkg"
-    notAFile    = "testdata/bob"
-    notAPkg     = "testdata/not.xml"
+	notAFile    = "testdata/bob"
+	notAPkg     = "testdata/not.xml"
 )
 
 func TestBasicDelta(t *testing.T) {

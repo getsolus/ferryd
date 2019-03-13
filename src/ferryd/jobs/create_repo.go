@@ -30,19 +30,19 @@ type CreateRepoJobHandler Job
 func NewCreateRepoJob(id string) *Job {
 	return &Job{
 		Type:    CreateRepo,
-        DstRepo: id,
+		DstRepo: id,
 	}
 }
 
 // NewCreateRepoJobHandler will create a job handler for the input job and ensure it validates
 func NewCreateRepoJobHandler(j *Job) (handler *CreateRepoJobHandler, err error) {
-    if len(j.DstRepo) == 0 {
-        err = fmt.Errorf("job is missing a destination repo")
-        return
-    }
+	if len(j.DstRepo) == 0 {
+		err = fmt.Errorf("job is missing a destination repo")
+		return
+	}
 	h := CreateRepoJobHandler(*j)
-    handler = &h
-    return
+	handler = &h
+	return
 }
 
 // Execute will construct a new repository if possible
@@ -61,5 +61,5 @@ func (j *CreateRepoJobHandler) Describe() string {
 
 // IsSerial returns true if a job should not be run alongside other jobs
 func (J *CreateRepoJobHandler) IsSerial() bool {
-    return true
+	return true
 }

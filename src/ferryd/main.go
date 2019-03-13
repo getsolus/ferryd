@@ -96,9 +96,6 @@ func mainLoop() {
 		return
 	}
 	if err := srv.Serve(); err != nil {
-		log.WithFields(log.Fields{
-			"socket": srv.socketPath,
-			"error":  err,
 		log.Errorf("Error in serving on socket '%s', message: '%s'\n", srv.socketPath, err.Error())
 		fmt.Fprintf(os.Stderr, "Fatal error in runtime execution, check logs: %v\n", err)
 		return

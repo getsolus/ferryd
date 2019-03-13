@@ -30,7 +30,7 @@ type DeltaRepoJobHandler Job
 func NewDeltaRepoJob(id string) *Job {
 	return &Job{
 		Type:    DeltaRepo,
-        SrcRepo: id,
+		SrcRepo: id,
 	}
 }
 
@@ -38,11 +38,11 @@ func NewDeltaRepoJob(id string) *Job {
 func NewDeltaRepoJobHandler(j *Job) (handler *DeltaRepoJobHandler, err error) {
 	if len(j.SrcRepo) == 0 {
 		err = fmt.Errorf("job is missing a source repo")
-        return
+		return
 	}
 	h := DeltaRepoJobHandler(*j)
-    handler = &h
-    return
+	handler = &h
+	return
 }
 
 // Execute will delta the given repository if possible
@@ -79,5 +79,5 @@ func (j *DeltaRepoJobHandler) Describe() string {
 
 // IsSerial returns true if a job should not be run alongside other jobs
 func (J *DeltaRepoJobHandler) IsSerial() bool {
-    return true
+	return true
 }

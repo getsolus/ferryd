@@ -29,8 +29,8 @@ type TrimPackagesJobHandler Job
 func NewTrimPackagesJob(repoID string, maxKeep int) *Job {
 	return &Job{
 		Type:    TrimPackages,
-        SrcRepo: repoID,
-        MaxKeep: maxKeep,
+		SrcRepo: repoID,
+		MaxKeep: maxKeep,
 	}
 }
 
@@ -38,15 +38,15 @@ func NewTrimPackagesJob(repoID string, maxKeep int) *Job {
 func NewTrimPackagesJobHandler(j *Job) (handler *TrimPackagesJobHandler, err error) {
 	if len(j.SrcRepo) == 0 {
 		err = fmt.Errorf("job is missing a source repository")
-        return
+		return
 	}
 	if j.MaxKeep < 1 {
 		err = fmt.Errorf("must keep at least one release of a package")
-        return
+		return
 	}
 	h := TrimPackagesJobHandler(*j)
-    handler = &h
-    return
+	handler = &h
+	return
 }
 
 // Execute will attempt removal of excessive packages in the index
@@ -65,6 +65,5 @@ func (j *TrimPackagesJobHandler) Describe() string {
 
 // IsSerial returns true if a job should not be run alongside other jobs
 func (J *TrimPackagesJobHandler) IsSerial() bool {
-    return true
+	return true
 }
-

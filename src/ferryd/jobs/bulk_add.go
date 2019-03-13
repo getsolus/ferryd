@@ -30,24 +30,24 @@ type BulkAddJobHandler Job
 func NewBulkAddJob(repo string, srcs []string) *Job {
 	return &Job{
 		Type:    BulkAdd,
-        SrcRepo: repo,
-        Sources: srcs,
+		SrcRepo: repo,
+		Sources: srcs,
 	}
 }
 
 // NewBulkAddJobHandler will create a job handler for the input job and ensure it validates
 func NewBulkAddJobHandler(j *Job) (handler *BulkAddJobHandler, err error) {
-    if len(j.SrcRepo) == 0 {
+	if len(j.SrcRepo) == 0 {
 		err = fmt.Errorf("job has no repo specified")
-        return
-    }
-    if len(j.Sources) == 0 {
+		return
+	}
+	if len(j.Sources) == 0 {
 		err = fmt.Errorf("job has no sources specified")
-        return
-    }
-    h := BulkAddJobHandler(*j)
-    handler = &h
-    return
+		return
+	}
+	h := BulkAddJobHandler(*j)
+	handler = &h
+	return
 }
 
 // Execute will attempt the mass-import of packages passed to the job
@@ -66,5 +66,5 @@ func (j *BulkAddJobHandler) Describe() string {
 
 // IsSerial returns true if a job should not be run alongside other jobs
 func (J *BulkAddJobHandler) IsSerial() bool {
-    return true
+	return true
 }

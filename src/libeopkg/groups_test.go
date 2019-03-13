@@ -21,7 +21,7 @@ import (
 )
 
 const (
-    notAGroup     = "testdata/not.xml"
+	notAGroup     = "testdata/not.xml"
 	groupTestFile = "testdata/groups.xml"
 )
 
