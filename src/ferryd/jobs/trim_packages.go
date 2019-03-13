@@ -19,7 +19,7 @@ package jobs
 import (
 	"ferryd/core"
 	"fmt"
-	log "github.com/sirupsen/logrus"
+	log "github.com/DataDrake/waterlog"
 )
 
 // TrimPackagesJobHandler is responsible for removing packages by identifiers
@@ -54,10 +54,7 @@ func (j *TrimPackagesJobHandler) Execute(_ *Processor, manager *core.Manager) er
 	if err := manager.TrimPackages(j.SrcRepo, j.MaxKeep); err != nil {
 		return err
 	}
-	log.WithFields(log.Fields{
-		"repo":    j.SrcRepo,
-		"maxKeep": j.MaxKeep,
-	}).Info("Trimmed packages in repository")
+	log.Goodf("Successfully trimmed packages in repo '%s' with max keep '%d'\n", j.SrcRepo, j.MaxKeep)
 	return nil
 }
 

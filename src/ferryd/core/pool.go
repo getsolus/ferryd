@@ -18,7 +18,7 @@ package core
 
 import (
 	"fmt"
-	log "github.com/sirupsen/logrus"
+	log "github.com/DataDrake/waterlog"
 	"libdb"
 	"libeopkg"
 	"os"
@@ -267,18 +267,12 @@ func (p *Pool) UnrefEntry(db libdb.Database, id string) error {
 	// RefCount is 0 so we now need to delete this entry
 	pkgPath := filepath.Join(p.poolDir, entry.Meta.GetPathComponent(), id)
 	if err := os.Remove(pkgPath); err != nil {
-		log.WithFields(log.Fields{
-			"path":  pkgPath,
-			"error": err,
-		}).Warning("Failed to remove package")
+		log.Errorf("Failed to remove package '%s', reason: '%s'\n", pkgPath, err.Error())
 	}
 
 	// Warn if unable to delete parents
 	if err := RemovePackageParents(pkgPath); err != nil {
-		log.WithFields(log.Fields{
-			"path":  pkgPath,
-			"error": err,
-		}).Warning("Failed to remove package parents")
+		log.Errorf("Failed to remove package '%s' parents, reason: '%s'\n", pkgPath, err.Error())
 	}
 
 	// Now remove from DB

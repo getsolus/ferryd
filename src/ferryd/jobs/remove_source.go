@@ -19,7 +19,7 @@ package jobs
 import (
 	"ferryd/core"
 	"fmt"
-	log "github.com/sirupsen/logrus"
+	log "github.com/DataDrake/waterlog"
 )
 
 // RemoveSourceJobHandler is responsible for removing packages by identifiers
@@ -59,11 +59,7 @@ func (j *RemoveSourceJobHandler) Execute(_ *Processor, manager *core.Manager) er
 	if err := manager.RemoveSource(j.SrcRepo, j.Sources[0], j.Release); err != nil {
 		return err
 	}
-	log.WithFields(log.Fields{
-		"repo":          j.SrcRepo,
-		"source":        j.Sources[0],
-		"releaseNumber": j.Release,
-	}).Info("Removed source")
+	log.Goodf("Successfully removed release '%d' of source '%s' from repo '%s'\n", j.Release, j.Sources[0], j.SrcRepo)
 	return nil
 }
 

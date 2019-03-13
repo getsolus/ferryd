@@ -18,16 +18,14 @@ package main
 
 import (
 	"ferryctl/cmd"
-	log "github.com/sirupsen/logrus"
+	log "github.com/DataDrake/waterlog"
+	"github.com/DataDrake/waterlog/format"
 	"os"
 )
 
 // Set up the main logger formatting used in USpin
 func init() {
-	form := &log.TextFormatter{}
-	form.FullTimestamp = true
-	form.TimestampFormat = "15:04:05"
-	log.SetFormatter(form)
+	log.SetFormat(format.Partial)
 }
 
 func main() {

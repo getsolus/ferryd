@@ -19,7 +19,7 @@ package core
 import (
 	"errors"
 	"fmt"
-	log "github.com/sirupsen/logrus"
+	log "github.com/DataDrake/waterlog"
 	"libdb"
 	"libeopkg"
 	"os"
@@ -300,11 +300,7 @@ func (r *RepositoryManager) DeleteRepo(db libdb.Database, pool *Pool, id string)
 		}
 		// Just continue, warn in the log - do what we can here
 		if err := os.RemoveAll(p); err != nil {
-			log.WithFields(log.Fields{
-				"repo":  id,
-				"path":  p,
-				"error": err,
-			}).Warning("Failed to remove repository path")
+			log.Errorf("Failed to remove repository '%s', at path '%s', reason: '%s'\n", id, p, err.Error())
 		}
 	}
 
@@ -352,10 +348,7 @@ func (r *Repository) RefDelta(db libdb.Database, pool *Pool, deltaID string) err
 	// Check we don't know about this delta already
 	for _, id := range entry.Deltas {
 		if id == deltaID {
-			log.WithFields(log.Fields{
-				"id":   id,
-				"repo": r.ID,
-			}).Info("Skipping already included delta")
+			log.Infof("Skipping already included delta '%v' in repo '%s'", id, r.ID)
 			return nil
 		}
 	}
@@ -416,10 +409,7 @@ func (r *Repository) AddLocalDelta(db libdb.Database, pool *Pool, pkg *libeopkg.
 	// Check we don't know about this delta already
 	for _, id := range entry.Deltas {
 		if id == pkg.ID {
-			log.WithFields(log.Fields{
-				"id":   id,
-				"repo": r.ID,
-			}).Info("Skipping already included delta")
+			log.Infof("Skipping already included delta '%v' in repo '%s'\n", id, r.ID)
 			return nil
 		}
 	}
@@ -462,20 +452,12 @@ func (r *Repository) removePackageInternal(db libdb.Database, pool *Pool, id str
 
 	// If we cant unlink the file it aint getting out of the DB either...
 	if err = os.Remove(pkgTarget); err != nil {
-		log.WithFields(log.Fields{
-			"repo":  r.ID,
-			"id":    id,
-			"error": err,
-		}).Warning("Failed to remove target for package")
+		log.Errorf("Failed to remove target '%s' for package '%s' in repo '%s', reason: '%s'\n", pkgTarget, id, r.ID, err.Error())
 	}
 
 	// This is a "we tried but oh noes, not fatal.
 	if err = RemovePackageParents(pkgTarget); err != nil {
-		log.WithFields(log.Fields{
-			"repo":  r.ID,
-			"id":    id,
-			"error": err,
-		}).Warning("Failed to remove parent structure for package")
+		log.Errorf("Failed to remove parent paths for package '%s' in repo '%s', reason: '%s'\n", id, r.ID, err.Error())
 	}
 
 	// Tell the pool we no longer need this guy
@@ -635,11 +617,7 @@ func (r *Repository) buildSaneEntry(db libdb.Database, pool *Pool, newPkg *libeo
 			if newPkg.GetRelease() > pkgAvail.Meta.GetRelease() {
 				repoEntry.Published = newID
 			} else if newPkg.GetRelease() == pkgAvail.Meta.GetRelease() && pkgAvail.Name != newID {
-				log.WithFields(log.Fields{
-					"existing":   pkgAvail.Name,
-					"newPackage": newID,
-					"repo":       r.ID,
-				}).Error("Duplicate release number detected. Fix immediately!")
+				log.Errorf("Duplicate release '%d' detected for package '%s' in repo '%s'. Fix immediately!\n", newPkg.GetRelease(), newID, r.ID)
 			}
 		} else {
 			repoEntry.Published = newID
@@ -649,10 +627,7 @@ func (r *Repository) buildSaneEntry(db libdb.Database, pool *Pool, newPkg *libeo
 	// Check if we've already indexed it, non-fatal
 	for _, id := range repoEntry.Available {
 		if id == newID {
-			log.WithFields(log.Fields{
-				"id":   id,
-				"repo": r.ID,
-			}).Info("Skipping already included package")
+			log.Infof("Skipping already included package '%s' in repo '%s'\n", id, r.ID)
 			return nil
 		}
 	}
@@ -1179,10 +1154,7 @@ func (r *Repository) TrimObsolete(db libdb.Database, pool *Pool) error {
 			if r.dist != nil && r.dist.IsObsolete(nom) {
 				if nom != entry.Name {
 					// Scream really loudly, but remove it because its "just" dbginfo.
-					log.WithFields(log.Fields{
-						"repo": r.ID,
-						"name": poolEntry.Meta.Name,
-					}).Error("Abandoned obsolete package. Removing!")
+					log.Errorf("Abandoned obsolete package '%s' in repo '%s'. Removing!", poolEntry.Meta.Name, r.ID)
 					removalIDs = append(removalIDs, id)
 				}
 				return nil
@@ -1198,10 +1170,7 @@ func (r *Repository) TrimObsolete(db libdb.Database, pool *Pool) error {
 
 	// Now attempt to unref every one of the packages marked as obsolete
 	for _, id := range removalIDs {
-		log.WithFields(log.Fields{
-			"repo": r.ID,
-			"id":   id,
-		}).Info("Removing obsolete package")
+		log.Infof("Removing obsolete package '%s' in repo '%s'\n", id, r.ID)
 		if err := r.UnrefPackage(db, pool, id); err != nil {
 			return err
 		}
@@ -1265,10 +1234,7 @@ func (r *Repository) TrimPackages(db libdb.Database, pool *Pool, maxKeep int) er
 
 	// Now attempt to unref every one of the packages marked as obsolete
 	for _, id := range removalIDs {
-		log.WithFields(log.Fields{
-			"repo": r.ID,
-			"id":   id,
-		}).Info("Trimming old package")
+		log.Infof("Trimming old package '%s' from repo '%s'\n", id, r.ID)
 		if err := r.UnrefPackage(db, pool, id); err != nil {
 			return err
 		}

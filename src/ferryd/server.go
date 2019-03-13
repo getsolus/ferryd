@@ -24,7 +24,7 @@ import (
 	"github.com/coreos/go-systemd/daemon"
 	"github.com/julienschmidt/httprouter"
 	"github.com/radu-munteanu/fsnotify"
-	log "github.com/sirupsen/logrus"
+	log "github.com/DataDrake/waterlog"
 	"net"
 	"net/http"
 	"os"
@@ -123,7 +123,7 @@ func (s *Server) killHandler() {
 	signal.Notify(ch, os.Interrupt, syscall.SIGTERM)
 	go func() {
 		<-ch
-		log.Warning("ferryd shutting down")
+		log.Infoln("ferryd shutting down")
 		s.Close()
 		// Stop any mainLoop defers here
 		os.Exit(1)

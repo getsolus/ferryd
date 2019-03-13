@@ -18,7 +18,7 @@ package jobs
 
 import (
 	"ferryd/core"
-	log "github.com/sirupsen/logrus"
+	log "github.com/DataDrake/waterlog"
 	"math/rand"
 	"sync"
 	"time"
@@ -123,10 +123,7 @@ func (w *Worker) Start() {
 			// Report the error
 			if err != nil {
 				if err != ErrEmptyQueue {
-					log.WithFields(log.Fields{
-						"error": err,
-						"async": !w.sequential,
-					}).Error("Failed to grab a work queue item")
+					log.Errorf("Failed to grab a work queue item, reason: '%s'\n", err.Error())
 				}
 				w.setTime()
 				continue
@@ -143,12 +140,7 @@ func (w *Worker) Start() {
 
 			// Report failure in retiring the job
 			if err != nil {
-				log.WithFields(log.Fields{
-					"error": err,
-					"id":    job.GetID(),
-					"type":  job.Type,
-					"async": !w.sequential,
-				}).Error("Error in retiring job")
+				log.Error("Error in retiring job '%v' of type '%v', reason: '%s'\n", job.GetID(), job.Type, err.Error())
 			}
 
 			// We had a job, so we must reset the timeout period
@@ -172,31 +164,22 @@ func (w *Worker) setTime() {
 func (w *Worker) processJob(job *JobEntry) {
 	handler, err := NewJobHandler(job)
 
-	fields := log.Fields{
-		"id":    job.GetID(),
-		"type":  job.Type,
-		"async": !w.sequential,
-	}
-
 	if err != nil {
-		fields["error"] = err
 		job.failure = err
-		log.WithFields(fields).Error("No known job handler, cannot continue with job")
+		log.Errorf("No known job handler, cannot continue with job '%v'\n", job.GetID())
 		return
 	}
 
 	// Safely have a handler now
 	job.description = handler.Describe()
-	fields["description"] = job.description
 
 	// Try to execute it, report the error
 	if err := handler.Execute(w.processor, w.manager); err != nil {
-		fields["error"] = err
 		job.failure = err
-		log.WithFields(fields).Error("Job failed with error")
+		log.Error("Job '%v' failed with error: '%s'\n", job.GetID(), err.Error())
 		return
 	}
 
 	// Succeeded
-	log.WithFields(fields).Info("Job completed successfully")
+	log.Infof("Job '%v' completed successfully", job.GetID())
 }

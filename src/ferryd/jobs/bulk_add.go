@@ -19,7 +19,7 @@ package jobs
 import (
 	"ferryd/core"
 	"fmt"
-	log "github.com/sirupsen/logrus"
+	log "github.com/DataDrake/waterlog"
 )
 
 // BulkAddJobHandler is responsible for indexing repositories and should only
@@ -55,7 +55,7 @@ func (j *BulkAddJobHandler) Execute(_ *Processor, manager *core.Manager) error {
 	if err := manager.AddPackages(j.SrcRepo, j.Sources, false); err != nil {
 		return err
 	}
-	log.WithFields(log.Fields{"repo": j.SrcRepo}).Info("Added packages to repository")
+	log.Infof("Added packages '%v' to repository '%s'\n", j.Sources, j.SrcRepo)
 	return nil
 }
 

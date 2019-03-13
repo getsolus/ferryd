@@ -19,7 +19,7 @@ package jobs
 import (
 	"ferryd/core"
 	"fmt"
-	log "github.com/sirupsen/logrus"
+	log "github.com/DataDrake/waterlog"
 	"libeopkg"
 	"os"
 	"sort"
@@ -74,10 +74,7 @@ func (j *DeltaJobHandler) executeInternal(manager *core.Manager) (nDeltas int, e
 
 	// Need at least 2 packages for a delta op.
 	if len(pkgs) < 2 {
-		log.WithFields(log.Fields{
-			"repo":    j.SrcRepo,
-			"package": j.Sources[0],
-		}).Debug("No delta is possible")
+		log.Debugf("No delta is possible for package '%s' in repo '%s'\n", j.Sources[0], j.SrcRepo)
 		return
 	}
 
@@ -87,11 +84,6 @@ func (j *DeltaJobHandler) executeInternal(manager *core.Manager) (nDeltas int, e
 	// Process all potential deltas
 	for i := 0; i < len(pkgs)-1; i++ {
 		old := pkgs[i]
-		fields := log.Fields{
-			"old":  old.GetID(),
-			"new":  tip.GetID(),
-			"repo": j.SrcRepo,
-		}
 
 		deltaID := libeopkg.ComputeDeltaName(old, tip)
 
@@ -123,48 +115,43 @@ func (j *DeltaJobHandler) executeInternal(manager *core.Manager) (nDeltas int, e
 		entry, e := manager.GetPoolEntry(deltaID)
 		if entry != nil && e == nil {
 			if e := manager.RefDelta(j.SrcRepo, deltaID); e != nil {
-				fields["error"] = e
-				log.WithFields(fields).Error("Failed to ref existing delta")
+				log.Errorf("Failed to ref existing delta, id: %v\n", deltaID)
                 err = e
 				return
 			}
-			log.WithFields(fields).Info("Reused existing delta")
+			log.Debugf("Reused existing delta, id: %v\n", deltaID)
 			continue
 		}
 
 		deltaPath, e := manager.CreateDelta(j.SrcRepo, old, tip)
 		if e != nil {
-			fields["error"] = e
 			if err == libeopkg.ErrDeltaPointless {
 				// Non-fatal, ask the manager to record this delta as a no-go
-				log.WithFields(fields).Info("Delta not possible, marked permanently")
+				log.Infof("Delta not possible, marked permanently: %v\n", deltaID)
 				if e = manager.MarkDeltaFailed(deltaID, mapping); e != nil {
-					fields["error"] = e
-					log.WithFields(fields).Error("Failed to mark delta failure")
+					log.Errorf("Failed to mark delta failure, id: %v\n", deltaID)
                     err = e
                     return
 				}
 				continue
 			} else if err == libeopkg.ErrMismatchedDelta {
-				log.WithFields(fields).Error("Package delta candidates do not match")
+				log.Errorln("Package delta candidates do not match")
 				continue
 			} else {
 				// Genuinely an issue now
-				log.WithFields(fields).Error("Error in delta production")
+				log.Errorf("Error in delta production, message: '%s'\n", e.Error())
 				return
 			}
 		}
 
 		nDeltas++
 
-		fields["path"] = deltaPath
 		// Produced a delta!
-		log.WithFields(fields).Info("Successfully producing delta package")
+		log.Infof("Successfully producing delta package, path: '%s'\n", deltaPath)
 
 		// Let's get it included now.
 		if err = j.includeDelta(manager, mapping, deltaPath); err != nil {
-			fields["error"] = err
-			log.WithFields(fields).Error("Failed to include delta package")
+			log.Error("Failed to include delta package, reason: '%s'\n", err.Error())
 			return
 		}
 	}
@@ -199,10 +186,7 @@ func (j *DeltaJobHandler) Execute(_ *Processor, manager *core.Manager) error {
 	}
 
 	if err := manager.Index(j.SrcRepo); err != nil {
-		log.WithFields(log.Fields{
-			"repo":  j.SrcRepo,
-			"error": err,
-		}).Error("Failed to index repository")
+		log.Errorf("Failed to index repository '%s', reason: '%s'\n", j.SrcRepo, err.Error())
 		return err
 	}
 

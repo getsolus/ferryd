@@ -19,7 +19,7 @@ package jobs
 import (
 	"ferryd/core"
 	"fmt"
-	log "github.com/sirupsen/logrus"
+	log "github.com/DataDrake/waterlog"
 	"os"
 	"path/filepath"
 )
@@ -73,10 +73,7 @@ func (j *TransitJobHandler) Execute(jproc *Processor, manager *core.Manager) err
 		return err
 	}
 
-	log.WithFields(log.Fields{
-		"target": repo,
-		"id":     tram.ID(),
-	}).Info("Successfully processed manifest upload")
+	log.Infof("Successfully processed manifest '%v' upload to repo '%s'\n", tram.ID(), repo)
 
 	// Append the manifest path because now we'll want to delete these
 	pkgs = append(pkgs, j.path)
@@ -86,11 +83,7 @@ func (j *TransitJobHandler) Execute(jproc *Processor, manager *core.Manager) err
 			continue
 		}
 		if err := os.Remove(p); err != nil {
-			log.WithFields(log.Fields{
-				"file":  p,
-				"id":    tram.ID(),
-				"error": err,
-			}).Error("Failed to remove manifest file upload")
+			log.Errorf("Failed to remove manifest file '%s', reason: '%s'\n", p, err.Error())
 		}
 	}
 

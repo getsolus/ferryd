@@ -19,7 +19,7 @@ package jobs
 import (
 	"ferryd/core"
 	"fmt"
-	log "github.com/sirupsen/logrus"
+	log "github.com/DataDrake/waterlog"
 )
 
 // PullRepoJobHandler is responsible for cloning an existing repository
@@ -53,18 +53,11 @@ func NewPullRepoJobHandler(j *Job) (handler *PullRepoJobHandler, err error) {
 func (j *PullRepoJobHandler) Execute(jproc *Processor, manager *core.Manager) error {
 	changedNames, err := manager.PullRepo(j.SrcRepo, j.DstRepo)
 	if err != nil {
-		log.WithFields(log.Fields{
-			"source": j.SrcRepo,
-			"target": j.DstRepo,
-			"error":  err,
-		}).Warning("Failed to pull repository")
+		log.Warnf("Failed to pull repo '%s' into '%s', reason: '%s'\n", j.SrcRepo, j.DstRepo, err.Error())
 		return err
 	}
 
-	log.WithFields(log.Fields{
-		"source": j.SrcRepo,
-		"target": j.DstRepo,
-	}).Info("Pulled repository")
+	log.Goodf("Succcessfully pulled repo '%s' into '%s'\n", j.SrcRepo, j.DstRepo)
 
 	// Create delta job in this repository on the changed names
 	// Don't cause indexing because it causes noise

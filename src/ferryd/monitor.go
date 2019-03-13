@@ -20,7 +20,7 @@ import (
 	"ferryd/core"
 	"ferryd/jobs"
 	"github.com/radu-munteanu/fsnotify"
-	log "github.com/sirupsen/logrus"
+	log "github.com/DataDrake/waterlog"
 	"os"
 	"path/filepath"
 	"strings"
@@ -86,8 +86,6 @@ func (s *Server) processTransitManifest(name string) {
 		return
 	}
 
-	log.WithFields(log.Fields{
-		"id": name,
-	}).Info("Received transit manifest upload")
+	log.Infof("Received transit manifest upload: '%s'\n", name)
 	s.jproc.PushJob(jobs.NewTransitJob(fullpath))
 }

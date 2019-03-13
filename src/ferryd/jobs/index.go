@@ -19,7 +19,7 @@ package jobs
 import (
 	"ferryd/core"
 	"fmt"
-	log "github.com/sirupsen/logrus"
+	log "github.com/DataDrake/waterlog"
 )
 
 // IndexRepoJobHandler is responsible for indexing repositories and should only
@@ -50,7 +50,7 @@ func (j *IndexRepoJobHandler) Execute(_ *Processor, manager *core.Manager) error
 	if err := manager.Index(j.SrcRepo); err != nil {
 		return err
 	}
-	log.WithFields(log.Fields{"repo": j.SrcRepo}).Info("Indexed repository")
+	log.Goodf("Successfully indexed rep '%s'\n", j.SrcRepo)
 	return nil
 }
 

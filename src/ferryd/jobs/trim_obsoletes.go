@@ -19,7 +19,7 @@ package jobs
 import (
 	"ferryd/core"
 	"fmt"
-	log "github.com/sirupsen/logrus"
+	log "github.com/DataDrake/waterlog"
 )
 
 // TrimObsoleteJobHandler is responsible for indexing repositories and should only
@@ -50,7 +50,7 @@ func (j *TrimObsoleteJobHandler) Execute(_ *Processor, manager *core.Manager) er
 	if err := manager.TrimObsolete(j.SrcRepo); err != nil {
 		return err
 	}
-	log.WithFields(log.Fields{"repo": j.SrcRepo}).Info("Trimmed obsoletes in repository")
+	log.Infof("Trimmed obsoletes in repository '%s'\n", j.SrcRepo)
 	return nil
 }
 

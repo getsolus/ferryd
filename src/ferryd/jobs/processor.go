@@ -18,7 +18,7 @@ package jobs
 
 import (
 	"ferryd/core"
-	log "github.com/sirupsen/logrus"
+	log "github.com/DataDrake/waterlog"
 	"runtime"
 	"sync"
 )
@@ -54,11 +54,10 @@ func NewProcessor(m *core.Manager, store *JobStore, njobs int) *Processor {
 		oldJobs = runtime.GOMAXPROCS(oldJobs)
 	}
 
-	log.WithFields(log.Fields{
-		"jobs":        njobs,
-		"oldMaxProcs": oldJobs,
-		"maxProcs":    njobs + 5,
-	}).Info("Set runtime job limits")
+    log.Infoln("Set runtime job limits:")
+    log.Infof("\tMax Jobs:            %d\n", njobs)
+    log.Infof("\tGo Max Procs:        %d\n", oldJobs)
+    log.Infof("\tRequested Max Procs: %d\n", nJobs + 5)
 
 	ret := &Processor{
 		manager: m,
@@ -106,9 +105,5 @@ func (j *Processor) Begin() {
 // PushJob will automatically determine which queue to push a job to and place
 // it there for immediate execution
 func (j *Processor) PushJob(job *Job) {
-	if job.IsSerial {
-		j.store.PushSequentialJob(job)
-	} else {
-		j.store.PushAsyncJob(job)
-	}
+    j.store.PushJob(job)
 }

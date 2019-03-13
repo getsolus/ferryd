@@ -21,7 +21,7 @@ import (
 	"encoding/json"
 	"ferryd/jobs"
 	"github.com/julienschmidt/httprouter"
-	log "github.com/sirupsen/logrus"
+	log "github.com/DataDrake/waterlog"
 	"libferry"
 	"net/http"
 	"runtime"

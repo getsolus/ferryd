@@ -19,7 +19,7 @@ package jobs
 import (
 	"ferryd/core"
 	"fmt"
-	log "github.com/sirupsen/logrus"
+	log "github.com/DataDrake/waterlog"
 )
 
 // CreateRepoJobHandler is responsible for creating new repositories and should only
@@ -50,7 +50,7 @@ func (j *CreateRepoJobHandler) Execute(_ *Processor, manager *core.Manager) erro
 	if err := manager.CreateRepo(j.DstRepo); err != nil {
 		return err
 	}
-	log.WithFields(log.Fields{"repo": j.DstRepo}).Info("Created repository")
+	log.Goodf("Successfully created repo '%s'\n", j.DstRepo)
 	return nil
 }
 

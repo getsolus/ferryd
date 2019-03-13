@@ -19,7 +19,7 @@ package jobs
 import (
 	"ferryd/core"
 	"fmt"
-	log "github.com/sirupsen/logrus"
+	log "github.com/DataDrake/waterlog"
 )
 
 const (
@@ -73,10 +73,7 @@ func (j *CloneRepoJobHandler) Execute(_ *Processor, manager *core.Manager) error
 	if err := manager.CloneRepo(j.SrcRepo, j.DstRepo, fullClone); err != nil {
 		return err
 	}
-	log.WithFields(log.Fields{
-        "srcRepo": j.SrcRepo,
-        "dstRepo": j.DstRepo,
-    }).Info("Cloned repository %s into %s")
+    log.Goodf("Successfully cloned repository '%s' into '%s'\n", j.SrcRepo, j.DstRepo)
 	return nil
 }
 

@@ -19,7 +19,7 @@ package main
 import (
 	"ferryd/core"
 	"fmt"
-	log "github.com/sirupsen/logrus"
+	log "github.com/DataDrake/waterlog"
 	"github.com/spf13/pflag"
 	"os"
 	"path/filepath"
@@ -51,13 +51,7 @@ func mainLoop() {
 	pflag.Parse()
 
 	// We write to a logfile..
-	form := &log.TextFormatter{
-		DisableColors: true,
-	}
-
-	form.FullTimestamp = true
-	form.TimestampFormat = "15:04:05"
-	log.SetFormatter(form)
+	log.SetFormat(format.Partial)
 
 	// Ensure all joined directories are correct
 	b, err := filepath.Abs(baseDir)
@@ -94,13 +88,10 @@ func mainLoop() {
 	log.SetOutput(logFile)
 
 	// Now we can safely use logrus..
-	log.Info("Initialising server")
+	log.Infoln("Initialising server")
 
 	if err := srv.Bind(); err != nil {
-		log.WithFields(log.Fields{
-			"socket": srv.socketPath,
-			"error":  err,
-		}).Error("Error in binding server socket")
+		log.Errorf("Error in binding server socket '%s', message: '%s'\n", srv.socketPath, err.Error())
 		fmt.Fprintf(os.Stderr, "Fatal error in socket bind, check logs: %v\n", err)
 		return
 	}
@@ -108,7 +99,7 @@ func mainLoop() {
 		log.WithFields(log.Fields{
 			"socket": srv.socketPath,
 			"error":  err,
-		}).Error("Error in serving on socket")
+		log.Errorf("Error in serving on socket '%s', message: '%s'\n", srv.socketPath, err.Error())
 		fmt.Fprintf(os.Stderr, "Fatal error in runtime execution, check logs: %v\n", err)
 		return
 	}

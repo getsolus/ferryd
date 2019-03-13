@@ -19,7 +19,7 @@ package jobs
 import (
 	"ferryd/core"
 	"fmt"
-	log "github.com/sirupsen/logrus"
+	log "github.com/DataDrake/waterlog"
 )
 
 // DeltaRepoJobHandler is responsible for delta'ing repositories and should only
@@ -60,9 +60,7 @@ func (j *DeltaRepoJobHandler) Execute(jproc *Processor, manager *core.Manager) e
 
 	// Skip an empty repository
 	if len(packageNames) < 1 {
-		log.WithFields(log.Fields{
-			"repo": j.SrcRepo,
-		}).Warning("Requested delta for empty repository")
+		log.Warnf("Requested delta for empty repository '%s'\n", j.SrcRepo)
 		return nil
 	}
 
