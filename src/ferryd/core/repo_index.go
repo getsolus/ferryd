@@ -62,7 +62,7 @@ func (r *Repository) emitDistribution(encoder *xml.Encoder) error {
 func (r *Repository) emitComponents(encoder *xml.Encoder) error {
 	dpath := filepath.Join(r.assetPath, "components.xml")
 	if !PathExists(dpath) {
-		log.Warnf("No components.xml defined for repo '%s'\r", r.ID)
+		log.Warnf("No components.xml defined for repo '%s'\n", r.ID)
 		return nil
 	}
 	comp, err := libeopkg.NewComponents(dpath)
