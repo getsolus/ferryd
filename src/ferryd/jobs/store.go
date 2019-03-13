@@ -94,7 +94,7 @@ func (s *JobStore) UnclaimRunning() error {
 func (s *JobStore) Push(j *Job) error {
 	s.wLock.Lock()
 	j.Status = New
-	j.Created.Time = time.Now().UTC()
+	j.Created.Scan(time.Now().UTC())
 	_, err := s.db.NamedExec(insertJob, j)
 	if err != nil {
 		err = fmt.Errorf("Failed to add new job, reason: '%s'", err.Error())
@@ -139,7 +139,7 @@ func (s *JobStore) Claim() (j *Job, err error) {
 	}
 	// claim the next job
 	s.next.Status = Running
-	s.next.Started.Time = time.Now().UTC()
+	s.next.Started.Scan(time.Now().UTC())
 	_, err = s.db.NamedExec(markRunning, s.next)
 	if err != nil {
 		goto UNLOCK
@@ -155,7 +155,7 @@ UNLOCK:
 // Retire marks a job as completed and updates the DB record
 func (s *JobStore) Retire(j *Job) error {
 	s.wLock.Lock()
-	j.Finished.Time = time.Now().UTC()
+	j.Finished.Scan(time.Now().UTC())
 	_, err := s.db.NamedExec(markFinished, j)
 	if err != nil {
 		err = fmt.Errorf("Failed to retire job, reason: '%s'", err.Error())
