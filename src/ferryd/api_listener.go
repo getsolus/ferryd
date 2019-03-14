@@ -20,9 +20,9 @@ import (
 	"errors"
 	"ferryd/core"
 	"ferryd/jobs"
+	log "github.com/DataDrake/waterlog"
 	"github.com/coreos/go-systemd/activation"
 	"github.com/julienschmidt/httprouter"
-    log "github.com/DataDrake/waterlog"
 	"net"
 	"net/http"
 	"os"
@@ -98,7 +98,7 @@ func (api *APIListener) Bind() error {
 
 	// Check if we're systemd activated.
 	if v, b := os.LookupEnv("LISTEN_FDS"); b {
-        log.Debugf("LISTEN_FDS: %v\n", v)
+		log.Debugf("LISTEN_FDS: %v\n", v)
 		listeners, err := activation.Listeners()
 		if err != nil {
 			return err
