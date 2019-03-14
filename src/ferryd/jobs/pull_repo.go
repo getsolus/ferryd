@@ -57,7 +57,7 @@ func (j *PullRepoJobHandler) Execute(s *JobStore, manager *core.Manager) error {
 		return err
 	}
 
-	log.Goodf("Succcessfully pulled repo '%s' into '%s'\n", j.SrcRepo, j.DstRepo)
+	log.Goodf("Successfully pulled repo '%s' into '%s'\n", j.SrcRepo, j.DstRepo)
 
 	// Create delta job in this repository on the changed names
 	// Don't cause indexing because it causes noise
