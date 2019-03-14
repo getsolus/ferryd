@@ -206,7 +206,7 @@ func (api *APIListener) PullRepo(w http.ResponseWriter, r *http.Request, p httpr
 		return
 	}
 
-	log.Infof("Pulll of repo '%s' into '%s' requested\n", req.Source, target)
+	log.Infof("Pull of repo '%s' into '%s' requested\n", req.Source, target)
 
 	api.store.Push(jobs.NewPullRepoJob(req.Source, target))
 }
