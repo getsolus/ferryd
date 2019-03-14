@@ -1,6 +1,7 @@
 [Unit]
 Description=ferryd repository management
-After=network.target
+After=network.target ferryd.socket
+Requires=ferryd.socket
 
 [Service]
 Type=notify

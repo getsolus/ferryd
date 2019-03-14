@@ -22,6 +22,7 @@ import (
 	"ferryd/jobs"
 	"github.com/coreos/go-systemd/activation"
 	"github.com/julienschmidt/httprouter"
+    log "github.com/DataDrake/waterlog"
 	"net"
 	"net/http"
 	"os"
@@ -96,7 +97,8 @@ func (api *APIListener) Bind() error {
 	api.socketPath = socketPath
 
 	// Check if we're systemd activated.
-	if _, b := os.LookupEnv("LISTEN_FDS"); b {
+	if v, b := os.LookupEnv("LISTEN_FDS"); b {
+        log.Debugf("LISTEN_FDS: %v\n", v)
 		listeners, err := activation.Listeners()
 		if err != nil {
 			return err

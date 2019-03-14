@@ -1,5 +1,6 @@
-[Socket]
+[Unit]
 Description=ferryd control socket
+PartOf=ferryd.service
 
 [Socket]
 ListenStream=/run/ferryd.sock

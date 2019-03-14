@@ -123,14 +123,23 @@ func (s *Server) Serve() error {
 	// Serve the job queue
 	s.pool.Begin()
 	s.tl.Start()
+	if systemdEnabled {
+		ok, err := daemon.SdNotify(false, daemon.SdNotifyReady)
+        if err != nil {
+            log.Errorf("Failed to notify systemd, reason: '%s'\n", err.Error())
+            return err
+        }
+        if !ok {
+            log.Warnln("SdNotify failed due to missing environment variable")
+        } else {
+            log.Goodln("SdNotify successful")
+        }
+	}
 	err := s.api.Start()
 	if err != nil {
 		return err
 	}
 
-	if systemdEnabled {
-		daemon.SdNotify(false, "READY=1")
-	}
 	return nil
 }
 
