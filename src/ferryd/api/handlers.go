@@ -14,14 +14,14 @@
 // limitations under the License.
 //
 
-package main
+package api
 
 import (
 	"bytes"
 	"encoding/json"
 	"ferryd/jobs"
 	log "github.com/DataDrake/waterlog"
-	"github.com/julienschmidt/httprouter"
+	"github.com/valyala/fasthttp"
 	"libferry"
 	"net/http"
 	"runtime"
@@ -42,7 +42,7 @@ func getMethodCaller() string {
 
 // sendStockError is a utility to send a standard response to the ferry
 // client that embeds the error message from ourside.
-func (api *APIListener) sendStockError(err error, w http.ResponseWriter, r *http.Request) {
+func (l *Listener) sendStockError(err error, ctx *fasthttp.RequestCtx) {
 	response := libferry.Response{
 		Error:       true,
 		ErrorString: err.Error(),
@@ -50,56 +50,56 @@ func (api *APIListener) sendStockError(err error, w http.ResponseWriter, r *http
 	log.Errorf("Client communication error for method '%s', message: '%s'\n", getMethodCaller(), err.Error())
 	buf := bytes.Buffer{}
 	if e2 := json.NewEncoder(&buf).Encode(&response); e2 != nil {
-		http.Error(w, e2.Error(), http.StatusInternalServerError)
+		ctx.Error(e2.Error(), http.StatusInternalServerError)
 		return
 	}
-	w.WriteHeader(http.StatusBadRequest)
-	w.Write(buf.Bytes())
+	ctx.SetStatusCode(http.StatusBadRequest)
+	ctx.SetBody(buf.Bytes())
 }
 
 // GetStatus will return the current status of the ferryd instance
-func (api *APIListener) GetStatus(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
+func (l *Listener) GetStatus(ctx *fasthttp.RequestCtx) {
 	ret := libferry.StatusRequest{
-		TimeStarted: api.timeStarted,
+		TimeStarted: l.timeStarted,
 		Version:     libferry.Version,
 	}
 
 	// Stuff the active jobs in
-	jo, err := api.store.Active()
+	jo, err := l.store.Active()
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		ctx.Error(err.Error(), http.StatusInternalServerError)
 		return
 	}
 	ret.CurrentJobs = jo
 
-	fj, err := api.store.Failed()
+	fj, err := l.store.Failed()
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		ctx.Error(err.Error(), http.StatusInternalServerError)
 		return
 	}
 	ret.FailedJobs = fj
 
-	cj, err := api.store.Completed()
+	cj, err := l.store.Completed()
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		ctx.Error(err.Error(), http.StatusInternalServerError)
 		return
 	}
 	ret.CompletedJobs = cj
 
 	buf := bytes.Buffer{}
 	if err := json.NewEncoder(&buf).Encode(&ret); err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		ctx.Error(err.Error(), http.StatusInternalServerError)
 		return
 	}
-	w.Write(buf.Bytes())
+	ctx.SetBody(buf.Bytes())
 }
 
 // GetRepos will attempt to serialise our known repositories into a response
-func (api *APIListener) GetRepos(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
+func (l *Listener) GetRepos(ctx *fasthttp.RequestCtx) {
 	req := libferry.RepoListingRequest{}
-	repos, err := api.manager.GetRepos()
+	repos, err := l.manager.GetRepos()
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		ctx.Error(err.Error(), http.StatusInternalServerError)
 		return
 	}
 	for _, repo := range repos {
@@ -107,18 +107,18 @@ func (api *APIListener) GetRepos(w http.ResponseWriter, r *http.Request, _ httpr
 	}
 	buf := bytes.Buffer{}
 	if err := json.NewEncoder(&buf).Encode(&req); err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		ctx.Error(err.Error(), http.StatusInternalServerError)
 		return
 	}
-	w.Write(buf.Bytes())
+	ctx.SetBody(buf.Bytes())
 }
 
 // GetPoolItems will handle responding with the currently known pool items
-func (api *APIListener) GetPoolItems(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
+func (l *Listener) GetPoolItems(ctx *fasthttp.RequestCtx) {
 	req := libferry.PoolListingRequest{}
-	pools, err := api.manager.GetPoolItems()
+	pools, err := l.manager.GetPoolItems()
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		ctx.Error(err.Error(), http.StatusInternalServerError)
 		return
 	}
 	for _, pool := range pools {
@@ -129,153 +129,153 @@ func (api *APIListener) GetPoolItems(w http.ResponseWriter, r *http.Request, _ h
 	}
 	buf := bytes.Buffer{}
 	if err := json.NewEncoder(&buf).Encode(&req); err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		ctx.Error(err.Error(), http.StatusInternalServerError)
 		return
 	}
-	w.Write(buf.Bytes())
+	ctx.SetBody(buf.Bytes())
 }
 
 // CreateRepo will handle remote requests for repository creation
-func (api *APIListener) CreateRepo(w http.ResponseWriter, r *http.Request, p httprouter.Params) {
-	id := p.ByName("id")
+func (l *Listener) CreateRepo(ctx *fasthttp.RequestCtx) {
+	id := ctx.UserValue("id").(string)
 	log.Infof("Creation of repo '%s' requested\n", id)
-	api.store.Push(jobs.NewCreateRepoJob(id))
+	l.store.Push(jobs.NewCreateRepoJob(id))
 }
 
 // DeleteRepo will handle remote requests for repository deletion
-func (api *APIListener) DeleteRepo(w http.ResponseWriter, r *http.Request, p httprouter.Params) {
-	id := p.ByName("id")
+func (l *Listener) DeleteRepo(ctx *fasthttp.RequestCtx) {
+	id := ctx.UserValue("id").(string)
 	log.Infof("Deletion of repo '%s' requested\n", id)
-	api.store.Push(jobs.NewDeleteRepoJob(id))
+	l.store.Push(jobs.NewDeleteRepoJob(id))
 }
 
 // DeltaRepo will handle remote requests for repository deltaing
-func (api *APIListener) DeltaRepo(w http.ResponseWriter, r *http.Request, p httprouter.Params) {
-	id := p.ByName("id")
+func (l *Listener) DeltaRepo(ctx *fasthttp.RequestCtx) {
+	id := ctx.UserValue("id").(string)
 	log.Infof("Delta of repo '%s' requested\n", id)
-	api.store.Push(jobs.NewDeltaRepoJob(id))
+	l.store.Push(jobs.NewDeltaRepoJob(id))
 }
 
 // IndexRepo will handle remote requests for repository indexing
-func (api *APIListener) IndexRepo(w http.ResponseWriter, r *http.Request, p httprouter.Params) {
-	id := p.ByName("id")
+func (l *Listener) IndexRepo(ctx *fasthttp.RequestCtx) {
+	id := ctx.UserValue("id").(string)
 	log.Infof("Index of repo '%s' requested\n", id)
-	api.store.Push(jobs.NewIndexRepoJob(id))
+	l.store.Push(jobs.NewIndexRepoJob(id))
 }
 
 // ImportPackages will bulk-import the packages in the request
-func (api *APIListener) ImportPackages(w http.ResponseWriter, r *http.Request, p httprouter.Params) {
-	id := p.ByName("id")
+func (l *Listener) ImportPackages(ctx *fasthttp.RequestCtx) {
+	id := ctx.UserValue("id").(string)
 
 	req := libferry.ImportRequest{}
 
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+	if err := json.Unmarshal(ctx.Request.Body(), &req); err != nil {
+		ctx.Error(err.Error(), http.StatusInternalServerError)
 		return
 	}
 
 	log.Infof("Bulk import of '%d' packages for repo '%s' requested: '%v'\n", len(req.Path), id, req.Path)
 
-	api.store.Push(jobs.NewBulkAddJob(id, req.Path))
+	l.store.Push(jobs.NewBulkAddJob(id, req.Path))
 }
 
 // CloneRepo will proxy a job to clone an existing repository
-func (api *APIListener) CloneRepo(w http.ResponseWriter, r *http.Request, p httprouter.Params) {
-	id := p.ByName("id")
+func (l *Listener) CloneRepo(ctx *fasthttp.RequestCtx) {
+	id := ctx.UserValue("id").(string)
 
 	req := libferry.CloneRepoRequest{}
 
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+	if err := json.Unmarshal(ctx.Request.Body(), &req); err != nil {
+		ctx.Error(err.Error(), http.StatusInternalServerError)
 		return
 	}
 
 	log.Infof("Clone of repo '%s' into '%s' requested, full? '%t'\n", id, req.CloneName, req.CopyAll)
 
-	api.store.Push(jobs.NewCloneRepoJob(id, req.CloneName, req.CopyAll))
+	l.store.Push(jobs.NewCloneRepoJob(id, req.CloneName, req.CopyAll))
 }
 
 // PullRepo will proxy a job to pull an existing repository
-func (api *APIListener) PullRepo(w http.ResponseWriter, r *http.Request, p httprouter.Params) {
-	target := p.ByName("id")
+func (l *Listener) PullRepo(ctx *fasthttp.RequestCtx) {
+	target := ctx.UserValue("id").(string)
 
 	req := libferry.PullRepoRequest{}
 
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+	if err := json.Unmarshal(ctx.Request.Body(), &req); err != nil {
+		ctx.Error(err.Error(), http.StatusInternalServerError)
 		return
 	}
 
 	log.Infof("Pull of repo '%s' into '%s' requested\n", req.Source, target)
 
-	api.store.Push(jobs.NewPullRepoJob(req.Source, target))
+	l.store.Push(jobs.NewPullRepoJob(req.Source, target))
 }
 
 // RemoveSource will proxy a job to remove an existing set of packages by source name + relno
-func (api *APIListener) RemoveSource(w http.ResponseWriter, r *http.Request, p httprouter.Params) {
-	target := p.ByName("id")
+func (l *Listener) RemoveSource(ctx *fasthttp.RequestCtx) {
+	target := ctx.UserValue("id").(string)
 
 	req := libferry.RemoveSourceRequest{}
 
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+	if err := json.Unmarshal(ctx.Request.Body(), &req); err != nil {
+		ctx.Error(err.Error(), http.StatusInternalServerError)
 		return
 	}
 
 	log.Infof("Removal of release '%d' of source '%s' in repo '%s' requested", req.Release, req.Source, target)
 
-	api.store.Push(jobs.NewRemoveSourceJob(target, req.Source, req.Release))
+	l.store.Push(jobs.NewRemoveSourceJob(target, req.Source, req.Release))
 }
 
 // CopySource will proxy a job to copy a package by source&relno into target
-func (api *APIListener) CopySource(w http.ResponseWriter, r *http.Request, p httprouter.Params) {
-	sourceRepo := p.ByName("id")
+func (l *Listener) CopySource(ctx *fasthttp.RequestCtx) {
+	sourceRepo := ctx.UserValue("id").(string)
 
 	req := libferry.CopySourceRequest{}
 
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+	if err := json.Unmarshal(ctx.Request.Body(), &req); err != nil {
+		ctx.Error(err.Error(), http.StatusInternalServerError)
 		return
 	}
 
 	log.Info("Copy of release '%d' of source '%s' from repo '%s' to '%s' requested\n", req.Release, req.Source, sourceRepo, req.Target)
 
-	api.store.Push(jobs.NewCopySourceJob(sourceRepo, req.Target, req.Source, req.Release))
+	l.store.Push(jobs.NewCopySourceJob(sourceRepo, req.Target, req.Source, req.Release))
 }
 
 // TrimPackages will proxy a job to remove excess fat from a repo
-func (api *APIListener) TrimPackages(w http.ResponseWriter, r *http.Request, p httprouter.Params) {
-	target := p.ByName("id")
+func (l *Listener) TrimPackages(ctx *fasthttp.RequestCtx) {
+	target := ctx.UserValue("id").(string)
 
 	req := libferry.TrimPackagesRequest{}
 
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+	if err := json.Unmarshal(ctx.Request.Body(), &req); err != nil {
+		ctx.Error(err.Error(), http.StatusInternalServerError)
 		return
 	}
 
 	log.Infof("Trim of packages with more than '%d' releases in repo '%s' requested\n", req.MaxKeep, target)
 
-	api.store.Push(jobs.NewTrimPackagesJob(target, req.MaxKeep))
+	l.store.Push(jobs.NewTrimPackagesJob(target, req.MaxKeep))
 }
 
 // TrimObsolete will proxy a job to remove obsolete packages from a repo
-func (api *APIListener) TrimObsolete(w http.ResponseWriter, r *http.Request, p httprouter.Params) {
-	id := p.ByName("id")
+func (l *Listener) TrimObsolete(ctx *fasthttp.RequestCtx) {
+	id := ctx.UserValue("id").(string)
 	log.Infof("Trim of obsoletes in repo '%s' requested\n", id)
-	api.store.Push(jobs.NewTrimObsoleteJob(id))
+	l.store.Push(jobs.NewTrimObsoleteJob(id))
 }
 
 // ResetCompleted will ask the job store to remove completed jobs. This is blocking.
-func (api *APIListener) ResetCompleted(w http.ResponseWriter, r *http.Request, p httprouter.Params) {
-	if err := api.store.ResetCompleted(); err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+func (l *Listener) ResetCompleted(ctx *fasthttp.RequestCtx) {
+	if err := l.store.ResetCompleted(); err != nil {
+		ctx.Error(err.Error(), http.StatusInternalServerError)
 	}
 }
 
 // ResetFailed will ask the job store to remove failed jobs. This is blocking.
-func (api *APIListener) ResetFailed(w http.ResponseWriter, r *http.Request, p httprouter.Params) {
-	if err := api.store.ResetFailed(); err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+func (l *Listener) ResetFailed(ctx *fasthttp.RequestCtx) {
+	if err := l.store.ResetFailed(); err != nil {
+		ctx.Error(err.Error(), http.StatusInternalServerError)
 	}
 }

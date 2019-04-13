@@ -14,7 +14,7 @@
 // limitations under the License.
 //
 
-package main
+package api
 
 import (
 	"errors"
@@ -22,21 +22,28 @@ import (
 	"ferryd/jobs"
 	log "github.com/DataDrake/waterlog"
 	"github.com/coreos/go-systemd/activation"
-	"github.com/julienschmidt/httprouter"
+	"github.com/fasthttp/router"
+	"github.com/valyala/fasthttp"
 	"net"
 	"net/http"
 	"os"
 	"time"
 )
 
-// APIListener sits on a unix socket accepting connections from authenticated
-// client, i.e. root or those in the "ferry" group
-type APIListener struct {
-	srv        *http.Server
-	router     *httprouter.Router
-	socket     net.Listener
-	socketPath string
+// Default socket path we expect to use
+const defaultSocketPath = "/run/ferryd.sock"
 
+// SocketPath is the path to find the ferryd socket
+var SocketPath string
+
+// Listener sits on a unix socket accepting connections from authenticated
+// client, i.e. root or those in the "ferry" group
+type Listener struct {
+	srv    *fasthttp.Server
+	router *router.Router
+	socket net.Listener
+	// If systemd is enabled, we'll talk to it.
+	SystemdEnabled bool
 	// When we first started up.
 	timeStarted time.Time
 
@@ -44,57 +51,55 @@ type APIListener struct {
 	manager *core.Manager  // manager of the repos
 }
 
-// NewAPIListener will return a newly initialised Server which is currently unbound
-func NewAPIListener(store *jobs.JobStore, manager *core.Manager) (api *APIListener, err error) {
-	router := httprouter.New()
-	api = &APIListener{
-		srv: &http.Server{
-			Handler: router,
+// NewListener will return a newly initialised Server which is currently unbound
+func NewListener(store *jobs.JobStore, manager *core.Manager) (api *Listener, err error) {
+	r := router.New()
+	api = &Listener{
+		srv: &fasthttp.Server{
+			Handler: r.Handler,
 		},
-		router:      router,
-		timeStarted: time.Now().UTC(),
-		store:       store,
-		manager:     manager,
+		router:         r,
+		SystemdEnabled: false,
+		timeStarted:    time.Now().UTC(),
+		store:          store,
+		manager:        manager,
 	}
 
 	// Set up the API bits
-	router.GET("/api/v1/status", api.GetStatus)
+	r.GET("/api/v1/status", api.GetStatus)
 
 	// Repo management
-	router.GET("/api/v1/create/repo/:id", api.CreateRepo)
-	router.GET("/api/v1/remove/repo/:id", api.DeleteRepo)
-	router.GET("/api/v1/delta/repo/:id", api.DeltaRepo)
-	router.GET("/api/v1/index/repo/:id", api.IndexRepo)
+	r.GET("/api/v1/create/repo/:id", api.CreateRepo)
+	r.GET("/api/v1/remove/repo/:id", api.DeleteRepo)
+	r.GET("/api/v1/delta/repo/:id", api.DeltaRepo)
+	r.GET("/api/v1/index/repo/:id", api.IndexRepo)
 
 	// Client sends us data
-	router.POST("/api/v1/import/:id", api.ImportPackages)
-	router.POST("/api/v1/clone/:id", api.CloneRepo)
-	router.POST("/api/v1/copy/source/:id", api.CopySource)
-	router.POST("/api/v1/pull/:id", api.PullRepo)
+	r.POST("/api/v1/import/:id", api.ImportPackages)
+	r.POST("/api/v1/clone/:id", api.CloneRepo)
+	r.POST("/api/v1/copy/source/:id", api.CopySource)
+	r.POST("/api/v1/pull/:id", api.PullRepo)
 
 	// Removal
-	router.POST("/api/v1/remove/source/:id", api.RemoveSource)
-	router.POST("/api/v1/trim/packages/:id", api.TrimPackages)
-	router.GET("/api/v1/trim/obsoletes/:id", api.TrimObsolete)
+	r.POST("/api/v1/remove/source/:id", api.RemoveSource)
+	r.POST("/api/v1/trim/packages/:id", api.TrimPackages)
+	r.GET("/api/v1/trim/obsoletes/:id", api.TrimObsolete)
 
 	// Reset jobs are special and go straight to the store
 	// We can't queue them as a job because we'd be in catch 22..
-	router.GET("/api/v1/reset/completed", api.ResetCompleted)
-	router.GET("/api/v1/reset/failed", api.ResetFailed)
+	r.GET("/api/v1/reset/completed", api.ResetCompleted)
+	r.GET("/api/v1/reset/failed", api.ResetFailed)
 
 	// List commands
-	router.GET("/api/v1/list/repos", api.GetRepos)
-	router.GET("/api/v1/list/pool", api.GetPoolItems)
+	r.GET("/api/v1/list/repos", api.GetRepos)
+	r.GET("/api/v1/list/pool", api.GetPoolItems)
 	return api, nil
 }
 
 // Bind will attempt to set up the listener on the unix socket
 // prior to serving.
-func (api *APIListener) Bind() error {
+func (api *Listener) Bind() error {
 	var listener net.Listener
-
-	// Set from global CLI flag
-	api.socketPath = socketPath
 
 	// Check if we're systemd activated.
 	if v, b := os.LookupEnv("LISTEN_FDS"); b {
@@ -114,9 +119,9 @@ func (api *APIListener) Bind() error {
 		} else {
 			return errors.New("expected unix socket")
 		}
-		systemdEnabled = true
+		api.SystemdEnabled = true
 	} else {
-		l, e := net.Listen("unix", api.socketPath)
+		l, e := net.Listen("unix", SocketPath)
 		if e != nil {
 			return e
 		}
@@ -125,13 +130,13 @@ func (api *APIListener) Bind() error {
 
 	uid := os.Getuid()
 	gid := os.Getgid()
-	if !systemdEnabled {
+	if !api.SystemdEnabled {
 		// Avoid umask issues
-		if e := os.Chown(api.socketPath, uid, gid); e != nil {
+		if e := os.Chown(SocketPath, uid, gid); e != nil {
 			return e
 		}
 		// Fatal if we cannot chmod the socket to be ours only
-		if e := os.Chmod(api.socketPath, 0660); e != nil {
+		if e := os.Chmod(SocketPath, 0660); e != nil {
 			return e
 		}
 	}
@@ -140,7 +145,7 @@ func (api *APIListener) Bind() error {
 }
 
 // Start will continuously serve on the unix socket until dead
-func (api *APIListener) Start() error {
+func (api *Listener) Start() error {
 	if api.socket == nil {
 		return errors.New("Cannot serve without a bound server socket")
 	}
@@ -153,11 +158,11 @@ func (api *APIListener) Start() error {
 }
 
 // Close will shut down and cleanup the socket
-func (api *APIListener) Close() {
-	api.srv.Shutdown(nil)
+func (api *Listener) Close() {
+	api.srv.Shutdown()
 
 	// We don't technically fully own it if systemd created it
-	if !systemdEnabled {
-		os.Remove(api.socketPath)
+	if !api.SystemdEnabled {
+		os.Remove(SocketPath)
 	}
 }

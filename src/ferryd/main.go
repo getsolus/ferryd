@@ -17,6 +17,7 @@
 package main
 
 import (
+	"ferryd/api"
 	"ferryd/core"
 	"fmt"
 	log "github.com/DataDrake/waterlog"
@@ -30,14 +31,8 @@ import (
 )
 
 var (
-	// If systemd is enabled, we'll talk to it.
-	systemdEnabled = false
-
 	// baseDir is where we expect to operate
 	baseDir = "/var/lib/ferryd"
-
-	// Default socket path we expect to use
-	socketPath = "/run/ferryd.sock"
 
 	// How many jobs we're allowed to use. By default, half of the system cores (xz -T 2)
 	backgroundJobCount = -1
@@ -50,7 +45,7 @@ const (
 
 func mainLoop() {
 	pflag.StringVarP(&baseDir, "base", "d", "/var/lib/ferryd", "Set the base directory for ferryd")
-	pflag.StringVarP(&socketPath, "socket", "s", "/run/ferryd.sock", "Set the socket path for ferryd")
+	pflag.StringVarP(&api.SocketPath, "socket", "s", "/run/ferryd.sock", "Set the socket path for ferryd")
 	pflag.IntVarP(&backgroundJobCount, "jobs", "j", -1, "Number of jobs to use (-1 is 50% of cores)")
 	pflag.Parse()
 
@@ -97,12 +92,12 @@ func mainLoop() {
 	log.Infoln("Initialising server")
 
 	if err := srv.Bind(); err != nil {
-		log.Errorf("Error in binding server socket '%s', message: '%s'\n", srv.api.socketPath, err.Error())
+		log.Errorf("Error in binding server socket '%s', message: '%s'\n", api.SocketPath, err.Error())
 		fmt.Fprintf(os.Stderr, "Fatal error in socket bind, check logs: %v\n", err)
 		return
 	}
 	if err := srv.Serve(); err != nil {
-		log.Errorf("Error in serving on socket '%s', message: '%s'\n", srv.api.socketPath, err.Error())
+		log.Errorf("Error in serving on socket '%s', message: '%s'\n", api.SocketPath, err.Error())
 		fmt.Fprintf(os.Stderr, "Fatal error in runtime execution, check logs: %v\n", err)
 		return
 	}

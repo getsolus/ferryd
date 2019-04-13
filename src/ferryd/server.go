@@ -17,6 +17,7 @@
 package main
 
 import (
+	"ferryd/api"
 	"ferryd/core"
 	"ferryd/jobs"
 	log "github.com/DataDrake/waterlog"
@@ -31,7 +32,7 @@ import (
 // client, i.e. root or those in the "ferry" group
 type Server struct {
 	running bool
-	api     *APIListener     // the HTTP socket handler
+	api     *api.Listener    // the HTTP socket handler
 	manager *core.Manager    // heart of the story
 	store   *jobs.JobStore   // Storage for jobs processor
 	pool    *jobs.Pool       // Allow scheduling jobs
@@ -105,7 +106,7 @@ func (s *Server) Bind() error {
 	s.tl = tl
 
 	// api
-	api, err := NewAPIListener(s.store, s.manager)
+	api, err := api.NewListener(s.store, s.manager)
 	if err != nil {
 		return err
 	}
@@ -123,7 +124,7 @@ func (s *Server) Serve() error {
 	// Serve the job queue
 	s.pool.Begin()
 	s.tl.Start()
-	if systemdEnabled {
+	if s.api.SystemdEnabled {
 		ok, err := daemon.SdNotify(false, daemon.SdNotifyReady)
 		if err != nil {
 			log.Errorf("Failed to notify systemd, reason: '%s'\n", err.Error())

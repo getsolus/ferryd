@@ -43,3 +43,21 @@
 [submodule "src/vendor/github.com/mattn/go-sqlite3"]
 	path = src/vendor/github.com/mattn/go-sqlite3
 	url = https://github.com/mattn/go-sqlite3
+[submodule "src/vendor/github.com/fasthttp/router"]
+	path = src/vendor/github.com/fasthttp/router
+	url = https://github.com/fasthttp/router.git
+[submodule "src/vendor/github.com/valyala/fasthttp"]
+	path = src/vendor/github.com/valyala/fasthttp
+	url = https://github.com/valyala/fasthttp.git
+[submodule "src/vendor/github.com/savsgio/gotils"]
+	path = src/vendor/github.com/savsgio/gotils
+	url = https://github.com/savsgio/gotils.git
+[submodule "src/vendor/github.com/valyala/bytebufferpool"]
+	path = src/vendor/github.com/valyala/bytebufferpool
+	url = https://github.com/valyala/bytebufferpool.git
+[submodule "src/vendor/github.com/klauspost/compress"]
+	path = src/vendor/github.com/klauspost/compress
+	url = https://github.com/klauspost/compress.git
+[submodule "src/vendor/github.com/klauspost/cpuid"]
+	path = src/vendor/github.com/klauspost/cpuid
+	url = https://github.com/klauspost/cpuid
