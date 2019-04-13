@@ -127,6 +127,7 @@ func (w *Worker) processJob(job *Job) {
 	if err != nil {
 		job.Status = Failed
 		job.Message.String = err.Error()
+		job.Message.Valid = true
 		log.Errorf("No known job handler, cannot continue with job '%v'\n", job.ID)
 		return
 	}
@@ -138,6 +139,7 @@ func (w *Worker) processJob(job *Job) {
 	if err := handler.Execute(w.store, w.manager); err != nil {
 		job.Status = Failed
 		job.Message.String = err.Error()
+		job.Message.Valid = true
 		log.Errorf("Job '%d' failed with error: '%s'\n", job.ID, err.Error())
 		return
 	}
