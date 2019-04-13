@@ -16,10 +16,10 @@
 
 ## Delta Table
 
-| Column Number | 0       | 1           | 2      | 3       | 4    | 5         | 6         |
-| ------------- | ------- | ----------- | ------ | ------- | ---- | --------- | --------- |
-| Column Name   | id      | package\_id | uri    | size    | hash | from\_rel | to\_rel   |
-| Column Type   | INTEGER | INTEGER     | STRING | INTEGER | TEXT | INTEGER   | INTEGER   |
+| Column Number | 0       | 1             | 2      | 3       | 4    | 5         | 6         |
+| ------------- | ------- | ------------- | ------ | ------- | ---- | --------- | --------- |
+| Column Name   | id      | package\_name | uri    | size    | hash | from\_rel | to\_rel   |
+| Column Type   | INTEGER | STRING        | STRING | INTEGER | TEXT | INTEGER   | INTEGER   |
 
 ## Repo Packages Table
 
