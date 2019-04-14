@@ -39,7 +39,7 @@ type Repo struct {
 // Queries for retrieving Repo of a particular status
 const (
 	primaryRepo  = "SELECT * FROM repos WHERE id=1"
-	allRepos     = "SELECT * FROM reps"
+	allRepos     = "SELECT * FROM repos"
 	instantRepos = "SELECT * FROM repos WHERE instant_transit=TRUE"
 )
 
