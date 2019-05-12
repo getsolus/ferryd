@@ -1,39 +1,75 @@
-PROJECT_ROOT := src/
-VERSION = 0.0.1
+PKGNAME  = ferryd
+DESTDIR ?=
+PREFIX  ?= /usr
+BINDIR   = $(PREFIX)/bin
 
-.DEFAULT_GOAL := all
+GOBIN       = _build/bin
+GOPROJROOT  = $(GOSRC)/$(PROJREPO)
 
-# We want to add compliance for all built binaries
-_CHECK_COMPLIANCE = $(shell find src/ -not -path '*/vendor/*' -name '*.go' | xargs -I{} dirname {} |sed 's/src\///g' | uniq | sort)
-_TESTS = $(shell find src/ -not -path '*/vendor/*' -name '*_test.go' | xargs -I{} dirname {} | sed 's/src\///g'|uniq | sort)
+GOLDFLAGS   = -ldflags "-s -w"
+GOTAGS      = --tags "libsqlite3 linux"
+GOCC        = go
+GOFMT       = $(GOCC) fmt -x
+GOGET       = $(GOCC) get $(GOLDFLAGS)
+GOBUILD     = $(GOCC) build -v $(GOLDFLAGS) $(GOTAGS)
+GOTEST      = $(GOCC) test
+GOVET       = $(GOCC) vet
+GOINSTALL   = $(GOCC) install $(GOLDFLAGS)
+GOBUILDDEP  = GOPATH=`pwd`/_build $(GOINSTALL)
+GOCLEANDEP  = GOPATH=`pwd`/_build $(GOCC) clean -cache -modcache
 
-BINARIES = \
-	ferryctl \
-	ferryd
+include Makefile.waterlog
 
-# Build all binaries as static binary
-BINS = $(addsuffix .build,$(BINARIES))
+GOLINT    = $(GOBIN)/golint -set_exit_status
 
+all: build
 
-GO_TESTS = $(addsuffix .test,$(_TESTS))
+build: setup-deps
+	@$(call stage,BUILD)
+	@$(GOBUILD)
+	@$(call pass,BUILD)
 
-include Makefile.gobuild
+test: build
+	@$(call stage,TEST)
+	@$(GOTEST) ./...
+	@$(call pass,TEST)
 
-# Ensure our own code is compliant..
-compliant: $(addsuffix .compliant,$(_CHECK_COMPLIANCE))
+validate: setup-deps
+	@$(call stage,FORMAT)
+	@$(GOFMT) ./...
+	@$(call pass,FORMAT)
+	@$(call stage,VET)
+	@$(call task,Running 'go vet'...)
+	@$(GOVET) ./...
+	@$(call pass,VET)
+	@$(call stage,LINT)
+	@$(call task,Running 'golint'...)
+	@$(GOLINT) `go list ./... | grep -v vendor`
+	@$(call pass,LINT)
 
-install: $(BINS)
-	test -d $(DESTDIR)/usr/bin || install -D -d -m 00755 $(DESTDIR)/usr/bin; \
-	install -m 00755 bin/* $(DESTDIR)/usr/bin/.;
+setup-deps:
+	@$(call stage,DEPS)
+	@if [ -d build/src/honnef.co ]; then rm -rf build/src/honnef.co; fi
+	@if [ ! -e $(GOBIN)/golint ]; then \
+	    $(call task,Installing golint...); \
+	    $(GOBUILDDEP) github.com/golang/lint/golint; \
+        $(GOCLEANDEP) ./...; \
+	fi
 
-ensure_modules:
-	@ ( \
-		git submodule init; \
-		git submodule update; \
-	);
+install:
+	@$(call stage,INSTALL)
+	install -D -m 00755 $(PKGNAME) $(DESTDIR)$(BINDIR)/$(PKGNAME)
+	@$(call pass,INSTALL)
 
-# See: https://github.com/meitar/git-archive-all.sh/blob/master/git-archive-all.sh
-release: ensure_modules
-	git-archive-all.sh --format tar.gz --prefix ferryd-$(VERSION)/ --verbose -t HEAD ferryd-$(VERSION).tar.gz
+uninstall:
+	@$(call stage,UNINSTALL)
+	rm -f $(DESTDIR)$(BINDIR)/$(PKGNAME)
+	@$(call pass,UNINSTALL)
 
-all: $(BINS)
+clean:
+	@$(call stage,CLEAN)
+	@$(call task,Removing _build directory...)
+	@rm -rf _build
+	@$(call task,Removing executable...)
+	@rm $(PKGNAME)
+	@$(call pass,CLEAN)
