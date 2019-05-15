@@ -35,10 +35,12 @@ func NewIndexRepoJob(id string) *Job {
 }
 
 // NewIndexRepoJobHandler will create a job handler for the input job and ensure it validates
-func NewIndexRepoJobHandler(j *Job) (handler *IndexRepoJobHandler, err error) {
+func NewIndexRepoJobHandler(j *Job, running bool) (handler *IndexRepoJobHandler, errs []error) {
 	if len(j.SrcRepo) == 0 {
-		err = fmt.Errorf("job is missing a source repo")
-		return
+		errs = append(errs, fmt.Errorf("job is missing a source repo"))
+	}
+	if len(errs) == 0 && !running {
+		log.Infof("Index of repo '%s' requested\n", j.SrcRepo)
 	}
 	h := IndexRepoJobHandler(*j)
 	handler = &h

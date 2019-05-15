@@ -37,24 +37,22 @@ func NewCopySourceJob(srcRepo, dstRepo, source string, release int) *Job {
 }
 
 // NewCopySourceJobHandler will create a job handler for the input job and ensure it validates
-func NewCopySourceJobHandler(j *Job) (handler *CopySourceJobHandler, err error) {
+func NewCopySourceJobHandler(j *Job, running bool) (handler *CopySourceJobHandler, errs []error) {
 	if len(j.SrcRepo) == 0 {
-		log.Errorf("job '%d' is missing source repo\n", j.ID)
-		return
+		errs = append(errs, fmt.Errorf("job '%d' is missing source repo\n", j.ID))
 	}
 	if len(j.DstRepo) == 0 {
-		log.Errorf("job '%d' is missing destination repo\n", j.ID)
-		return
+		errs = append(errs, fmt.Errorf("job '%d' is missing destination repo\n", j.ID))
 	}
 	if len(j.Sources) == 0 {
-		log.Errorf("job '%d' is missing source name\n", j.ID)
-		return
+		errs = append(errs, fmt.Errorf("job '%d' is missing source name\n", j.ID))
 	}
 	if j.Release == 0 || j.Release < -1 {
-		log.Errorf("job '%d' has invalid release number: '%d'", j.ID, j.Release)
-		return
+		errs = append(errs, fmt.Errorf("job '%d' has invalid release number: '%d'", j.ID, j.Release))
 	}
-
+	if len(errs) == 0 && !running {
+		log.Info("Copy of release '%d' of source '%s' from repo '%s' to '%s' requested\n", j.Release, j.Sources, j.SrcRepo, j.DstRepo)
+	}
 	h := CopySourceJobHandler(*j)
 	handler = &h
 	return

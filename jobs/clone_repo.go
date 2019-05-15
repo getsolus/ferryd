@@ -47,18 +47,18 @@ func NewCloneRepoJob(srcRepo, newRepo string, cloneAll bool) *Job {
 }
 
 // NewCloneRepoJobHandler will create a job handler for the input job and ensure it validates
-func NewCloneRepoJobHandler(j *Job) (handler *CloneRepoJobHandler, err error) {
+func NewCloneRepoJobHandler(j *Job, running bool) (handler *CloneRepoJobHandler, errs []error) {
 	if len(j.SrcRepo) == 0 {
-		err = fmt.Errorf("job has no source repo")
-		return
+		errs = append(errs, fmt.Errorf("job has no source repo"))
 	}
 	if len(j.DstRepo) == 0 {
-		err = fmt.Errorf("job has no destination repo")
-		return
+		errs = append(errs, fmt.Errorf("job has no destination repo"))
 	}
 	if j.Mode < CloneTip || j.Mode > CloneFull {
-		err = fmt.Errorf("job has invalid mode: %d", j.Mode)
-		return
+		errs = append(errs, fmt.Errorf("job has invalid mode: %d", j.Mode))
+	}
+	if len(errs) == 0 && !running {
+		log.Infof("Clone of repo '%s' into '%s' requested, full? '%t'\n", j.SrcRepo, j.DstRepo, j.Mode == CloneFull)
 	}
 	h := CloneRepoJobHandler(*j)
 	handler = &h

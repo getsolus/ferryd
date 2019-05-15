@@ -35,14 +35,15 @@ func NewTrimPackagesJob(repoID string, maxKeep int) *Job {
 }
 
 // NewTrimPackagesJobHandler will create a job handler for the input job and ensure it validates
-func NewTrimPackagesJobHandler(j *Job) (handler *TrimPackagesJobHandler, err error) {
+func NewTrimPackagesJobHandler(j *Job, running bool) (handler *TrimPackagesJobHandler, errs []error) {
 	if len(j.SrcRepo) == 0 {
-		err = fmt.Errorf("job is missing a source repository")
-		return
+		errs = append(errs, fmt.Errorf("job is missing a source repository"))
 	}
 	if j.MaxKeep < 1 {
-		err = fmt.Errorf("must keep at least one release of a package")
-		return
+		errs = append(errs, fmt.Errorf("must keep at least one release of a package"))
+	}
+	if len(errs) == 0 && !running {
+		log.Infof("Trim of packages with more than '%d' releases in repo '%s' requested\n", j.MaxKeep, j.SrcRepo)
 	}
 	h := TrimPackagesJobHandler(*j)
 	handler = &h

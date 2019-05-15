@@ -35,10 +35,12 @@ func NewDeltaRepoJob(id string) *Job {
 }
 
 // NewDeltaRepoJobHandler will create a job handler for the input job and ensure it validates
-func NewDeltaRepoJobHandler(j *Job) (handler *DeltaRepoJobHandler, err error) {
+func NewDeltaRepoJobHandler(j *Job, running bool) (handler *DeltaRepoJobHandler, errs []error) {
 	if len(j.SrcRepo) == 0 {
-		err = fmt.Errorf("job is missing a source repo")
-		return
+		errs = append(errs, fmt.Errorf("job is missing a source repo"))
+	}
+	if len(errs) == 0 && !running {
+		log.Infof("Delta of repo '%s' requested\n", j.SrcRepo)
 	}
 	h := DeltaRepoJobHandler(*j)
 	handler = &h

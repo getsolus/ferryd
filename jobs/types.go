@@ -20,54 +20,71 @@ package jobs
 type JobType int
 
 const (
-
+	// Invalid is the Zero for JobType
+	Invalid JobType = 0
 	// BulkAdd is a sequential job which will attempt to add all of the packages
-	BulkAdd JobType = 0
+	BulkAdd = 1
 
 	// CopySource is a sequential job to copy from one repo to another
-	CopySource = 1
+	CopySource = 2
 
 	// CloneRepo is a sequential job which will attempt to clone a repo
-	CloneRepo = 2
+	CloneRepo = 3
 
 	// CreateRepo is a sequential job which will attempt to create a new repo
-	CreateRepo = 3
+	CreateRepo = 4
 
 	// DeleteRepo is a sequential job which will attempt to delete a repository
-	DeleteRepo = 4
+	DeleteRepo = 5
 
 	// Delta is a parallel job which will attempt the construction of deltas for
 	// a given package name + repo
-	Delta = 5
+	Delta = 6
 
 	// DeltaIndex is created in response to transit manifest events, and will
 	// cause the repository to be reindexed after each delta job continues
-	DeltaIndex = 6
+	DeltaIndex = 7
 
 	// DeltaRepo is a sequential job which creates Delta jobs for every package in
 	// a repo
-	DeltaRepo = 7
+	DeltaRepo = 8
 
 	// IndexRepo is a sequential job that requests the repository be re-indexed
-	IndexRepo = 8
+	IndexRepo = 9
 
 	// PullRepo is a sequential job that will attempt to pull a repo
-	PullRepo = 9
+	PullRepo = 10
 
 	// RemoveSource is a sequential job that will attempt removal of packages
-	RemoveSource = 10
+	RemoveSource = 11
 
 	// TransitProcess is a sequential job that will process the incoming uploads
 	// directory, dealing with each .tram upload
-	TransitProcess = 11
+	TransitProcess = 12
 
 	// TrimObsolete is a sequential job to permanently remove obsolete packages
 	// from a repo
-	TrimObsolete = 12
+	TrimObsolete = 13
 
 	// TrimPackages is a sequential job to trim fat from a repository
-	TrimPackages = 13
+	TrimPackages = 14
 )
+
+var Mapping = map[string]JobType{
+	"BulkAdd":        BulkAdd,
+	"CopySource":     CopySource,
+	"CloneRepo":      CloneRepo,
+	"CreateRepo":     CreateRepo,
+	"DeleteRepo":     DeleteRepo,
+	"Delta":          Delta,
+	"DeltaRepo":      DeltaRepo,
+	"IndexRepo":      IndexRepo,
+	"PullRepo":       PullRepo,
+	"RemoveSource":   RemoveSource,
+	"TransitProcess": TransitProcess,
+	"TrimObsolete":   TrimObsolete,
+	"TrimPackages":   TrimPackages,
+}
 
 // IsParallel tells us if a particular JobType can be done in parallel
 var IsParallel = map[JobType]bool{

@@ -36,18 +36,18 @@ func NewRemoveSourceJob(repoID, source string, release int) *Job {
 }
 
 // NewRemoveSourceJobHandler will create a job handler for the input job and ensure it validates
-func NewRemoveSourceJobHandler(j *Job) (handler *RemoveSourceJobHandler, err error) {
+func NewRemoveSourceJobHandler(j *Job, running bool) (handler *RemoveSourceJobHandler, errs []error) {
 	if len(j.SrcRepo) == 0 {
-		err = fmt.Errorf("job is missing source repo")
-		return
+		errs = append(errs, fmt.Errorf("job is missing source repo"))
 	}
 	if len(j.Sources) == 0 {
-		err = fmt.Errorf("job is missing source package")
-		return
+		errs = append(errs, fmt.Errorf("job is missing source package"))
 	}
 	if j.Release == 0 {
-		err = fmt.Errorf("job has invalid release number: 0")
-		return
+		errs = append(errs, fmt.Errorf("job has invalid release number: 0"))
+	}
+	if len(errs) == 0 && !running {
+		log.Infof("Removal of release '%d' of source '%s' in repo '%s' requested", j.Release, j.SrcRepo, j.DstRepo)
 	}
 	h := RemoveSourceJobHandler(*j)
 	handler = &h

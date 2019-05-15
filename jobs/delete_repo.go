@@ -35,10 +35,12 @@ func NewDeleteRepoJob(id string) *Job {
 }
 
 // NewDeleteRepoJobHandler will create a job handler for the input job and ensure it validates
-func NewDeleteRepoJobHandler(j *Job) (handler *DeleteRepoJobHandler, err error) {
+func NewDeleteRepoJobHandler(j *Job, running bool) (handler *DeleteRepoJobHandler, errs []error) {
 	if len(j.SrcRepo) == 0 {
-		err = fmt.Errorf("job is missing a source repo")
-		return
+		errs = append(errs, fmt.Errorf("job is missing a source repo"))
+	}
+	if len(errs) == 0 && !running {
+		log.Infof("Deletion of repo '%s' requested\n", j.SrcRepo)
 	}
 	h := DeleteRepoJobHandler(*j)
 	handler = &h

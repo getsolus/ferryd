@@ -23,6 +23,7 @@ import (
 	"github.com/getsolus/ferryd/client"
 	"github.com/jmoiron/sqlx"
 	"path/filepath"
+	"strings"
 	"sync"
 	"time"
 )
@@ -146,6 +147,9 @@ func (s *JobStore) Claim() (j *Job, err error) {
 	}
 	// find the next replacement job
 	j, s.next = s.next, nil
+	if j != nil {
+		j.SourcesList = strings.Split(j.Sources, ";")
+	}
 UNLOCK:
 	s.findNewJob()
 	s.wLock.Unlock()
@@ -222,6 +226,17 @@ func (s *JobStore) ResetFailed() error {
 	_, err := s.db.Exec(clearFailedJobs)
 	if err != nil {
 		err = fmt.Errorf("Failed to clear failed jobs, reason: '%s'", err.Error())
+	}
+	s.wLock.Unlock()
+	return err
+}
+
+// ResetQueud will remove all unexecuted records from our store and reset the pointer
+func (s *JobStore) ResetQueued() error {
+	s.wLock.Lock()
+	_, err := s.db.Exec(clearQueuedJobs)
+	if err != nil {
+		err = fmt.Errorf("Failed to clear queued jobs, reason: '%s'", err.Error())
 	}
 	s.wLock.Unlock()
 	return err

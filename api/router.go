@@ -69,30 +69,17 @@ func NewListener(store *jobs.JobStore, manager *core.Manager) (api *Listener, er
 	r.GET("/api/v1/status", api.GetStatus)
 
 	// Repo management
-	r.GET("/api/v1/create/repo/:id", api.CreateRepo)
-	r.GET("/api/v1/remove/repo/:id", api.DeleteRepo)
-	r.GET("/api/v1/delta/repo/:id", api.DeltaRepo)
-	r.GET("/api/v1/index/repo/:id", api.IndexRepo)
+	r.GET("/api/v1/repos", api.GetRepos)
+	r.POST("/api/v1/repos/:id", api.CreateRepo)
+	r.DELETE("/api/v1/repos/:id", api.DeleteRepo)
 
-	// Client sends us data
-	r.POST("/api/v1/import/:id", api.ImportPackages)
-	r.POST("/api/v1/clone/:id", api.CloneRepo)
-	r.POST("/api/v1/copy/source/:id", api.CopySource)
-	r.POST("/api/v1/pull/:id", api.PullRepo)
-
-	// Removal
-	r.POST("/api/v1/remove/source/:id", api.RemoveSource)
-	r.POST("/api/v1/trim/packages/:id", api.TrimPackages)
-	r.GET("/api/v1/trim/obsoletes/:id", api.TrimObsolete)
-
-	// Reset jobs are special and go straight to the store
-	// We can't queue them as a job because we'd be in catch 22..
-	r.GET("/api/v1/reset/completed", api.ResetCompleted)
-	r.GET("/api/v1/reset/failed", api.ResetFailed)
+	// Job Management
+	r.POST("/api/v1/jobs", api.CreateJob)
+	r.DELETE("/api/v1/jobs", api.ResetJobs) // ?type={completed,failed,queued}
+	//r.DELETE("/api/v1/jobs/:id", api.CancelJob)
 
 	// List commands
-	r.GET("/api/v1/list/repos", api.GetRepos)
-	r.GET("/api/v1/list/pool", api.GetPoolItems)
+	r.GET("/api/v1/pool", api.GetPoolItems)
 	return api, nil
 }
 

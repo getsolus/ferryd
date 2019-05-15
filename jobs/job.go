@@ -125,6 +125,7 @@ const (
 
 // Queries for Cleaning up the Job queue
 const (
+	clearQueuedJobs    = "DELETE FROM jobs WHERE status=0"
 	clearRunningJobs   = "UPDATE jobs SET status=0 WHERE status=1"
 	clearFailedJobs    = "DELETE FROM jobs WHERE status=2"
 	clearCancelledJobs = "DELETE FROM jobs WHERE status=3"
@@ -133,7 +134,7 @@ const (
 
 // Convert turns a ferryd job into a client job
 func (j *Job) Convert() *client.Job {
-	h, err := NewJobHandler(j)
+	h, err := NewJobHandler(j, true)
 	if err != nil {
 		return nil
 	}

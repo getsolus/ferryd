@@ -35,10 +35,12 @@ func NewCreateRepoJob(id string) *Job {
 }
 
 // NewCreateRepoJobHandler will create a job handler for the input job and ensure it validates
-func NewCreateRepoJobHandler(j *Job) (handler *CreateRepoJobHandler, err error) {
+func NewCreateRepoJobHandler(j *Job, running bool) (handler *CreateRepoJobHandler, errs []error) {
 	if len(j.DstRepo) == 0 {
-		err = fmt.Errorf("job is missing a destination repo")
-		return
+		errs = append(errs, fmt.Errorf("job is missing a destination repo"))
+	}
+	if len(errs) == 0 && !running {
+		log.Infof("Creation of repo '%s' requested\n", j.DstRepo)
 	}
 	h := CreateRepoJobHandler(*j)
 	handler = &h

@@ -50,14 +50,12 @@ func NewDeltaIndexJob(repoID, packageID string) *Job {
 }
 
 // NewDeltaJobHandler will create a job handler for the input job and ensure it validates
-func NewDeltaJobHandler(j *Job) (handler *DeltaJobHandler, err error) {
+func NewDeltaJobHandler(j *Job) (handler *DeltaJobHandler, errs []error) {
 	if len(j.SrcRepo) == 0 {
-		err = fmt.Errorf("job is missing source repo")
-		return
+		errs = append(errs, fmt.Errorf("job is missing source repo"))
 	}
 	if len(j.Sources) == 0 {
-		err = fmt.Errorf("job is missing a source package")
-		return
+		errs = append(errs, fmt.Errorf("job is missing a source package"))
 	}
 	h := DeltaJobHandler(*j)
 	handler = &h

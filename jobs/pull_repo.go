@@ -35,14 +35,15 @@ func NewPullRepoJob(sourceID, targetID string) *Job {
 }
 
 // NewPullRepoJobHandler will create a job handler for the input job and ensure it validates
-func NewPullRepoJobHandler(j *Job) (handler *PullRepoJobHandler, err error) {
+func NewPullRepoJobHandler(j *Job, running bool) (handler *PullRepoJobHandler, errs []error) {
 	if len(j.SrcRepo) == 0 {
-		err = fmt.Errorf("job is missing source repo")
-		return
+		errs = append(errs, fmt.Errorf("job is missing source repo"))
 	}
 	if len(j.DstRepo) == 0 {
-		err = fmt.Errorf("job is missing destination repo")
-		return
+		errs = append(errs, fmt.Errorf("job is missing destination repo"))
+	}
+	if len(errs) == 0 && !running {
+		log.Infof("Pull of repo '%s' into '%s' requested\n", j.SrcRepo, j.DstRepo)
 	}
 	h := PullRepoJobHandler(*j)
 	handler = &h

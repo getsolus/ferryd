@@ -35,10 +35,12 @@ func NewTrimObsoleteJob(id string) *Job {
 }
 
 // NewTrimObsoleteJobHandler will create a job handler for the input job and ensure it validates
-func NewTrimObsoleteJobHandler(j *Job) (handler *TrimObsoleteJobHandler, err error) {
+func NewTrimObsoleteJobHandler(j *Job, running bool) (handler *TrimObsoleteJobHandler, errs []error) {
 	if len(j.SrcRepo) == 0 {
-		err = fmt.Errorf("job is missing a source repository")
-		return
+		errs = append(errs, fmt.Errorf("job is missing a source repository"))
+	}
+	if len(errs) == 0 && !running {
+		log.Infof("Trim of obsoletes in repo '%s' requested\n", j.SrcRepo)
 	}
 	h := TrimObsoleteJobHandler(*j)
 	handler = &h

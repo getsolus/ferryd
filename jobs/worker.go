@@ -20,6 +20,7 @@ import (
 	log "github.com/DataDrake/waterlog"
 	"github.com/getsolus/ferryd/core"
 	"math/rand"
+	"strings"
 	"time"
 )
 
@@ -122,13 +123,17 @@ func (w *Worker) setTime() {
 // processJob will actually examine the given job and figure out how
 // to execute it. Each Worker can only execute a single job at a time
 func (w *Worker) processJob(job *Job) {
-	handler, err := NewJobHandler(job)
+	handler, errs := NewJobHandler(job, true)
 
-	if err != nil {
+	if len(errs) > 0 {
+		errors := make([]string, len(errs))
+		for i, err := range errs {
+			errors[i] = err.Error()
+			log.Errorln(errors[i])
+		}
 		job.Status = Failed
-		job.Message.String = err.Error()
+		job.Message.String = strings.Join(errors, ";")
 		job.Message.Valid = true
-		log.Errorf("No known job handler, cannot continue with job '%v'\n", job.ID)
 		return
 	}
 

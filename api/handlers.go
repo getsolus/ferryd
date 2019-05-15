@@ -19,12 +19,14 @@ package api
 import (
 	"bytes"
 	"encoding/json"
+	"fmt"
 	log "github.com/DataDrake/waterlog"
 	"github.com/getsolus/ferryd/client"
 	"github.com/getsolus/ferryd/jobs"
 	"github.com/valyala/fasthttp"
 	"net/http"
 	"runtime"
+	"strings"
 )
 
 // getMethodOrigin helps us determine the caller so that we can print
@@ -138,144 +140,63 @@ func (l *Listener) GetPoolItems(ctx *fasthttp.RequestCtx) {
 // CreateRepo will handle remote requests for repository creation
 func (l *Listener) CreateRepo(ctx *fasthttp.RequestCtx) {
 	id := ctx.UserValue("id").(string)
-	log.Infof("Creation of repo '%s' requested\n", id)
 	l.store.Push(jobs.NewCreateRepoJob(id))
 }
 
 // DeleteRepo will handle remote requests for repository deletion
 func (l *Listener) DeleteRepo(ctx *fasthttp.RequestCtx) {
 	id := ctx.UserValue("id").(string)
-	log.Infof("Deletion of repo '%s' requested\n", id)
 	l.store.Push(jobs.NewDeleteRepoJob(id))
 }
 
-// DeltaRepo will handle remote requests for repository deltaing
-func (l *Listener) DeltaRepo(ctx *fasthttp.RequestCtx) {
-	id := ctx.UserValue("id").(string)
-	log.Infof("Delta of repo '%s' requested\n", id)
-	l.store.Push(jobs.NewDeltaRepoJob(id))
-}
-
-// IndexRepo will handle remote requests for repository indexing
-func (l *Listener) IndexRepo(ctx *fasthttp.RequestCtx) {
-	id := ctx.UserValue("id").(string)
-	log.Infof("Index of repo '%s' requested\n", id)
-	l.store.Push(jobs.NewIndexRepoJob(id))
-}
-
-// ImportPackages will bulk-import the packages in the request
-func (l *Listener) ImportPackages(ctx *fasthttp.RequestCtx) {
-	id := ctx.UserValue("id").(string)
-
-	req := client.ImportRequest{}
-
-	if err := json.Unmarshal(ctx.Request.Body(), &req); err != nil {
+// CreateJob will proxy a job to remove an existing set of packages by source name + relno
+func (l *Listener) CreateJob(ctx *fasthttp.RequestCtx) {
+	request := &JobRequest{}
+	if err := json.Unmarshal(ctx.Request.Body(), request); err != nil {
 		ctx.Error(err.Error(), http.StatusInternalServerError)
 		return
 	}
-
-	log.Infof("Bulk import of '%d' packages for repo '%s' requested: '%v'\n", len(req.Path), id, req.Path)
-
-	l.store.Push(jobs.NewBulkAddJob(id, req.Path))
-}
-
-// CloneRepo will proxy a job to clone an existing repository
-func (l *Listener) CloneRepo(ctx *fasthttp.RequestCtx) {
-	id := ctx.UserValue("id").(string)
-
-	req := client.CloneRepoRequest{}
-
-	if err := json.Unmarshal(ctx.Request.Body(), &req); err != nil {
-		ctx.Error(err.Error(), http.StatusInternalServerError)
+	job, errs := request.Convert()
+	if len(errs) > 0 {
+		errors := make([]string, len(errs))
+		for i, err := range errs {
+			errors[i] = err.Error()
+			log.Errorln(errors[i])
+		}
+		ctx.Error(strings.Join(errors, "\n"), http.StatusBadRequest)
 		return
 	}
-
-	log.Infof("Clone of repo '%s' into '%s' requested, full? '%t'\n", id, req.CloneName, req.CopyAll)
-
-	l.store.Push(jobs.NewCloneRepoJob(id, req.CloneName, req.CopyAll))
+	l.store.Push(job)
 }
 
-// PullRepo will proxy a job to pull an existing repository
-func (l *Listener) PullRepo(ctx *fasthttp.RequestCtx) {
-	target := ctx.UserValue("id").(string)
-
-	req := client.PullRepoRequest{}
-
-	if err := json.Unmarshal(ctx.Request.Body(), &req); err != nil {
-		ctx.Error(err.Error(), http.StatusInternalServerError)
+// ResetJobs will ask the job store to remove jobs of a certain status
+func (l *Listener) ResetJobs(ctx *fasthttp.RequestCtx) {
+	status := string(ctx.QueryArgs().Peek("status"))
+	if len(status) == 0 {
+		err := "Job status required when resetting jobs"
+		log.Errorln(err)
+		ctx.Error(err, http.StatusBadRequest)
 		return
 	}
-
-	log.Infof("Pull of repo '%s' into '%s' requested\n", req.Source, target)
-
-	l.store.Push(jobs.NewPullRepoJob(req.Source, target))
-}
-
-// RemoveSource will proxy a job to remove an existing set of packages by source name + relno
-func (l *Listener) RemoveSource(ctx *fasthttp.RequestCtx) {
-	target := ctx.UserValue("id").(string)
-
-	req := client.RemoveSourceRequest{}
-
-	if err := json.Unmarshal(ctx.Request.Body(), &req); err != nil {
-		ctx.Error(err.Error(), http.StatusInternalServerError)
-		return
-	}
-
-	log.Infof("Removal of release '%d' of source '%s' in repo '%s' requested", req.Release, req.Source, target)
-
-	l.store.Push(jobs.NewRemoveSourceJob(target, req.Source, req.Release))
-}
-
-// CopySource will proxy a job to copy a package by source&relno into target
-func (l *Listener) CopySource(ctx *fasthttp.RequestCtx) {
-	sourceRepo := ctx.UserValue("id").(string)
-
-	req := client.CopySourceRequest{}
-
-	if err := json.Unmarshal(ctx.Request.Body(), &req); err != nil {
-		ctx.Error(err.Error(), http.StatusInternalServerError)
-		return
-	}
-
-	log.Info("Copy of release '%d' of source '%s' from repo '%s' to '%s' requested\n", req.Release, req.Source, sourceRepo, req.Target)
-
-	l.store.Push(jobs.NewCopySourceJob(sourceRepo, req.Target, req.Source, req.Release))
-}
-
-// TrimPackages will proxy a job to remove excess fat from a repo
-func (l *Listener) TrimPackages(ctx *fasthttp.RequestCtx) {
-	target := ctx.UserValue("id").(string)
-
-	req := client.TrimPackagesRequest{}
-
-	if err := json.Unmarshal(ctx.Request.Body(), &req); err != nil {
-		ctx.Error(err.Error(), http.StatusInternalServerError)
-		return
-	}
-
-	log.Infof("Trim of packages with more than '%d' releases in repo '%s' requested\n", req.MaxKeep, target)
-
-	l.store.Push(jobs.NewTrimPackagesJob(target, req.MaxKeep))
-}
-
-// TrimObsolete will proxy a job to remove obsolete packages from a repo
-func (l *Listener) TrimObsolete(ctx *fasthttp.RequestCtx) {
-	id := ctx.UserValue("id").(string)
-	log.Infof("Trim of obsoletes in repo '%s' requested\n", id)
-	l.store.Push(jobs.NewTrimObsoleteJob(id))
-}
-
-// ResetCompleted will ask the job store to remove completed jobs. This is blocking.
-func (l *Listener) ResetCompleted(ctx *fasthttp.RequestCtx) {
-	if err := l.store.ResetCompleted(); err != nil {
-		ctx.Error(err.Error(), http.StatusInternalServerError)
-	}
-}
-
-// ResetFailed will ask the job store to remove failed jobs. This is blocking.
-func (l *Listener) ResetFailed(ctx *fasthttp.RequestCtx) {
-	if err := l.store.ResetFailed(); err != nil {
-		ctx.Error(err.Error(), http.StatusInternalServerError)
+	switch status {
+	case "completed":
+		if err := l.store.ResetCompleted(); err != nil {
+			log.Errorln(err)
+			ctx.Error(err.Error(), http.StatusInternalServerError)
+		}
+	case "failed":
+		if err := l.store.ResetFailed(); err != nil {
+			log.Errorln(err)
+			ctx.Error(err.Error(), http.StatusInternalServerError)
+		}
+	case "queued":
+		if err := l.store.ResetQueued(); err != nil {
+			log.Errorln(err)
+			ctx.Error(err.Error(), http.StatusInternalServerError)
+		}
+	default:
+		err := fmt.Sprintf("Invalid job status '%s' when resetting jobs", status)
+		log.Errorln(err)
+		ctx.Error(err, http.StatusBadRequest)
 	}
 }

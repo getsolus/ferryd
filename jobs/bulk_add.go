@@ -38,15 +38,15 @@ func NewBulkAddJob(repo string, srcs []string) *Job {
 }
 
 // NewBulkAddJobHandler will create a job handler for the input job and ensure it validates
-func NewBulkAddJobHandler(j *Job) (handler *BulkAddJobHandler, err error) {
+func NewBulkAddJobHandler(j *Job, running bool) (handler *BulkAddJobHandler, errs []error) {
 	if len(j.SrcRepo) == 0 {
-		err = fmt.Errorf("job has no repo specified")
-		return
+		errs = append(errs, fmt.Errorf("job has no repo specified"))
 	}
-	j.SourcesList = strings.Split(j.Sources, ";")
 	if len(j.SourcesList) == 0 {
-		err = fmt.Errorf("job has no sources specified")
-		return
+		errs = append(errs, fmt.Errorf("job has no sources specified"))
+	}
+	if len(errs) == 0 && !running {
+		log.Infof("Bulk import of '%d' packages for repo '%s' requested.\n", len(j.SourcesList), j.SrcRepo)
 	}
 	h := BulkAddJobHandler(*j)
 	handler = &h

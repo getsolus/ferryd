@@ -34,37 +34,37 @@ type JobHandler interface {
 
 // NewJobHandler will return a handler that is loaded only during the execution
 // of a previously serialised job
-func NewJobHandler(j *Job) (JobHandler, error) {
+func NewJobHandler(j *Job, running bool) (JobHandler, []error) {
 	switch j.Type {
 	case BulkAdd:
-		return NewBulkAddJobHandler(j)
+		return NewBulkAddJobHandler(j, running)
 	case CopySource:
-		return NewCopySourceJobHandler(j)
+		return NewCopySourceJobHandler(j, running)
 	case CloneRepo:
-		return NewCloneRepoJobHandler(j)
+		return NewCloneRepoJobHandler(j, running)
 	case CreateRepo:
-		return NewCreateRepoJobHandler(j)
+		return NewCreateRepoJobHandler(j, running)
 	case DeleteRepo:
-		return NewDeleteRepoJobHandler(j)
+		return NewDeleteRepoJobHandler(j, running)
 	case Delta:
 		return NewDeltaJobHandler(j)
 	case DeltaRepo:
-		return NewDeltaRepoJobHandler(j)
+		return NewDeltaRepoJobHandler(j, running)
 	case DeltaIndex:
 		return NewDeltaJobHandler(j)
 	case IndexRepo:
-		return NewIndexRepoJobHandler(j)
+		return NewIndexRepoJobHandler(j, running)
 	case RemoveSource:
-		return NewRemoveSourceJobHandler(j)
+		return NewRemoveSourceJobHandler(j, running)
 	case PullRepo:
-		return NewPullRepoJobHandler(j)
+		return NewPullRepoJobHandler(j, running)
 	case TransitProcess:
 		return NewTransitJobHandler(j)
 	case TrimObsolete:
-		return NewTrimObsoleteJobHandler(j)
+		return NewTrimObsoleteJobHandler(j, running)
 	case TrimPackages:
-		return NewTrimPackagesJobHandler(j)
+		return NewTrimPackagesJobHandler(j, running)
 	default:
-		return nil, fmt.Errorf("unknown job type '%d'", j.Type)
+		return nil, []error{fmt.Errorf("unknown job type '%d'", j.Type)}
 	}
 }

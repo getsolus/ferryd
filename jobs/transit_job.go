@@ -36,10 +36,9 @@ func NewTransitJob(path string) *Job {
 }
 
 // NewTransitJobHandler will create a job handler for the input job and ensure it validates
-func NewTransitJobHandler(j *Job) (handler *TransitJobHandler, err error) {
+func NewTransitJobHandler(j *Job) (handler *TransitJobHandler, errs []error) {
 	if len(j.Sources) == 0 {
-		err = fmt.Errorf("job is missing the path to the manifest")
-		return
+		errs = append(errs, fmt.Errorf("job is missing the path to the manifest"))
 	}
 	h := TransitJobHandler(*j)
 	handler = &h

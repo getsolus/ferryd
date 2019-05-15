@@ -69,7 +69,7 @@ func (c *Client) formURI(part string) string {
 // GetRepos will grab a list of repos from the daemon
 func (c *Client) GetRepos() ([]string, error) {
 	var lq RepoListingRequest
-	resp, err := c.client.Get(c.formURI("api/v1/list/repos"))
+	resp, err := c.client.Get(c.formURI("api/v1/repos"))
 	if err != nil {
 		return nil, err
 	}
@@ -83,7 +83,7 @@ func (c *Client) GetRepos() ([]string, error) {
 // GetPoolItems will grab a list of pool items from the daemon
 func (c *Client) GetPoolItems() ([]PoolItem, error) {
 	var lq PoolListingRequest
-	resp, err := c.client.Get(c.formURI("api/v1/list/pool"))
+	resp, err := c.client.Get(c.formURI("api/v1/pool"))
 	if err != nil {
 		return nil, err
 	}
@@ -144,13 +144,13 @@ func (c *Client) postBasicResponse(url string, inT interface{}, outT interface{}
 
 // CreateRepo will attempt to create a repository in the daemon
 func (c *Client) CreateRepo(id string) error {
-	uri := c.formURI("/api/v1/create/repo/" + id)
+	uri := c.formURI("/api/v1/repos/" + id)
 	return c.getBasicResponse(uri, &Response{})
 }
 
 // DeleteRepo will attempt to delete a remote repository
 func (c *Client) DeleteRepo(id string) error {
-	uri := c.formURI("/api/v1/remove/repo/" + id)
+	uri := c.formURI("/api/v1/repos/" + id)
 	return c.getBasicResponse(uri, &Response{})
 }
 
