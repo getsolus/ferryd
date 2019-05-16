@@ -136,7 +136,7 @@ func (j *Job) QueuedSince() time.Duration {
 	return time.Now().UTC().Sub(j.Created.Time)
 }
 
-// Executed will work outow long ago it stopped executing
+// Executed will work out how long ago it stopped executing
 func (j *Job) Executed() time.Duration {
 	return time.Now().UTC().Sub(j.Finished.Time)
 }
