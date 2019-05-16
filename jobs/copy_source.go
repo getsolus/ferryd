@@ -45,10 +45,10 @@ func NewCopySourceJobHandler(j *Job, running bool) (handler *CopySourceJobHandle
 		errs = append(errs, fmt.Errorf("Job '%d' is missing destination repo", j.ID))
 	}
 	if len(j.Sources) == 0 {
-		errs = append(errs, fmt.Errorf("Kob '%d' is missing source name", j.ID))
+		errs = append(errs, fmt.Errorf("Job '%d' is missing source name", j.ID))
 	}
 	if j.Release == 0 || j.Release < -1 {
-		errs = append(errs, fmt.Errorf("job '%d' has invalid release number: '%d'", j.ID, j.Release))
+		errs = append(errs, fmt.Errorf("Job '%d' has invalid release number: '%d'", j.ID, j.Release))
 	}
 	if len(errs) == 0 && !running {
 		log.Info("Copy of release '%d' of source '%s' from repo '%s' to '%s' requested\n", j.Release, j.Sources, j.SrcRepo, j.DstRepo)
