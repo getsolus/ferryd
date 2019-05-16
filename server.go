@@ -19,7 +19,7 @@ package main
 import (
 	log "github.com/DataDrake/waterlog"
 	"github.com/coreos/go-systemd/daemon"
-	"github.com/getsolus/ferryd/api"
+	"github.com/getsolus/ferryd/api/v1"
 	"github.com/getsolus/ferryd/core"
 	"github.com/getsolus/ferryd/jobs"
 	"os"
@@ -32,7 +32,7 @@ import (
 // client, i.e. root or those in the "ferry" group
 type Server struct {
 	running bool
-	api     *api.Listener    // the HTTP socket handler
+	api     *v1.Listener     // the HTTP socket handler
 	manager *core.Manager    // heart of the story
 	store   *jobs.JobStore   // Storage for jobs processor
 	pool    *jobs.Pool       // Allow scheduling jobs
@@ -106,7 +106,7 @@ func (s *Server) Bind() error {
 	s.tl = tl
 
 	// api
-	api, err := api.NewListener(s.store, s.manager)
+	api, err := v1.NewListener(s.store, s.manager)
 	if err != nil {
 		return err
 	}

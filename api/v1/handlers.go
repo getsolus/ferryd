@@ -14,19 +14,17 @@
 // limitations under the License.
 //
 
-package api
+package v1
 
 import (
 	"bytes"
 	"encoding/json"
 	"fmt"
 	log "github.com/DataDrake/waterlog"
-	"github.com/getsolus/ferryd/client"
 	"github.com/getsolus/ferryd/jobs"
 	"github.com/valyala/fasthttp"
 	"net/http"
 	"runtime"
-	"strings"
 )
 
 // getMethodOrigin helps us determine the caller so that we can print
@@ -42,14 +40,17 @@ func getMethodCaller() string {
 	return ""
 }
 
-// sendStockError is a utility to send a standard response to the ferry
+// sendStockErrors is a utility to send a standard response to the ferry
 // client that embeds the error message from ourside.
-func (l *Listener) sendStockError(err error, ctx *fasthttp.RequestCtx) {
-	response := client.Response{
-		Error:       true,
-		ErrorString: err.Error(),
+func (l *Listener) sendStockErrors(errs []error, ctx *fasthttp.RequestCtx) {
+	errors := make([]string, len(errs))
+	for i, err := range errs {
+		errors[i] = err.Error()
+		log.Errorf("Client communication error for method '%s', message: '%s'\n", getMethodCaller(), errors[i])
 	}
-	log.Errorf("Client communication error for method '%s', message: '%s'\n", getMethodCaller(), err.Error())
+	response := GenericResponse{
+		Errors: errors,
+	}
 	buf := bytes.Buffer{}
 	if e2 := json.NewEncoder(&buf).Encode(&response); e2 != nil {
 		ctx.Error(e2.Error(), http.StatusInternalServerError)
@@ -61,36 +62,36 @@ func (l *Listener) sendStockError(err error, ctx *fasthttp.RequestCtx) {
 
 // GetStatus will return the current status of the ferryd instance
 func (l *Listener) GetStatus(ctx *fasthttp.RequestCtx) {
-	ret := client.StatusRequest{
+	ret := StatusResponse{
 		TimeStarted: l.timeStarted,
-		Version:     client.Version,
+		Version:     Version,
 	}
 
 	// Stuff the active jobs in
 	jo, err := l.store.Active()
 	if err != nil {
-		ctx.Error(err.Error(), http.StatusInternalServerError)
-		return
+		ctx.SetStatusCode(http.StatusInternalServerError)
+		ret.Errors = append(ret.Errors, err.Error())
 	}
 	ret.CurrentJobs = jo
 
 	fj, err := l.store.Failed()
 	if err != nil {
-		ctx.Error(err.Error(), http.StatusInternalServerError)
-		return
+		ctx.SetStatusCode(http.StatusInternalServerError)
+		ret.Errors = append(ret.Errors, err.Error())
 	}
 	ret.FailedJobs = fj
 
 	cj, err := l.store.Completed()
 	if err != nil {
-		ctx.Error(err.Error(), http.StatusInternalServerError)
-		return
+		ctx.SetStatusCode(http.StatusInternalServerError)
+		ret.Errors = append(ret.Errors, err.Error())
 	}
 	ret.CompletedJobs = cj
 
 	buf := bytes.Buffer{}
 	if err := json.NewEncoder(&buf).Encode(&ret); err != nil {
-		ctx.Error(err.Error(), http.StatusInternalServerError)
+		ctx.SetStatusCode(http.StatusInternalServerError)
 		return
 	}
 	ctx.SetBody(buf.Bytes())
@@ -98,18 +99,18 @@ func (l *Listener) GetStatus(ctx *fasthttp.RequestCtx) {
 
 // GetRepos will attempt to serialise our known repositories into a response
 func (l *Listener) GetRepos(ctx *fasthttp.RequestCtx) {
-	req := client.RepoListingRequest{}
-	repos, err := l.manager.GetRepos()
+	resp := RepoList{}
+	//TODO: re-enable repos
+	_, err := l.manager.GetRepos()
 	if err != nil {
-		ctx.Error(err.Error(), http.StatusInternalServerError)
-		return
+		ctx.SetStatusCode(http.StatusInternalServerError)
+		resp.Errors = append(resp.Errors, err.Error())
 	}
-	for _, repo := range repos {
-		req.Repository = append(req.Repository, repo.ID)
-	}
+	//TODO: Uncomment this
+	//resp.Repos = repos
 	buf := bytes.Buffer{}
-	if err := json.NewEncoder(&buf).Encode(&req); err != nil {
-		ctx.Error(err.Error(), http.StatusInternalServerError)
+	if err := json.NewEncoder(&buf).Encode(&resp); err != nil {
+		ctx.SetStatusCode(http.StatusInternalServerError)
 		return
 	}
 	ctx.SetBody(buf.Bytes())
@@ -117,21 +118,22 @@ func (l *Listener) GetRepos(ctx *fasthttp.RequestCtx) {
 
 // GetPoolItems will handle responding with the currently known pool items
 func (l *Listener) GetPoolItems(ctx *fasthttp.RequestCtx) {
-	req := client.PoolListingRequest{}
+	resp := PoolResponse{}
 	pools, err := l.manager.GetPoolItems()
 	if err != nil {
-		ctx.Error(err.Error(), http.StatusInternalServerError)
+		ctx.SetStatusCode(http.StatusInternalServerError)
+		resp.Errors = append(resp.Errors, err.Error())
 		return
 	}
 	for _, pool := range pools {
-		req.Item = append(req.Item, client.PoolItem{
+		resp.Items = append(resp.Items, PoolItem{
 			ID:       pool.Name,
 			RefCount: int(pool.RefCount),
 		})
 	}
 	buf := bytes.Buffer{}
-	if err := json.NewEncoder(&buf).Encode(&req); err != nil {
-		ctx.Error(err.Error(), http.StatusInternalServerError)
+	if err := json.NewEncoder(&buf).Encode(&resp); err != nil {
+		ctx.SetStatusCode(http.StatusInternalServerError)
 		return
 	}
 	ctx.SetBody(buf.Bytes())
@@ -151,19 +153,9 @@ func (l *Listener) DeleteRepo(ctx *fasthttp.RequestCtx) {
 
 // CreateJob will proxy a job to remove an existing set of packages by source name + relno
 func (l *Listener) CreateJob(ctx *fasthttp.RequestCtx) {
-	request := &JobRequest{}
-	if err := json.Unmarshal(ctx.Request.Body(), request); err != nil {
-		ctx.Error(err.Error(), http.StatusInternalServerError)
-		return
-	}
-	job, errs := request.Convert()
-	if len(errs) > 0 {
-		errors := make([]string, len(errs))
-		for i, err := range errs {
-			errors[i] = err.Error()
-			log.Errorln(errors[i])
-		}
-		ctx.Error(strings.Join(errors, "\n"), http.StatusBadRequest)
+	job := &jobs.Job{}
+	if err := json.Unmarshal(ctx.Request.Body(), job); err != nil {
+		l.sendStockErrors([]error{err}, ctx)
 		return
 	}
 	l.store.Push(job)

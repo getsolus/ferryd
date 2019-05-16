@@ -122,7 +122,7 @@ func (l *levelDbHandle) Decode(input []byte, o interface{}) error {
 	return nil
 }
 
-func (l *levelDbHandle) ForEach(f DbForeachFunc) error {
+func (l *levelDbHandle) ForEach(f ForeachFunc) error {
 	// No matching on prefixes..
 	iter := l.db.NewIterator(l.prefixBytes, nil)
 	defer iter.Release()

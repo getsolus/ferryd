@@ -19,7 +19,6 @@ package jobs
 import (
 	"database/sql"
 	"database/sql/driver"
-	"github.com/getsolus/ferryd/client"
 	"time"
 )
 
@@ -132,37 +131,45 @@ const (
 	clearCompletedJobs = "DELETE FROM jobs WHERE status=4"
 )
 
-// Convert turns a ferryd job into a client job
-func (j *Job) Convert() *client.Job {
-	h, err := NewJobHandler(j, true)
-	if err != nil {
-		return nil
-	}
-	job := &client.Job{
-		Description: h.Describe(),
-		Timing: client.TimingInformation{
-			Queued: j.Created.Time,
-			Begin:  j.Started.Time,
-			End:    j.Finished.Time,
-		},
-	}
-	if j.Status == Failed {
-		job.Failed = true
-		job.Error = j.Message.String
-	}
-	return job
+// QueuedSince will let us know how long this task has been queued
+func (j *Job) QueuedSince() time.Duration {
+	return time.Now().UTC().Sub(j.Created.Time)
 }
 
-// JobList is a list of Jobs
-type JobList []*Job
+// Executed will work outow long ago it stopped executing
+func (j *Job) Executed() time.Duration {
+	return time.Now().UTC().Sub(j.Finished.Time)
+}
 
-// Convert turns a ferryd job list into a client job set
-func (l JobList) Convert() client.JobSet {
-	var set client.JobSet
-	for _, job := range l {
-		if curr := job.Convert(); curr != nil {
-			set = append(set, curr)
-		}
-	}
-	return set
+// ExecutionTime will return the time it took to execute a job
+func (j *Job) ExecutionTime() time.Duration {
+	return j.Finished.Time.Sub(j.Started.Time)
+}
+
+// QueuedTime will return the total time that the job was queued for
+func (j *Job) QueuedTime() time.Duration {
+	return j.Started.Time.Sub(j.Created.Time)
+}
+
+// TotalTime will return the total time a job took to complete from queuing
+func (j *Job) TotalTime() time.Duration {
+	return j.QueuedTime() + j.ExecutionTime()
+}
+
+// List is a list of Jobs
+type List []*Job
+
+// Len returns the length of the list
+func (l List) Len() int {
+	return len(l)
+}
+
+// Less compares tow jobs by creation time
+func (l List) Less(i, j int) bool {
+	return l[i].Created.Time.Before(l[j].Created.Time)
+}
+
+// Swap switches two Jobs for sorting
+func (l List) Swap(i, j int) {
+	l[i], l[j] = l[j], l[i]
 }

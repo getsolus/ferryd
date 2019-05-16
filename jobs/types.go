@@ -70,22 +70,6 @@ const (
 	TrimPackages = 14
 )
 
-var Mapping = map[string]JobType{
-	"BulkAdd":        BulkAdd,
-	"CopySource":     CopySource,
-	"CloneRepo":      CloneRepo,
-	"CreateRepo":     CreateRepo,
-	"DeleteRepo":     DeleteRepo,
-	"Delta":          Delta,
-	"DeltaRepo":      DeltaRepo,
-	"IndexRepo":      IndexRepo,
-	"PullRepo":       PullRepo,
-	"RemoveSource":   RemoveSource,
-	"TransitProcess": TransitProcess,
-	"TrimObsolete":   TrimObsolete,
-	"TrimPackages":   TrimPackages,
-}
-
 // IsParallel tells us if a particular JobType can be done in parallel
 var IsParallel = map[JobType]bool{
 	CopySource: true,

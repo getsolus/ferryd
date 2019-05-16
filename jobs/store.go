@@ -20,7 +20,6 @@ import (
 	"errors"
 	"fmt"
 	log "github.com/DataDrake/waterlog"
-	"github.com/getsolus/ferryd/client"
 	"github.com/jmoiron/sqlx"
 	"path/filepath"
 	"strings"
@@ -170,9 +169,9 @@ func (s *JobStore) Retire(j *Job) error {
 
 // Active will attempt to return a list of active jobs within
 // the scheduler suitable for consumption by the CLI client
-func (s *JobStore) Active() (client.JobSet, error) {
-	var list JobList
-	var list2 JobList
+func (s *JobStore) Active() (List, error) {
+	var list List
+	var list2 List
 	err := s.db.Select(&list, newJobs)
 	if err != nil {
 		err = fmt.Errorf("Failed to read new jobs, reason: '%s'", err.Error())
@@ -186,27 +185,27 @@ func (s *JobStore) Active() (client.JobSet, error) {
 		return nil, err
 	}
 	list = append(list, list2...)
-	return list.Convert(), err
+	return list, err
 }
 
 // Completed will return all successfully completed jobs still stored
-func (s *JobStore) Completed() (client.JobSet, error) {
-	var list JobList
+func (s *JobStore) Completed() (List, error) {
+	var list List
 	err := s.db.Select(&list, completedJobs)
 	if err != nil {
 		err = fmt.Errorf("Failed to read completed jobs, reason: '%s'", err.Error())
 	}
-	return list.Convert(), err
+	return list, err
 }
 
 // Failed will return all failed jobs that are still stored
-func (s *JobStore) Failed() (client.JobSet, error) {
-	var list JobList
+func (s *JobStore) Failed() (List, error) {
+	var list List
 	err := s.db.Select(&list, failedJobs)
 	if err != nil {
 		err = fmt.Errorf("Failed to read failed jobs, reason: '%s'", err.Error())
 	}
-	return list.Convert(), err
+	return list, err
 }
 
 // ResetCompleted will remove all completion records from our store and reset the pointer
@@ -231,7 +230,7 @@ func (s *JobStore) ResetFailed() error {
 	return err
 }
 
-// ResetQueud will remove all unexecuted records from our store and reset the pointer
+// ResetQueued will remove all unexecuted records from our store and reset the pointer
 func (s *JobStore) ResetQueued() error {
 	s.wLock.Lock()
 	_, err := s.db.Exec(clearQueuedJobs)

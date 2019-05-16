@@ -20,8 +20,8 @@ import (
 	"sync"
 )
 
-// DbForeachFunc is used in the root (untyped buckets)
-type DbForeachFunc func(key, val []byte) error
+// ForeachFunc is used in the root (untyped buckets)
+type ForeachFunc func(key, val []byte) error
 
 // A Closable is a handle or database that can be closed
 type Closable interface {
@@ -43,7 +43,7 @@ type ReadOnlyView interface {
 	Decode(input []byte, o interface{}) error
 
 	// For every key value pair, run the given function
-	ForEach(f DbForeachFunc) error
+	ForEach(f ForeachFunc) error
 }
 
 // WriterView allows destructive write actions within the database

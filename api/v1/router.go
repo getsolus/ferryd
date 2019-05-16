@@ -14,7 +14,7 @@
 // limitations under the License.
 //
 
-package api
+package v1
 
 import (
 	"errors"
@@ -75,7 +75,7 @@ func NewListener(store *jobs.JobStore, manager *core.Manager) (api *Listener, er
 
 	// Job Management
 	r.POST("/api/v1/jobs", api.CreateJob)
-	r.DELETE("/api/v1/jobs", api.ResetJobs) // ?type={completed,failed,queued}
+	r.DELETE("/api/v1/jobs", api.ResetJobs) // ?status={completed,failed,queued}
 	//r.DELETE("/api/v1/jobs/:id", api.CancelJob)
 
 	// List commands

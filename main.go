@@ -21,7 +21,7 @@ import (
 	log "github.com/DataDrake/waterlog"
 	"github.com/DataDrake/waterlog/format"
 	"github.com/DataDrake/waterlog/level"
-	"github.com/getsolus/ferryd/api"
+	"github.com/getsolus/ferryd/api/v1"
 	"github.com/getsolus/ferryd/core"
 	_ "github.com/mattn/go-sqlite3"
 	"github.com/spf13/pflag"
@@ -45,7 +45,7 @@ const (
 
 func mainLoop() {
 	pflag.StringVarP(&baseDir, "base", "d", "/var/lib/ferryd", "Set the base directory for ferryd")
-	pflag.StringVarP(&api.SocketPath, "socket", "s", "/run/ferryd.sock", "Set the socket path for ferryd")
+	pflag.StringVarP(&v1.SocketPath, "socket", "s", "/run/ferryd.sock", "Set the socket path for ferryd")
 	pflag.IntVarP(&backgroundJobCount, "jobs", "j", -1, "Number of jobs to use (-1 is 50% of cores)")
 	pflag.Parse()
 
@@ -92,12 +92,12 @@ func mainLoop() {
 	log.Infoln("Initialising server")
 
 	if err := srv.Bind(); err != nil {
-		log.Errorf("Error in binding server socket '%s', message: '%s'\n", api.SocketPath, err.Error())
+		log.Errorf("Error in binding server socket '%s', message: '%s'\n", v1.SocketPath, err.Error())
 		fmt.Fprintf(os.Stderr, "Fatal error in socket bind, check logs: %v\n", err)
 		return
 	}
 	if err := srv.Serve(); err != nil {
-		log.Errorf("Error in serving on socket '%s', message: '%s'\n", api.SocketPath, err.Error())
+		log.Errorf("Error in serving on socket '%s', message: '%s'\n", v1.SocketPath, err.Error())
 		fmt.Fprintf(os.Stderr, "Fatal error in runtime execution, check logs: %v\n", err)
 		return
 	}

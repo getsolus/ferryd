@@ -39,13 +39,13 @@ func NewCopySourceJob(srcRepo, dstRepo, source string, release int) *Job {
 // NewCopySourceJobHandler will create a job handler for the input job and ensure it validates
 func NewCopySourceJobHandler(j *Job, running bool) (handler *CopySourceJobHandler, errs []error) {
 	if len(j.SrcRepo) == 0 {
-		errs = append(errs, fmt.Errorf("job '%d' is missing source repo\n", j.ID))
+		errs = append(errs, fmt.Errorf("Job '%d' is missing source repo", j.ID))
 	}
 	if len(j.DstRepo) == 0 {
-		errs = append(errs, fmt.Errorf("job '%d' is missing destination repo\n", j.ID))
+		errs = append(errs, fmt.Errorf("Job '%d' is missing destination repo", j.ID))
 	}
 	if len(j.Sources) == 0 {
-		errs = append(errs, fmt.Errorf("job '%d' is missing source name\n", j.ID))
+		errs = append(errs, fmt.Errorf("Kob '%d' is missing source name", j.ID))
 	}
 	if j.Release == 0 || j.Release < -1 {
 		errs = append(errs, fmt.Errorf("job '%d' has invalid release number: '%d'", j.ID, j.Release))
