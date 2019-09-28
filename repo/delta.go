@@ -41,9 +41,9 @@ type Delta struct {
 	URI         sql.NullString `db:"uri"`
 	Size        int
 	Hash        sql.NullString
-	FromRelease int `db:"from_release"`
-	ToRelease   int `db:"to_release"`
-    Skip        bool `db:"skip"`
+	FromRelease int  `db:"from_release"`
+	ToRelease   int  `db:"to_release"`
+	Skip        bool `db:"skip"`
 }
 
 // Queries for retrieving Deltas

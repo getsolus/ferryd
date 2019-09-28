@@ -41,6 +41,8 @@ github.com/radu-munteanu/fsnotify v0.0.0-20120201171113-6b752d1de7795 h1:jCQcUok
 github.com/radu-munteanu/fsnotify v0.0.0-20120201171113-6b752d1de7795/go.mod h1:67sXMQgjhVUYtdbTT4fB+hAECroRtZ1nWjEH8cLa2n8=
 github.com/radu-munteanu/fsnotify v1.4.2 h1:gnENlApnu0yNsD//bgAo5WatJTv0gQpen2P488GetQA=
 github.com/radu-munteanu/fsnotify v1.4.2/go.mod h1:67sXMQgjhVUYtdbTT4fB+hAECroRtZ1nWjEH8cLa2n8=
+github.com/radu-munteanu/fsnotify v1.4.3-0.20190225091322-6b752d1de779 h1:BEZMgmLuUcSM3o0B4+k290qpnowJ9caN4GGo+VPbtHo=
+github.com/radu-munteanu/fsnotify v1.4.3-0.20190225091322-6b752d1de779/go.mod h1:67sXMQgjhVUYtdbTT4fB+hAECroRtZ1nWjEH8cLa2n8=
 github.com/savsgio/gotils v0.0.0-20190210195551-a1aee1d83e72 h1:JEOaM8cQH5Z237uAdMAF6YXMcZXtaiTD2NECYwrYHl0=
 github.com/savsgio/gotils v0.0.0-20190210195551-a1aee1d83e72/go.mod h1:w803/Fg1m0hrp1ZT9KNfQe4E4+WOMMFLcgzPvOcye10=
 github.com/spf13/cobra v0.0.3 h1:ZlrZ4XsMRm04Fr5pSFxBgfND2EBVa1nLpiy1stUsX/8=

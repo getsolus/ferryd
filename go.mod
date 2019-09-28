@@ -12,7 +12,7 @@ require (
 	github.com/mattn/go-runewidth v0.0.4 // indirect
 	github.com/mattn/go-sqlite3 v1.10.0
 	github.com/olekukonko/tablewriter v0.0.1
-	github.com/radu-munteanu/fsnotify v0.0.0-20120201171113-6b752d1de7795
+	github.com/radu-munteanu/fsnotify v1.4.3-0.20190225091322-6b752d1de779
 	github.com/spf13/cobra v0.0.3
 	github.com/spf13/pflag v1.0.3
 	github.com/syndtr/goleveldb v1.0.0
