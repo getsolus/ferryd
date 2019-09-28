@@ -30,6 +30,7 @@ CREATE TABLE IF NOT EXISTS deltas (
     hash         TEXT,
     from_rel     INTEGER,
     to_rel       INTEGER,
+    skip         BOOLEAN,
 )
 `
 
@@ -42,6 +43,7 @@ type Delta struct {
 	Hash        sql.NullString
 	FromRelease int `db:"from_release"`
 	ToRelease   int `db:"to_release"`
+    Skip        bool `db:"skip"`
 }
 
 // Queries for retrieving Deltas
@@ -52,20 +54,15 @@ const (
 // Query for creating a new Delta
 const insertDelta = `
 INSERT INTO deltas (
-    id, package_name, uri, size, hash, from_release, to_release
+    id, package_name, uri, size, hash, from_release, to_release, skip
 ) VALUES (
-    NULL, :package_name, :uri, :size, :hash, :from_release, :to_release
+    NULL, :package_name, :uri, :size, :hash, :from_release, :to_release, :skip
 )
 `
-
-// Queries for updating a Delta
-const (
-	updateDelta = "UPDATE deltas SET size=:size, hash=:hash WHERE id=:id"
-)
 
 // Queries for removing a Delta
 const (
 	trimDeltas     = "DELETE FROM deltas WHERE package_name=:package_name AND to_release < :to_release"
 	obsoleteDeltas = "DELETE FROM deltas WHERE package_name=:package_name"
-	removeDelta    = "DELETE FROM deltas WHERE id=:id"
+	removeDelta    = "DELETE FROM deltas WHERE package_name=:package_name AND to_release = :to_release"
 )

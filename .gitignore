@@ -2,6 +2,8 @@
 _build/*
 vendor/*
 ferryd
+*.db
+*.backup
 
 # Compiled Object files, Static and Dynamic libs (Shared Objects)
 *.o
