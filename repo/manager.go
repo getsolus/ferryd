@@ -17,7 +17,7 @@
 package repo
 
 import (
-    "fmt"
+	"fmt"
 	"github.com/jmoiron/sqlx"
 )
 

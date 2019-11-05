@@ -14,13 +14,31 @@
 // limitations under the License.
 //
 
-package main
+package cli
 
 import (
-	"github.com/getsolus/ferryd/cli"
-	_ "github.com/mattn/go-sqlite3"
+	"fmt"
+	"github.com/DataDrake/cli-ng/cmd"
+	"github.com/getsolus/ferryd/api/v1"
+	"os"
 )
 
-func main() {
-	cli.Root.Run()
+// Version fulfills the "version" sub-command
+var Version = &cmd.CMD{
+	Name:  "version",
+	Alias: "v",
+	Short: "Get the version of ferryd",
+	Args:  &VersionArgs{},
+	Run:   VersionRun,
+}
+
+// VersionArgs are the arguments to the "version" sub-command
+type VersionArgs struct{}
+
+// VersionRun executes the "version" sub-command
+func VersionRun(r *cmd.RootCMD, c *cmd.CMD) {
+	//flags := r.Flags.(*GlobalFlags)
+	//args  := c.Args.(*VersionArgs)
+
+	fmt.Printf("ferryd version: %s\n", v1.Version)
 }
