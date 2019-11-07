@@ -68,6 +68,13 @@ func (c *Client) CreateRepo(id string) (gen GenericResponse, err error) {
 	return
 }
 
+// CreateRepo will handle remote requests for repository creation
+func (l *Listener) CreateRepo(ctx *fasthttp.RequestCtx) {
+    id := ctx.UserValue("id").(string)
+    l.store.Push(jobs.NewCreateRepoJob(id))
+}
+
+
 // DeltaRepo will generate missing metas in a given repo
 func (c *Client) DeltaRepo(id string) (gen GenericResponse, err error) {
 	return c.createJob(jobs.NewDeltaRepoJob(id))
@@ -98,6 +105,12 @@ func (c *Client) RemoveRepo(id string) (gen GenericResponse, err error) {
 		return
 	}
 	return
+}
+
+// RemoveRepo will handle remote requests for repository deletion
+func (l *Listener) RemoveRepo(ctx *fasthttp.RequestCtx) {
+    id := ctx.UserValue("id").(string)
+    l.store.Push(jobs.NewRemoveRepoJob(id))
 }
 
 // Rescan will ask ferryd to re-import a repository from disk

@@ -30,7 +30,7 @@ import (
 )
 
 // Restart terminates the running ferryd service and starts a new one
-func (c *Client) Restart() (status StatusResponse, err error) {
+func (c *Client) Restart() (status GenericResponse, err error) {
     req, err := http.NewRequest("PATCH", formURI("api/v1/daemon")
 	if err != nil {
 		return
@@ -49,6 +49,28 @@ func (c *Client) Restart() (status StatusResponse, err error) {
 	return
 }
 
+// ModifyDaemon makes a requested change to the daemon
+func (l *Listener) ModifyDaemon(ctx *fasthttp.RequestCtx) {
+    action := string(ctx.QueryArgs().Peek("action"))
+    if len(action) == 0 {
+        err := "Action not specified when modifying daemon."
+        log.Errorln(err)
+        ctx.Error(err, http.StatusBadRequest)
+        return
+    }
+    switch action {
+    case "restart":
+        err := "Restart of Daemon not yet implemented."
+        log.Errorln(err)
+        ctx.Error(err, http.StatusBadRequest)
+    default:
+        err := fmt.Sprintf("Action '%s' not implemented for the daemon.", action)
+        log.Errorln(err)
+        ctx.Error(err, http.StatusBadRequest)
+    }
+    return
+}
+
 // Status retrieves the status of the ferryd service
 func (c *Client) Status() (status StatusResponse, err error) {
 	resp, err := c.client.Get(formURI("api/v1/daemon/status"))
@@ -63,7 +85,7 @@ func (c *Client) Status() (status StatusResponse, err error) {
 }
 
 // Stop terminates the running ferryd service
-func (c *Client) Stop() (status StatusResponse, err error) {
+func (c *Client) Stop() (status GenericResponse, err error) {
     req, err := http.NewRequest("DELETE", formURI("api/v1/daemon")
 	if err != nil {
 		return
@@ -77,4 +99,10 @@ func (c *Client) Stop() (status StatusResponse, err error) {
 		return
 	}
 	return
+}
+func (l *Listener) StopDaemon(ctx *fasthttp.RequestCtx) {
+    err := "Stopping of Daemon not yet implemented."
+    log.Errorln(err)
+    ctx.Error(err, http.StatusBadRequest)
+    return
 }

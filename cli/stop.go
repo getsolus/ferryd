@@ -43,8 +43,15 @@ func StopRun(r *cmd.RootCMD, c *cmd.CMD) {
 	client := v1.NewClient(flags.Socket)
 	defer client.Close()
 
-	if err := client.Stop(); err != nil {
+	resp, err := client.Stop()
+    if err != nil {
 		fmt.Fprintf(os.Stderr, "Error while stopping daemon: %v\n", err)
 		os.Exit(1)
 	}
+    if len(resp.Errors) > 0 {
+		fmt.Fprintln(os.Stderr, "Error while stopping daemon:")
+        resp.Print(os.Stderr)
+        os.Exit(1)
+    }
+    fmt.Fprintln("Daemon has been stopped successfully.")
 }

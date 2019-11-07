@@ -66,20 +66,26 @@ func NewListener(store *jobs.JobStore, manager *core.Manager) (api *Listener, er
 	}
 
 	// Set up the API bits
+
+    // Daemon Management
 	r.GET("/api/v1/status", api.GetStatus)
+    r.PATCH("/api/v1/daemon", api.ModifyDaemon) // restart only, for now
+    r.DELETE("/api/v1/daemon", api.StopDaemon)
 
 	// Repo management
-	r.GET("/api/v1/repos", api.GetRepos)
-	r.POST("/api/v1/repos/:id", api.CreateRepo)
+	r.GET("/api/v1/repos", api.Repos)
+	r.POST("/api/v1/repos", api.CreateRepo)
+	r.GET("/api/v1/repos/:id/check", api.CheckRepo)
+	r.GET("/api/v1/repos/:left/compare/:right", api.CompareRepo)
+	r.GET("/api/v1/repos/:left/sync/:right", api.SyncRepo)
+	r.POST("/api/v1/repos/:id", api.ModifyRepo) // check, index,
 	r.DELETE("/api/v1/repos/:id", api.DeleteRepo)
 
 	// Job Management
-	r.POST("/api/v1/jobs", api.CreateJob)
+	r.POST("/api/v1/jobs", api.CreateJob) // cherry-pick, 
 	r.DELETE("/api/v1/jobs", api.ResetJobs) // ?status={completed,failed,queued}
 	//r.DELETE("/api/v1/jobs/:id", api.CancelJob)
 
-	// List commands
-	r.GET("/api/v1/pool", api.GetPoolItems)
 	return api, nil
 }
 

@@ -43,8 +43,10 @@ func StatusRun(r *cmd.RootCMD, c *cmd.CMD) {
 	client := v1.NewClient(flags.Socket)
 	defer client.Close()
 
-	if err := client.Status(); err != nil {
+	status, err := client.Status()
+    if err != nil {
 		fmt.Fprintf(os.Stderr, "Error while getting status: %v\n", err)
 		os.Exit(1)
 	}
+    status.Print(os.Stdout)
 }

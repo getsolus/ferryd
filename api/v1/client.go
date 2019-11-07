@@ -30,7 +30,7 @@ import (
 )
 
 // Version is the version of ferryd
-const Version = "0.5.0"
+const Version = "1.0.0"
 
 // Client is a client for the V1 API
 type Client struct {
@@ -63,37 +63,4 @@ func (c *Client) Close() {
 
 func formURI(part string) string {
 	return fmt.Sprintf("http://localhost.localdomain:0/%s", part)
-}
-
-// GetRepos will grab a list of repos from the daemon
-func (c *Client) GetRepos() (list RepoList, err error) {
-	resp, err := c.client.Get(formURI("api/v1/repos"))
-	if err != nil {
-		return
-	}
-	defer resp.Body.Close()
-	if err = json.NewDecoder(resp.Body).Decode(&list); err != nil {
-		return
-	}
-	return
-}
-
-func (c *Client) createJob(j *jobs.Job) (gen GenericResponse, err error) {
-	raw, err := json.Marshal(j)
-	if err != nil {
-		return
-	}
-	req, err := http.NewRequest("POST", formURI("api/v1/jobs"), bytes.NewBuffer(raw))
-	if err != nil {
-		return
-	}
-	resp, err := c.client.Do(req)
-	if err != nil {
-		return
-	}
-	defer resp.Body.Close()
-	if err = json.NewDecoder(resp.Body).Decode(&gen); err != nil {
-		return
-	}
-	return
 }
