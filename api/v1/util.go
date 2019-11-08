@@ -19,6 +19,8 @@ package v1
 import (
 	"errors"
 	"fmt"
+	"github.com/valyala/fasthttp"
+	"io"
 	"io/ioutil"
 )
 

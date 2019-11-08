@@ -14,35 +14,28 @@
 // limitations under the License.
 //
 
-package repo
+package jobs
 
-import (
-	"fmt"
-	"io"
+// JobStatus indicates the status of a Job in the DB
+type JobStatus int
+
+const (
+	// New indicates a brand-new job
+	New JobStatus = 0
+	// Running indicates an executing job
+	Running = 1
+	// Failed indicates a job that finished in failure
+	Failed = 2
+	// Cancelled indicates a job that was cancelled
+	Cancelled = 3
+	// Completed indicates a job that successfully finished
+	Completed = 4
 )
 
-// Diff is a list of changes made to a repo
-type Diff []string
-
-// Print writes out a Diff in a human-readable format
-func (d Diff) Print(out io.Writer, full, color bool) {
-	plusFmt := "%s\n"
-	minusFmt := "%s\n"
-	if color {
-		plusFmt = "\033[49;38;5;208%s\033[0m\n"
-		minusFmt = "\033[49;38;5;040%s\033[0m\n"
-	}
-	for _, change := range d {
-		rs := []rune(change)
-		switch rs[0] {
-		case '+':
-			fmt.Fprintf(out, plusFmt, change)
-		case '-':
-			fmt.Fprintf(out, minusFmt, change)
-		default:
-			if full {
-				fmt.Fprintln(out, change)
-			}
-		}
-	}
+var statusMap = map[JobStatus]string{
+	New:       "new",
+	Running:   "running",
+	Failed:    "failed",
+	Cancelled: "cancelled",
+	Completed: "completed",
 }

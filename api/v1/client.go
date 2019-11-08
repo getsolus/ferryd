@@ -17,11 +17,7 @@
 package v1
 
 import (
-	"bytes"
 	"context"
-	"encoding/json"
-	"fmt"
-	"github.com/getsolus/ferryd/jobs"
 	"net"
 	"net/http"
 	"time"

@@ -17,16 +17,7 @@
 package v1
 
 import (
-	"bytes"
-	"context"
-	"encoding/json"
-	"fmt"
 	"github.com/getsolus/ferryd/jobs"
-	"net"
-	"net/http"
-	//"runtime"
-	//"strings"
-	"time"
 )
 
 // CherryPick will ask the backend to sync a single package from one repo to another
@@ -39,7 +30,7 @@ func (c *Client) CloneRepo(src, dest string) (gen GenericResponse, err error) {
 	return c.createJob(jobs.NewCloneRepoJob(src, dest))
 }
 
-// SyncRepo will ask the backend to sync from one repo to another
+// PullRepo will ask the backend to sync from one repo to another
 func (c *Client) PullRepo(src, dest string) (gen GenericResponse, err error) {
 	return c.createJob(jobs.NewSyncRepoJob(src, dest))
 }

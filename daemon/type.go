@@ -20,8 +20,8 @@ import (
 	log "github.com/DataDrake/waterlog"
 	"github.com/coreos/go-systemd/daemon"
 	"github.com/getsolus/ferryd/api/v1"
-	"github.com/getsolus/ferryd/repo"
 	"github.com/getsolus/ferryd/jobs"
+	"github.com/getsolus/ferryd/repo"
 	"os"
 	"os/signal"
 	"path/filepath"
@@ -34,7 +34,7 @@ type Server struct {
 	running bool
 	api     *v1.Listener     // the HTTP socket handler
 	manager *repo.Manager    // heart of the story
-	store   *jobs.Store   // Storage for jobs processor
+	store   *jobs.Store      // Storage for jobs processor
 	tl      *TransitListener //Listener for TRAM files
 
 	// We store a global lock file ..

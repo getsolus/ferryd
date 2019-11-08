@@ -17,15 +17,12 @@
 package v1
 
 import (
-	"bytes"
-	"context"
-	"encoding/json"
+	"errors"
 	"fmt"
 	"github.com/getsolus/ferryd/jobs"
-	"net"
+	"github.com/valyala/fasthttp"
 	"net/http"
-	//"runtime"
-	//"strings"
+	"strconv"
 	"time"
 )
 
@@ -35,7 +32,7 @@ func (c *Client) modifyRepo(id, action string) (j *jobs.Job, err error) {
 		return
 	}
 	q := req.URL.Query()
-	q.Add("action", check)
+	q.Add("action", "check")
 	req.URL.RawQuery = q.Encode()
 
 	resp, err := c.client.Do(req)
@@ -63,7 +60,7 @@ func (c *Client) modifyRepo(id, action string) (j *jobs.Job, err error) {
 	return
 }
 
-// ModifyRepo
+// ModifyRepo performs a modification to an existing repo
 func (l *Listener) ModifyRepo(ctx *fasthttp.RequestCtx) {
 	id := ctx.UserValue("id").(string)
 	if len(id) == 0 {
@@ -99,9 +96,9 @@ func (l *Listener) ModifyRepo(ctx *fasthttp.RequestCtx) {
 		}
 		jobID, err = l.manager.TrimPackages(id, m)
 	case "trim-obsoletes":
-		jobID, err = l.manager.TimeObsoletes(id)
+		jobID, err = l.manager.TrimObsoletes(id)
 	default:
-		writeErrorString(ctx, fmt.Sprintf("Invalid action '%s' when modifying repo", action), http.Status.BadRequest)
+		writeErrorString(ctx, fmt.Sprintf("Invalid action '%s' when modifying repo", action), http.StatusBadRequest)
 		return
 	}
 	if err != nil {
@@ -112,7 +109,7 @@ func (l *Listener) ModifyRepo(ctx *fasthttp.RequestCtx) {
 
 // CheckRepo will compare a repo on disk with the DB
 func (c *Client) CheckRepo(id string) (*jobs.Job, error) {
-	return s.modifyRepo(id, "check")
+	return c.modifyRepo(id, "check")
 }
 
 // DeltaRepo will generate missing metas in a given repo
@@ -125,14 +122,14 @@ func (c *Client) IndexRepo(id string) (j *jobs.Job, err error) {
 	return c.modifyRepo(id, "index")
 }
 
-// Rescan will ask ferryd to re-import a repository from disk
+// RescanRepo will ask ferryd to re-import a repository from disk
 func (c *Client) RescanRepo(id string) (j *jobs.Job, err error) {
 	return c.modifyRepo(id, "rescan")
 }
 
 // TrimPackages will request that packages in the repo are trimmed to maxKeep
 func (c *Client) TrimPackages(id string, maxKeep int) (j *jobs.Job, err error) {
-	err := errors.New("Not yet implemented")
+	err = errors.New("Not yet implemented")
 	return
 }
 

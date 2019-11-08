@@ -14,13 +14,13 @@
 // limitations under the License.
 //
 
-package jobs
+package repo
 
 import (
+	"errors"
 	log "github.com/DataDrake/waterlog"
-	"github.com/getsolus/ferryd/core"
+	"github.com/getsolus/ferryd/jobs"
 	"math/rand"
-	"strings"
 	"time"
 )
 
@@ -34,25 +34,19 @@ const MaxJitter int64 = 512
 // keep polling for the correct job type to process
 type Worker struct {
 	timer   *time.Timer
-	manager *core.Manager
-	store   *JobStore
+	manager *Manager
 	stop    chan bool
 	done    chan bool
 }
 
 // NewWorker creates a new worker for the pool
-func NewWorker(store *JobStore, manager *core.Manager) *Worker {
-	if store == nil {
-		panic("Constructed a Worker without a valid JobStore!")
-	}
+func NewWorker(manager *Manager) *Worker {
 	if manager == nil {
 		panic("Constructed a Worker without a valid Manager!")
 	}
-
 	return &Worker{
 		timer:   nil, // Init this when we start up
 		manager: manager,
-		store:   store,
 		stop:    make(chan bool),
 		done:    make(chan bool),
 	}
@@ -82,11 +76,11 @@ func (w *Worker) Start() {
 
 		case <-w.timer.C:
 			// Try to grab a job
-			job, err := w.store.Claim()
+			job, err := w.manager.store.Claim()
 
 			// Report the error
 			if err != nil {
-				if err != ErrNoJobReady {
+				if err != jobs.ErrNoJobReady {
 					log.Errorf("Failed to grab a work queue item, reason: '%s'\n", err.Error())
 				}
 				w.setTime()
@@ -97,7 +91,7 @@ func (w *Worker) Start() {
 			w.processJob(job)
 
 			// Mark the job as dealt with
-			err = w.store.Retire(job)
+			err = w.manager.store.Retire(job)
 
 			// Report failure in retiring the job
 			if err != nil {
@@ -122,34 +116,55 @@ func (w *Worker) setTime() {
 
 // processJob will actually examine the given job and figure out how
 // to execute it. Each Worker can only execute a single job at a time
-func (w *Worker) processJob(job *Job) {
-	handler, errs := NewJobHandler(job, true)
-
-	if len(errs) > 0 {
-		errors := make([]string, len(errs))
-		for i, err := range errs {
-			errors[i] = err.Error()
-			log.Errorln(errors[i])
-		}
-		job.Status = Failed
-		job.Message.String = strings.Join(errors, ";")
-		job.Message.Valid = true
-		return
-	}
-
+func (w *Worker) processJob(j *jobs.Job) {
 	// Safely have a handler now
-	job.Message.String = handler.Describe()
+	j.Message.String = j.Describe()
 
 	// Try to execute it, report the error
-	if err := handler.Execute(w.store, w.manager); err != nil {
-		job.Status = Failed
-		job.Message.String = err.Error()
-		job.Message.Valid = true
-		log.Errorf("Job '%d' failed with error: '%s'\n", job.ID, err.Error())
+	if err := w.executeJob(j); err != nil {
+		j.Status = jobs.Failed
+		j.Message.String = err.Error()
+		j.Message.Valid = true
+		log.Errorf("Job '%d' failed with error: '%s'\n", j.ID, err.Error())
 		return
 	}
-	job.Status = Completed
+	j.Status = jobs.Completed
 
 	// Succeeded
-	log.Infof("Job '%d' completed successfully\n", job.ID)
+	log.Infof("Job '%d' completed successfully\n", j.ID)
+}
+
+func (w *Worker) executeJob(j *jobs.Job) error {
+	switch j.Type {
+	case jobs.Check:
+		return w.manager.CheckExecute(j)
+	case jobs.CherryPick:
+		return w.manager.CherryPickExecute(j)
+	case jobs.Clone:
+		return w.manager.CloneExecute(j)
+	case jobs.Compare:
+		return w.manager.CompareExecute(j)
+	case jobs.Create:
+		return w.manager.CreateExecute(j)
+	case jobs.Delta:
+		return w.manager.DeltaExecute(j)
+	case jobs.DeltaPackage:
+		return w.manager.DeltaPackageExecute(j)
+	case jobs.Import:
+		return w.manager.ImportExecute(j)
+	case jobs.Index:
+		return w.manager.IndexExecute(j)
+	case jobs.Remove:
+		return w.manager.RemoveExecute(j)
+	case jobs.Rescan:
+		return w.manager.RescanExecute(j)
+	case jobs.Sync:
+		return w.manager.SyncExecute(j)
+	case jobs.TrimObsoletes:
+		return w.manager.TrimObsoletesExecute(j)
+	case jobs.TrimPackages:
+		return w.manager.TrimPackagesExecute(j)
+	default:
+		return errors.New("Unsupported Job Type")
+	}
 }

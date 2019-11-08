@@ -22,57 +22,60 @@ type JobType int
 const (
 	// Invalid is the Zero for JobType
 	Invalid JobType = 0
-	// BulkAdd is a sequential job which will attempt to add all of the packages
-	BulkAdd = 1
-
-	// CopySource is a sequential job to copy from one repo to another
-	CopySource = 2
-
-	// CloneRepo is a sequential job which will attempt to clone a repo
-	CloneRepo = 3
-
-	// CreateRepo is a sequential job which will attempt to create a new repo
-	CreateRepo = 4
-
-	// DeleteRepo is a sequential job which will attempt to delete a repository
-	DeleteRepo = 5
-
-	// Delta is a parallel job which will attempt the construction of deltas for
-	// a given package name + repo
+	// Check compares the contents of a repo on Disk with the DB
+	Check = 1
+	// CherryPick syncs a single package from one repo to another
+	CherryPick = 2
+	// Clone copies an existing repo into a new one
+	Clone = 3
+	// Compare creates a diff of the contents of two repos
+	Compare = 4
+	// Create adds a new empty repo
+	Create = 5
+	// Delta generates missing Delta Packages for an entire repo
 	Delta = 6
-
-	// DeltaIndex is created in response to transit manifest events, and will
-	// cause the repository to be reindexed after each delta job continues
-	DeltaIndex = 7
-
-	// DeltaRepo is a sequential job which creates Delta jobs for every package in
-	// a repo
-	DeltaRepo = 8
-
-	// IndexRepo is a sequential job that requests the repository be re-indexed
-	IndexRepo = 9
-
-	// PullRepo is a sequential job that will attempt to pull a repo
-	PullRepo = 10
-
-	// RemoveSource is a sequential job that will attempt removal of packages
-	RemoveSource = 11
-
-	// TransitProcess is a sequential job that will process the incoming uploads
-	// directory, dealing with each .tram upload
-	TransitProcess = 12
-
-	// TrimObsolete is a sequential job to permanently remove obsolete packages
-	// from a repo
-	TrimObsolete = 13
-
-	// TrimPackages is a sequential job to trim fat from a repository
+	// DeltaPackage generates Deltas for a single package
+	DeltaPackage = 7
+	// Import adds a new repo to the DB from an existing filepath
+	Import = 8
+	// Index regenerates the index for a repo
+	Index = 9
+	// Remove removes a repo from the DB but not its contents on disk
+	Remove = 10
+	// Rescan updates the DB with the contents of a repo on disk
+	Rescan = 11
+	// Sync replicates the contents of one repo into another
+	Sync = 12
+	// TrimObsoletes removes obsoleted packages from the repo
+	TrimObsoletes = 13
+	// TrimPackages removes old release of packages from the repo
 	TrimPackages = 14
+	// TransitPackage addss a new package to the Pool and any auto-transit repos
+	TransitPackage = 15
 )
+
+var typeMap = map[JobType]string{
+	Invalid:        "INVALID",
+	Check:          "Check",
+	CherryPick:     "Cherry-Pick",
+	Clone:          "Clone",
+	Compare:        "Compare",
+	Create:         "Create",
+	Delta:          "Delta",
+	DeltaPackage:   "Delta Package",
+	Import:         "Import",
+	Index:          "Index",
+	Remove:         "Remove",
+	Rescan:         "Rescan",
+	Sync:           "Scan",
+	TrimObsoletes:  "Trim Obsoletes",
+	TrimPackages:   "Trim Packages",
+	TransitPackage: "Transit Package",
+}
 
 // IsParallel tells us if a particular JobType can be done in parallel
 var IsParallel = map[JobType]bool{
-	CopySource: true,
-	Delta:      true,
-	DeltaIndex: true,
+	Check:        true,
+	Compare:      true,
+	DeltaPackage: true,
 }

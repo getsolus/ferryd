@@ -19,6 +19,7 @@ package v1
 import (
 	"encoding/json"
 	"github.com/getsolus/ferryd/repo"
+	"github.com/valyala/fasthttp"
 	"io"
 )
 
@@ -51,7 +52,7 @@ func (c *Client) Repos() (list RepoList, err error) {
 func (l *Listener) Repos(ctx *fasthttp.RequestCtx) {
 	resp := RepoList{}
 	//TODO: re-enable repos
-	_, err := l.manager.GetRepos()
+	_, err := l.manager.Repos()
 	if err != nil {
 		writeError(ctx, err, http.StatusInternalServerError)
 	}

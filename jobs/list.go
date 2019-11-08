@@ -14,35 +14,22 @@
 // limitations under the License.
 //
 
-package repo
+package jobs
 
-import (
-	"fmt"
-	"io"
-)
+// List is a list of Jobs
+type List []*Job
 
-// Diff is a list of changes made to a repo
-type Diff []string
+// Len returns the length of the list
+func (l List) Len() int {
+	return len(l)
+}
 
-// Print writes out a Diff in a human-readable format
-func (d Diff) Print(out io.Writer, full, color bool) {
-	plusFmt := "%s\n"
-	minusFmt := "%s\n"
-	if color {
-		plusFmt = "\033[49;38;5;208%s\033[0m\n"
-		minusFmt = "\033[49;38;5;040%s\033[0m\n"
-	}
-	for _, change := range d {
-		rs := []rune(change)
-		switch rs[0] {
-		case '+':
-			fmt.Fprintf(out, plusFmt, change)
-		case '-':
-			fmt.Fprintf(out, minusFmt, change)
-		default:
-			if full {
-				fmt.Fprintln(out, change)
-			}
-		}
-	}
+// Less compares tow jobs by creation time
+func (l List) Less(i, j int) bool {
+	return l[i].Created.Time.Before(l[j].Created.Time)
+}
+
+// Swap switches two Jobs for sorting
+func (l List) Swap(i, j int) {
+	l[i], l[j] = l[j], l[i]
 }

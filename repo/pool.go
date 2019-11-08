@@ -14,11 +14,10 @@
 // limitations under the License.
 //
 
-package jobs
+package repo
 
 import (
 	log "github.com/DataDrake/waterlog"
-	"github.com/getsolus/ferryd/repo"
 	"runtime"
 )
 
@@ -33,7 +32,7 @@ type Pool struct {
 // NewPool will return a new Pool with the specified number
 // of jobs. Note that "njobs" only refers to the number of *background jobs*,
 // the majority of operations will run sequentially
-func NewPool(store *Store, manager *repo.Manager, njobs int) *Pool {
+func NewPool(manager *Manager, njobs int) *Pool {
 	// If we set to -1, we'll automatically set to half of the system core count
 	// because we use xz -T 2 (so twice the number of threads ..)
 	if njobs < 0 {
@@ -49,7 +48,7 @@ func NewPool(store *Store, manager *repo.Manager, njobs int) *Pool {
 
 	// Construct worker pool
 	for i := 0; i < njobs; i++ {
-		ret.workers = append(ret.workers, NewWorker(store, manager))
+		ret.workers = append(ret.workers, NewWorker(manager))
 	}
 	return ret
 }

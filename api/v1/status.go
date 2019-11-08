@@ -18,7 +18,8 @@ package v1
 
 import (
 	"github.com/getsolus/ferryd/jobs"
-	"github.com/getsolus/ferryd/repo"
+	"github.com/valyala/fasthttp"
+	"io"
 	"time"
 )
 
@@ -43,7 +44,7 @@ func (s StatusResponse) Uptime() time.Duration {
 }
 
 // Print writes out a StatusResponse
-func (resp StatusResponse) Print(out io.Writer) {
+func (s StatusResponse) Print(out io.Writer) {
 
 }
 

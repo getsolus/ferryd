@@ -17,16 +17,10 @@
 package v1
 
 import (
-	"bytes"
-	"context"
 	"encoding/json"
-	"fmt"
 	"github.com/getsolus/ferryd/jobs"
-	"net"
+	"github.com/valyala/fasthttp"
 	"net/http"
-	//"runtime"
-	//"strings"
-	"time"
 )
 
 // CreateRepo will attempt to create a repository in the daemon
@@ -53,9 +47,9 @@ func (l *Listener) CreateRepo(ctx *fasthttp.RequestCtx) {
 	writeErrorString(ctx, "Not yet implemented", http.StatusInternalServerError)
 }
 
-// Import will ask ferryd to import a repository from disk
+// ImportRepo will ask ferryd to import a repository from disk
 func (c *Client) ImportRepo(id string) (j *jobs.Job, err error) {
-	err := errors.New("Not yet implemented")
+	err = errors.New("Not yet implemented")
 	return
 }
 

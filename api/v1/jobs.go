@@ -18,9 +18,9 @@ package v1
 
 import (
 	"encoding/json"
-	"errors"
 	"fmt"
 	"github.com/getsolus/ferryd/jobs"
+	"github.com/valyala/fasthttp"
 	"net/http"
 	"strconv"
 )
@@ -29,16 +29,16 @@ import (
 func (c *Client) GetJob(id int) (j *jobs.Job, err error) {
 	resp, err := c.client.Get(fmt.Sprintf("/api/v1/jobs/%d", id))
 	if err != nil {
-		return nil, err
+		return
 	}
 	defer resp.Body.Close()
 	if resp.StatusCode != http.StatusOK {
-		return nil, readError(resp.Body)
+		err = readError(resp.Body)
+		return
 	}
 	dec := json.NewDecoder(resp.Body)
-	var j jobs.Job
-	err = dec.Decode(&j)
-	return &j, err
+	err = dec.Decode(j)
+	return
 }
 
 // GetJob handles request the current information about a Job
@@ -54,7 +54,7 @@ func (l *Listener) GetJob(ctx *fasthttp.RequestCtx) {
 		writeError(ctx, err, http.StatusInternalServerError)
 		return
 	}
-	enc := json.NewEncoder(ctx.Response)
+	enc := json.NewEncoder(ctx.Response.BodyWriter())
 	err = enc.Encode(job)
 	if err != nil {
 		writeError(ctx, err, http.StatusInternalServerError)

@@ -22,7 +22,6 @@ import (
 	log "github.com/DataDrake/waterlog"
 	"github.com/jmoiron/sqlx"
 	"path/filepath"
-	"strings"
 	"sync"
 	"time"
 )
@@ -41,12 +40,12 @@ const (
 
 // Store handles the storage and manipulation of incomplete jobs
 type Store struct {
-    sync.Mutex
+	sync.Mutex
 
-	db    *sqlx.DB
-	next  *Job
-	stop  chan bool
-	done  chan bool
+	db   *sqlx.DB
+	next *Job
+	stop chan bool
+	done chan bool
 }
 
 // NewStore creates a fully initialized Store and sets up Bolt Buckets as needed
@@ -73,18 +72,19 @@ func NewStore(path string) (*Store, error) {
 }
 
 // Close will clean up our private job database
-func (s *Store) Close() {
+func (s *Store) Close() error {
 	if s.db != nil {
-		s.db.Close()
 		s.db = nil
+		return s.db.Close()
 	}
+	return nil
 }
 
 // GetJob retrieves a Job from the DB
 func (s *Store) GetJob(id int) (*Job, error) {
-    var j Job
-    err := d.db.NamedQuery(&j, getJob, id)
-    return &j, err
+	var j Job
+	err := s.db.Select(&j, getJob, id)
+	return &j, err
 }
 
 // UnclaimRunning will find all claimed jobs and unclaim them again
@@ -99,17 +99,24 @@ func (s *Store) UnclaimRunning() error {
 }
 
 // Push inserts a new Job into the queue
-func (s *Store) Push(j *Job) error {
+func (s *Store) Push(j *Job) (id int64, err error) {
 	s.Lock()
 	j.Status = New
 	j.Created.Scan(time.Now().UTC())
-	_, err := s.db.NamedExec(insertJob, j)
+	res, err := s.db.NamedExec(insertJob, j)
 	if err != nil {
 		err = fmt.Errorf("Failed to add new job, reason: '%s'", err.Error())
 		log.Errorln(err.Error())
+		goto UNLOCK
 	}
+	id, err = res.LastInsertId()
+	if err != nil {
+		err = fmt.Errorf("Failed to get ID of new job, reason: '%s'", err.Error())
+		log.Errorln(err.Error())
+	}
+UNLOCK:
 	s.Unlock()
-	return err
+	return id, err
 }
 
 func (s *Store) findNewJob() {
@@ -154,9 +161,6 @@ func (s *Store) Claim() (j *Job, err error) {
 	}
 	// find the next replacement job
 	j, s.next = s.next, nil
-	if j != nil {
-		j.SourcesList = strings.Split(j.Sources, ";")
-	}
 UNLOCK:
 	s.findNewJob()
 	s.Unlock()

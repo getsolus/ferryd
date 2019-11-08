@@ -18,21 +18,22 @@ package v1
 
 import (
 	"fmt"
+	"github.com/valyala/fasthttp"
 	"net/http"
 )
 
 // Restart terminates the running ferryd service and starts a new one
 func (c *Client) Restart() error {
-	req, err := http.NewRequest("PATCH", formURI("api/v1/daemon"))
+	req, err := http.NewRequest("PATCH", formURI("api/v1/daemon"), nil)
 	if err != nil {
-		return
+		return err
 	}
 	q := req.URL.Query()
 	q.Add("action", "restart")
 	req.URL.RawQuery = q.Encode()
 	resp, err := c.client.Do(req)
 	if err != nil {
-		return
+		return err
 	}
 	defer resp.Body.Close()
 	return readError(resp.Body)
@@ -56,13 +57,13 @@ func (l *Listener) ModifyDaemon(ctx *fasthttp.RequestCtx) {
 
 // Stop terminates the running ferryd service
 func (c *Client) Stop() error {
-	req, err := http.NewRequest("DELETE", formURI("api/v1/daemon"))
+	req, err := http.NewRequest("DELETE", formURI("api/v1/daemon"), nil)
 	if err != nil {
-		return
+		return err
 	}
 	resp, err := c.client.Do(req)
 	if err != nil {
-		return
+		return err
 	}
 	defer resp.Body.Close()
 	return readError(resp.Body)
@@ -70,6 +71,6 @@ func (c *Client) Stop() error {
 
 // StopDaemon handles the stopping of the daemon
 func (l *Listener) StopDaemon(ctx *fasthttp.RequestCtx) {
-	writeErrorString(ctx, "Stopping of Daemon not yet implemented", http.Status.BadRequest)
+	writeErrorString(ctx, "Stopping of Daemon not yet implemented", http.StatusBadRequest)
 	return
 }
