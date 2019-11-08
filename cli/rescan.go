@@ -45,8 +45,10 @@ func RescanRun(r *cmd.RootCMD, c *cmd.CMD) {
 	client := v1.NewClient(flags.Socket)
 	defer client.Close()
 
-	if err := client.Rescan(args.Repo); err != nil {
+	j, err := client.Rescan(args.Repo)
+	if err != nil {
 		fmt.Fprintf(os.Stderr, "Error while rescanning repo: %v\n", err)
 		os.Exit(1)
 	}
+	j.Print()
 }

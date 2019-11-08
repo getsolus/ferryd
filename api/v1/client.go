@@ -24,8 +24,6 @@ import (
 	"github.com/getsolus/ferryd/jobs"
 	"net"
 	"net/http"
-	//"runtime"
-	//"strings"
 	"time"
 )
 
@@ -59,8 +57,4 @@ func NewClient(address string) *Client {
 // not leaking file descriptors.
 func (c *Client) Close() {
 	c.client.Transport.(*http.Transport).CloseIdleConnections()
-}
-
-func formURI(part string) string {
-	return fmt.Sprintf("http://localhost.localdomain:0/%s", part)
 }

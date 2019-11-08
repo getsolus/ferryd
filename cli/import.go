@@ -45,8 +45,10 @@ func ImportRun(r *cmd.RootCMD, c *cmd.CMD) {
 	client := v1.NewClient(flags.Socket)
 	defer client.Close()
 
-	if err := client.Import(args.Repo); err != nil {
+	j, err := client.Import(args.Repo)
+	if err != nil {
 		fmt.Fprintf(os.Stderr, "Error while importing repo: %v\n", err)
 		os.Exit(1)
 	}
+	j.Print()
 }

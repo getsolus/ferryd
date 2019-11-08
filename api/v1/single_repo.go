@@ -29,28 +29,6 @@ import (
 	"time"
 )
 
-
-// CheckRepo will compare a repo on disk with the DB
-func (c *Client) CheckRepo(id string) (gen GenericResponse, err error) {
-	req, err := http.NewRequest("POST", formURI("api/v1/repos/"+id), nil)
-	if err != nil {
-		return
-	}
-    q := req.URL.Query()
-    q.Add("action", check)
-    req.URL.RawQuery = q.Encode()
-
-	resp, err := c.client.Do(req)
-	if err != nil {
-		return
-	}
-	defer resp.Body.Close()
-	if err = json.NewDecoder(resp.Body).Decode(&gen); err != nil {
-		return
-	}
-	return
-}
-
 // CreateRepo will attempt to create a repository in the daemon
 func (c *Client) CreateRepo(id string) (gen GenericResponse, err error) {
 	req, err := http.NewRequest("POST", formURI("api/v1/repos/"+id), nil)
@@ -70,28 +48,19 @@ func (c *Client) CreateRepo(id string) (gen GenericResponse, err error) {
 
 // CreateRepo will handle remote requests for repository creation
 func (l *Listener) CreateRepo(ctx *fasthttp.RequestCtx) {
-    id := ctx.UserValue("id").(string)
-    l.store.Push(jobs.NewCreateRepoJob(id))
-}
-
-
-// DeltaRepo will generate missing metas in a given repo
-func (c *Client) DeltaRepo(id string) (gen GenericResponse, err error) {
-	return c.createJob(jobs.NewDeltaRepoJob(id))
+	//id := ctx.UserValue("id").(string)
+	//jobID, err := l.manager.CreateRepo(id)
+	writeErrorString(ctx, "Not yet implemented", http.StatusInternalServerError)
 }
 
 // Import will ask ferryd to import a repository from disk
-func (c *Client) ImportRepo(id string) (gen GenericResponse, err error) {
-	return c.createJob(jobs.NewImportRepoJob(id))
-}
-
-// IndexRepo will attempt to index a repository in the daemon
-func (c *Client) IndexRepo(id string) (gen GenericResponse, err error) {
-	return c.createJob(jobs.NewIndexRepoJob(id))
+func (c *Client) ImportRepo(id string) (j *jobs.Job, err error) {
+	err := errors.New("Not yet implemented")
+	return
 }
 
 // RemoveRepo will attempt to remove a repository in the daemon
-func (c *Client) RemoveRepo(id string) (gen GenericResponse, err error) {
+func (c *Client) RemoveRepo(id string) (j *jobs.Job, err error) {
 	req, err := http.NewRequest("DELETE", formURI("api/v1/repos/"+id), nil)
 	if err != nil {
 		return
@@ -109,21 +78,7 @@ func (c *Client) RemoveRepo(id string) (gen GenericResponse, err error) {
 
 // RemoveRepo will handle remote requests for repository deletion
 func (l *Listener) RemoveRepo(ctx *fasthttp.RequestCtx) {
-    id := ctx.UserValue("id").(string)
-    l.store.Push(jobs.NewRemoveRepoJob(id))
-}
-
-// Rescan will ask ferryd to re-import a repository from disk
-func (c *Client) RescanRepo(id string) (gen GenericResponse, err error) {
-	return c.createJob(jobs.NewRescanRepoJob(id))
-}
-
-// TrimPackages will request that packages in the repo are trimmed to maxKeep
-func (c *Client) TrimPackages(id string, maxKeep int) (gen GenericResponse, err error) {
-	return c.createJob(jobs.NewTrimPackagesJob(id, maxKeep))
-}
-
-// TrimObsolete will request that all packages marked obsolete are removed
-func (c *Client) TrimObsolete(id string) (gen GenericResponse, err error) {
-	return c.createJob(jobs.NewTrimObsoleteJob(id))
+	// id := ctx.UserValue("id").(string)
+	// l.store.Push(jobs.NewRemoveRepoJob(id))
+	writeErrorString(ctx, "Not yet implemented", http.StatusInternalServerError)
 }

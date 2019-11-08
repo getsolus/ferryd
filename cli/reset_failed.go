@@ -47,4 +47,5 @@ func ResetFailedRun(r *cmd.RootCMD, c *cmd.CMD) {
 		fmt.Fprintf(os.Stderr, "Error while resetting failed jobs: %v\n", err)
 		os.Exit(1)
 	}
+	fmt.Println("Successfully reset failed jobs")
 }

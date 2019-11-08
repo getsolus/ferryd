@@ -44,9 +44,9 @@ func StatusRun(r *cmd.RootCMD, c *cmd.CMD) {
 	defer client.Close()
 
 	status, err := client.Status()
-    if err != nil {
+	if err != nil {
 		fmt.Fprintf(os.Stderr, "Error while getting status: %v\n", err)
 		os.Exit(1)
 	}
-    status.Print(os.Stdout)
+	status.Print(os.Stdout)
 }

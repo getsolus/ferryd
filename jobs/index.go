@@ -19,7 +19,7 @@ package jobs
 import (
 	"fmt"
 	log "github.com/DataDrake/waterlog"
-	"github.com/getsolus/ferryd/core"
+	"github.com/getsolus/ferryd/repo"
 )
 
 // IndexRepoJobHandler is responsible for indexing repositories and should only
@@ -48,7 +48,7 @@ func NewIndexRepoJobHandler(j *Job, running bool) (handler *IndexRepoJobHandler,
 }
 
 // Execute will index the given repository if possible
-func (j *IndexRepoJobHandler) Execute(_ *JobStore, manager *core.Manager) error {
+func (j *IndexRepoJobHandler) Execute(_ *Store, manager *repo.Manager) error {
 	if err := manager.Index(j.SrcRepo); err != nil {
 		return err
 	}

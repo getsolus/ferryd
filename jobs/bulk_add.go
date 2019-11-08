@@ -19,7 +19,7 @@ package jobs
 import (
 	"fmt"
 	log "github.com/DataDrake/waterlog"
-	"github.com/getsolus/ferryd/core"
+	"github.com/getsolus/ferryd/repo"
 	"strings"
 )
 
@@ -54,7 +54,7 @@ func NewBulkAddJobHandler(j *Job, running bool) (handler *BulkAddJobHandler, err
 }
 
 // Execute will attempt the mass-import of packages passed to the job
-func (j *BulkAddJobHandler) Execute(_ *JobStore, manager *core.Manager) error {
+func (j *BulkAddJobHandler) Execute(_ *Store, manager *repo.Manager) error {
 	if err := manager.AddPackages(j.SrcRepo, j.SourcesList, false); err != nil {
 		return err
 	}

@@ -19,7 +19,7 @@ package jobs
 import (
 	"fmt"
 	log "github.com/DataDrake/waterlog"
-	"github.com/getsolus/ferryd/core"
+	"github.com/getsolus/ferryd/repo"
 )
 
 // DeltaRepoJobHandler is responsible for delta'ing repositories and should only
@@ -54,7 +54,7 @@ func NewDeltaRepoJobHandler(j *Job, running bool) (handler *DeltaRepoJobHandler,
 //
 // This operation is ideally only used after the first import of a repository,
 // after then deltas will be produced on the fly.
-func (j *DeltaRepoJobHandler) Execute(s *JobStore, manager *core.Manager) error {
+func (j *DeltaRepoJobHandler) Execute(s *Store, manager *repo.Manager) error {
 	packageNames, err := manager.GetPackageNames(j.SrcRepo)
 	if err != nil {
 		return err

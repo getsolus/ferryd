@@ -45,8 +45,10 @@ func TrimObsoleteRun(r *cmd.RootCMD, c *cmd.CMD) {
 	client := v1.NewClient(flags.Socket)
 	defer client.Close()
 
-	if err := client.TrimObsolete(args.Repo); err != nil {
+	j, err := client.TrimObsolete(args.Repo)
+	if err != nil {
 		fmt.Fprintf(os.Stderr, "Error while trimming obsolete packages in repo: %v\n", err)
 		os.Exit(1)
 	}
+	j.Print()
 }

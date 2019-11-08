@@ -21,8 +21,8 @@ import (
 	log "github.com/DataDrake/waterlog"
 	"github.com/coreos/go-systemd/activation"
 	"github.com/fasthttp/router"
-	"github.com/getsolus/ferryd/core"
 	"github.com/getsolus/ferryd/jobs"
+	"github.com/getsolus/ferryd/repo"
 	"github.com/valyala/fasthttp"
 	"net"
 	"net/http"
@@ -47,12 +47,12 @@ type Listener struct {
 	// When we first started up.
 	timeStarted time.Time
 
-	store   *jobs.JobStore // Storage for jobs processor
-	manager *core.Manager  // manager of the repos
+	store   *jobs.Store   // Storage for jobs processor
+	manager *repo.Manager // manager of the repos
 }
 
 // NewListener will return a newly initialised Server which is currently unbound
-func NewListener(store *jobs.JobStore, manager *core.Manager) (api *Listener, err error) {
+func NewListener(store *jobs.Store, manager *repo.Manager) (api *Listener, err error) {
 	r := router.New()
 	api = &Listener{
 		srv: &fasthttp.Server{
@@ -66,24 +66,25 @@ func NewListener(store *jobs.JobStore, manager *core.Manager) (api *Listener, er
 	}
 
 	// Set up the API bits
-
-    // Daemon Management
+	// Daemon Management
 	r.GET("/api/v1/status", api.GetStatus)
-    r.PATCH("/api/v1/daemon", api.ModifyDaemon) // restart only, for now
-    r.DELETE("/api/v1/daemon", api.StopDaemon)
+	r.PATCH("/api/v1/daemon", api.ModifyDaemon) // restart only, for now
+	r.DELETE("/api/v1/daemon", api.StopDaemon)
 
 	// Repo management
-	r.GET("/api/v1/repos", api.Repos)
-	r.POST("/api/v1/repos", api.CreateRepo)
-	r.GET("/api/v1/repos/:id/check", api.CheckRepo)
-	r.GET("/api/v1/repos/:left/compare/:right", api.CompareRepo)
-	r.GET("/api/v1/repos/:left/sync/:right", api.SyncRepo)
-	r.POST("/api/v1/repos/:id", api.ModifyRepo) // check, index,
+	r.GET("/api/v1/repos", api.Repos)       // Summaries of all repos
+	r.POST("/api/v1/repos", api.CreateRepo) // Import?
+	// r.GET("/api/v1/repos/:id", api.GetRepo) // Summary of repo
+	r.PATCH("/api/v1/repos/:id", api.ModifyRepo) // ?action={check, delta, index, rescan, trim-packages, trim-obsoletes}
 	r.DELETE("/api/v1/repos/:id", api.DeleteRepo)
 
+	r.GET("/api/v1/repos/:left/cherrypick/:right", api.CherryPickRepo)
+	r.GET("/api/v1/repos/:left/compare/:right", api.CompareRepo)
+	r.GET("/api/v1/repos/:left/sync/:right", api.SyncRepo)
+
 	// Job Management
-	r.POST("/api/v1/jobs", api.CreateJob) // cherry-pick, 
 	r.DELETE("/api/v1/jobs", api.ResetJobs) // ?status={completed,failed,queued}
+	r.GET("/api/v1/jobs/:id", api.GetJob)
 	//r.DELETE("/api/v1/jobs/:id", api.CancelJob)
 
 	return api, nil

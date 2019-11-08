@@ -45,8 +45,10 @@ func CheckRun(r *cmd.RootCMD, c *cmd.CMD) {
 	client := v1.NewClient(flags.Socket)
 	defer client.Close()
 
-	if err := client.Check(args.Repo); err != nil {
+	j, err := client.Check(args.Repo)
+	if err != nil {
 		fmt.Fprintf(os.Stderr, "Error while checking repo: %v\n", err)
 		os.Exit(1)
 	}
+	j.Print()
 }

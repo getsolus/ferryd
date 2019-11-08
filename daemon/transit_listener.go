@@ -30,13 +30,13 @@ import (
 type TransitListener struct {
 	base    string
 	watcher *fsnotify.Watcher
-	store   *jobs.JobStore
+	store   *jobs.Store
 	stop    chan bool
 	done    chan bool
 }
 
 // NewTransitListener creates and sets up a new TransitListener
-func NewTransitListener(base string, store *jobs.JobStore) (tl *TransitListener, err error) {
+func NewTransitListener(base string, store *jobs.Store) (tl *TransitListener, err error) {
 	tl = &TransitListener{
 		base:  base,
 		store: store,

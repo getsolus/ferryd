@@ -17,110 +17,104 @@
 package v1
 
 import (
-	"bytes"
-	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"github.com/getsolus/ferryd/jobs"
-	"net"
 	"net/http"
-	//"runtime"
-	//"strings"
-	"time"
+	"strconv"
 )
 
-func (c *Client) resetJobs(status string) (gen GenericResponse, err error) {
+// GetJob will request current information about a Job
+func (c *Client) GetJob(id int) (j *jobs.Job, err error) {
+	resp, err := c.client.Get(fmt.Sprintf("/api/v1/jobs/%d", id))
+	if err != nil {
+		return nil, err
+	}
+	defer resp.Body.Close()
+	if resp.StatusCode != http.StatusOK {
+		return nil, readError(resp.Body)
+	}
+	dec := json.NewDecoder(resp.Body)
+	var j jobs.Job
+	err = dec.Decode(&j)
+	return &j, err
+}
+
+// GetJob handles request the current information about a Job
+func (l *Listener) GetJob(ctx *fasthttp.RequestCtx) {
+	idString := ctx.UserValue("id").(string)
+	id, err := strconv.Atoi(idString)
+	if err != nil {
+		writeError(ctx, err, http.StatusInternalServerError)
+		return
+	}
+	var job *jobs.Job
+	if job, err := l.store.GetJob(id); err != nil {
+		writeError(ctx, err, http.StatusInternalServerError)
+		return
+	}
+	enc := json.NewEncoder(ctx.Response)
+	err = enc.Encode(job)
+	if err != nil {
+		writeError(ctx, err, http.StatusInternalServerError)
+	}
+}
+
+func (c *Client) resetJobs(status string) error {
 	req, err := http.NewRequest("DELETE", formURI("api/v1/jobs"), nil)
 	if err != nil {
-		return
+		return err
 	}
 	q := req.URL.Query()
 	q.Add("status", status)
 	req.URL.RawQuery = q.Encode()
 	resp, err := c.client.Do(req)
 	if err != nil {
-		return
+		return err
 	}
 	defer resp.Body.Close()
-	if err = json.NewDecoder(resp.Body).Decode(&gen); err != nil {
-		return
+	if resp.StatusCode != http.StatusOK {
+		return readError(resp.Body)
 	}
-	return
+	return nil
 }
 
 // ResetFailed asks the daemon to reset failed jobs
-func (c *Client) ResetFailed() (gen GenericResponse, err error) {
+func (c *Client) ResetFailed() error {
 	return c.resetJobs("failed")
 }
 
 // ResetCompleted asks the daemon to reset completed jobs
-func (c *Client) ResetCompleted() (gen GenericResponse, err error) {
+func (c *Client) ResetCompleted() error {
 	return c.resetJobs("completed")
 }
 
 // ResetQueued asks the daemon to reset queued jobs
-func (c *Client) ResetQueued() (gen GenericResponse, err error) {
+func (c *Client) ResetQueued() error {
 	return c.resetJobs("queued")
-}
-
-func (c *Client) createJob(j *jobs.Job) (gen GenericResponse, err error) {
-    raw, err := json.Marshal(j)
-    if err != nil {
-        return
-    }
-    req, err := http.NewRequest("POST", formURI("api/v1/jobs"), bytes.NewBuffer(raw))
-    if err != nil {
-        return
-    }
-    resp, err := c.client.Do(req)
-    if err != nil {
-        return
-    }
-    defer resp.Body.Close()
-    if err = json.NewDecoder(resp.Body).Decode(&gen); err != nil {
-        return
-    }
-    return
-}
-
-// CreateJob will proxy a job to remove an existing set of packages by source name + relno
-func (l *Listener) CreateJob(ctx *fasthttp.RequestCtx) {
-    job := &jobs.Job{}
-    if err := json.Unmarshal(ctx.Request.Body(), job); err != nil {
-        l.sendStockErrors([]error{err}, ctx)
-        return
-    }
-    l.store.Push(job)
 }
 
 // ResetJobs will ask the job store to remove jobs of a certain status
 func (l *Listener) ResetJobs(ctx *fasthttp.RequestCtx) {
-    status := string(ctx.QueryArgs().Peek("status"))
-    if len(status) == 0 {
-        err := "Job status required when resetting jobs"
-        log.Errorln(err)
-        ctx.Error(err, http.StatusBadRequest)
-        return
-    }
-    switch status {
-    case "completed":
-        if err := l.store.ResetCompleted(); err != nil {
-            log.Errorln(err)
-            ctx.Error(err.Error(), http.StatusInternalServerError)
-        }
-    case "failed":
-        if err := l.store.ResetFailed(); err != nil {
-            log.Errorln(err)
-            ctx.Error(err.Error(), http.StatusInternalServerError)
-        }
-    case "queued":
-        if err := l.store.ResetQueued(); err != nil {
-            log.Errorln(err)
-            ctx.Error(err.Error(), http.StatusInternalServerError)
-        }
-    default:
-        err := fmt.Sprintf("Invalid job status '%s' when resetting jobs", status)
-        log.Errorln(err)
-        ctx.Error(err, http.StatusBadRequest)
-    }
+	status := string(ctx.QueryArgs().Peek("status"))
+	if len(status) == 0 {
+		writeErrorString(ctx, "Job status required when resetting jobs", http.StatusBadRequest)
+		return
+	}
+	var err error
+	switch status {
+	case "completed":
+		err = l.store.ResetCompleted()
+	case "failed":
+		err = l.store.ResetFailed()
+	case "queued":
+		err = l.store.ResetQueued()
+	default:
+		writeErrorString(ctx, fmt.Sprintf("Invalid job status '%s' when resetting jobs", status), http.StatusBadRequest)
+		return
+	}
+	if err != nil {
+		writeError(ctx, err, http.StatusInternalServerError)
+	}
 }

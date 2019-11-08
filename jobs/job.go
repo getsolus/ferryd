@@ -113,6 +113,7 @@ INSERT INTO jobs (
 `
 
 const (
+	getJob = "SELECT * FROM jobs WHERE id=:id"
 	nextJob = "SELECT * FROM jobs WHERE status=0 ORDER BY id LIMIT 1"
 )
 

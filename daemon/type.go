@@ -20,7 +20,7 @@ import (
 	log "github.com/DataDrake/waterlog"
 	"github.com/coreos/go-systemd/daemon"
 	"github.com/getsolus/ferryd/api/v1"
-	"github.com/getsolus/ferryd/core"
+	"github.com/getsolus/ferryd/repo"
 	"github.com/getsolus/ferryd/jobs"
 	"os"
 	"os/signal"
@@ -33,9 +33,8 @@ import (
 type Server struct {
 	running bool
 	api     *v1.Listener     // the HTTP socket handler
-	manager *core.Manager    // heart of the story
-	store   *jobs.JobStore   // Storage for jobs processor
-	pool    *jobs.Pool       // Allow scheduling jobs
+	manager *repo.Manager    // heart of the story
+	store   *jobs.Store   // Storage for jobs processor
 	tl      *TransitListener //Listener for TRAM files
 
 	// We store a global lock file ..
@@ -88,15 +87,12 @@ func (s *Server) Bind() error {
 	}
 	s.manager = m
 
-	// jobstore
+	// Store
 	st, e := jobs.NewStore(baseDir)
 	if e != nil {
 		return e
 	}
 	s.store = st
-
-	// processor
-	s.pool = jobs.NewPool(s.store, s.manager, backgroundJobCount)
 
 	// Set up watching the manager's incoming directory
 	tl, err := NewTransitListener(s.manager.IncomingPath, s.store)
@@ -122,7 +118,6 @@ func (s *Server) Serve() error {
 		s.running = false
 	}()
 	// Serve the job queue
-	s.pool.Begin()
 	s.tl.Start()
 	if s.api.SystemdEnabled {
 		ok, err := daemon.SdNotify(false, daemon.SdNotifyReady)
@@ -156,7 +151,6 @@ func (s *Server) Close() {
 	}
 	s.api.Close()
 	s.tl.Stop()
-	s.pool.Close()
 	s.store.Close()
 	s.manager.Close()
 	s.running = false

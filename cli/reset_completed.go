@@ -47,4 +47,5 @@ func ResetCompletedRun(r *cmd.RootCMD, c *cmd.CMD) {
 		fmt.Fprintf(os.Stderr, "Error while resetting complete jobs: %v\n", err)
 		os.Exit(1)
 	}
+	fmt.Println("Successfully reset completed jobs")
 }

@@ -19,7 +19,7 @@ package jobs
 import (
 	"fmt"
 	log "github.com/DataDrake/waterlog"
-	"github.com/getsolus/ferryd/core"
+	"github.com/getsolus/ferryd/repo"
 )
 
 // DeleteRepoJobHandler is responsible for creating new repositories and should only
@@ -48,7 +48,7 @@ func NewDeleteRepoJobHandler(j *Job, running bool) (handler *DeleteRepoJobHandle
 }
 
 // Execute will delete an existing repository
-func (j *DeleteRepoJobHandler) Execute(_ *JobStore, manager *core.Manager) error {
+func (j *DeleteRepoJobHandler) Execute(_ *Store, manager *repo.Manager) error {
 	if err := manager.DeleteRepo(j.SrcRepo); err != nil {
 		return err
 	}

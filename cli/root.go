@@ -37,11 +37,12 @@ func init() {
 
 	Root.RegisterCMD(&cmd.Help)
 	Root.RegisterCMD(Version)
+	// API
+	Root.RegisterCMD(Status)
 	// Daemon
 	Root.RegisterCMD(Daemon)
 	Root.RegisterCMD(Stop)
 	Root.RegisterCMD(Restart)
-	Root.RegisterCMD(Status)
 	// Job Management
 	Root.RegisterCMD(ResetCompleted)
 	Root.RegisterCMD(ResetFailed)

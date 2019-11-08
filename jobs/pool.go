@@ -18,7 +18,7 @@ package jobs
 
 import (
 	log "github.com/DataDrake/waterlog"
-	"github.com/getsolus/ferryd/core"
+	"github.com/getsolus/ferryd/repo"
 	"runtime"
 )
 
@@ -33,7 +33,7 @@ type Pool struct {
 // NewPool will return a new Pool with the specified number
 // of jobs. Note that "njobs" only refers to the number of *background jobs*,
 // the majority of operations will run sequentially
-func NewPool(store *JobStore, manager *core.Manager, njobs int) *Pool {
+func NewPool(store *Store, manager *repo.Manager, njobs int) *Pool {
 	// If we set to -1, we'll automatically set to half of the system core count
 	// because we use xz -T 2 (so twice the number of threads ..)
 	if njobs < 0 {

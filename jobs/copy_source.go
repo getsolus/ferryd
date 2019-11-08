@@ -19,7 +19,7 @@ package jobs
 import (
 	"fmt"
 	log "github.com/DataDrake/waterlog"
-	"github.com/getsolus/ferryd/core"
+	"github.com/getsolus/ferryd/repo"
 )
 
 // CopySourceJobHandler is responsible for removing packages by identifiers
@@ -59,7 +59,7 @@ func NewCopySourceJobHandler(j *Job, running bool) (handler *CopySourceJobHandle
 }
 
 // Execute will copy the source&rel match from the repo to the target
-func (j *CopySourceJobHandler) Execute(_ *JobStore, manager *core.Manager) error {
+func (j *CopySourceJobHandler) Execute(_ *Store, manager *repo.Manager) error {
 	if err := manager.CopySource(j.SrcRepo, j.DstRepo, j.Sources, j.Release); err != nil {
 		return err
 	}

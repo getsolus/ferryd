@@ -21,6 +21,7 @@ import (
 	"github.com/getsolus/ferryd/repo"
 	"time"
 )
+
 // StatusResponse is a response from the 'status' endpoint
 type StatusResponse struct {
 	GenericResponse
@@ -46,39 +47,52 @@ func (resp StatusResponse) Print(out io.Writer) {
 
 }
 
+// Status retrieves the status of the ferryd service
+func (c *Client) Status() (status StatusResponse, err error) {
+	resp, err := c.client.Get(formURI("api/v1/status"))
+	if err != nil {
+		return
+	}
+	defer resp.Body.Close()
+	if err = json.NewDecoder(resp.Body).Decode(&status); err != nil {
+		return
+	}
+	return
+}
+
 // Status will return the current status of the ferryd instance
 func (l *Listener) Status(ctx *fasthttp.RequestCtx) {
-    ret := StatusResponse{
-        TimeStarted: l.timeStarted,
-        Version:     Version,
-    }
+	ret := StatusResponse{
+		TimeStarted: l.timeStarted,
+		Version:     Version,
+	}
 
-    // Stuff the active jobs in
-    jo, err := l.store.Active()
-    if err != nil {
-        ctx.SetStatusCode(http.StatusInternalServerError)
-        ret.Errors = append(ret.Errors, err.Error())
-    }
-    ret.CurrentJobs = jo
+	// Stuff the active jobs in
+	jo, err := l.store.Active()
+	if err != nil {
+		writeError(ctx, err, http.StatusInternalServerError)
+		return
+	}
+	ret.CurrentJobs = jo
 
-    fj, err := l.store.Failed()
-    if err != nil {
-        ctx.SetStatusCode(http.StatusInternalServerError)
-        ret.Errors = append(ret.Errors, err.Error())
-    }
-    ret.FailedJobs = fj
+	fj, err := l.store.Failed()
+	if err != nil {
+		writeError(ctx, err, http.StatusInternalServerError)
+		return
+	}
+	ret.FailedJobs = fj
 
-    cj, err := l.store.Completed()
-    if err != nil {
-        ctx.SetStatusCode(http.StatusInternalServerError)
-        ret.Errors = append(ret.Errors, err.Error())
-    }
-    ret.CompletedJobs = cj
+	cj, err := l.store.Completed()
+	if err != nil {
+		writeError(ctx, err, http.StatusInternalServerError)
+		return
+	}
+	ret.CompletedJobs = cj
 
-    buf := bytes.Buffer{}
-    if err := json.NewEncoder(&buf).Encode(&ret); err != nil {
-        ctx.SetStatusCode(http.StatusInternalServerError)
-        return
-    }
-    ctx.SetBody(buf.Bytes())
+	buf := bytes.Buffer{}
+	if err := json.NewEncoder(&buf).Encode(&ret); err != nil {
+		writeError(ctx, err, http.StatusInternalServerError)
+		return
+	}
+	ctx.SetBody(buf.Bytes())
 }

@@ -17,14 +17,9 @@
 package v1
 
 import (
-	"bytes"
-	"encoding/json"
+	"errors"
 	"fmt"
-	log "github.com/DataDrake/waterlog"
-	"github.com/getsolus/ferryd/jobs"
-	"github.com/valyala/fasthttp"
-	"net/http"
-	"runtime"
+	"io/ioutil"
 )
 
 // getMethodOrigin helps us determine the caller so that we can print
@@ -40,22 +35,32 @@ func getMethodCaller() string {
 	return ""
 }
 
-// sendStockErrors is a utility to send a standard response to the ferry
-// client that embeds the error message from ourside.
-func (l *Listener) sendStockErrors(errs []error, ctx *fasthttp.RequestCtx) {
-	errors := make([]string, len(errs))
-	for i, err := range errs {
-		errors[i] = err.Error()
-		log.Errorf("Client communication error for method '%s', message: '%s'\n", getMethodCaller(), errors[i])
+func formURI(part string) string {
+	return fmt.Sprintf("http://localhost.localdomain:0/%s", part)
+}
+
+func readError(in io.Reader) error {
+	raw, err := ioutil.ReadAll(in)
+	if err != nil {
+		return err
 	}
-	response := GenericResponse{
-		Errors: errors,
-	}
-	buf := bytes.Buffer{}
-	if e2 := json.NewEncoder(&buf).Encode(&response); e2 != nil {
-		ctx.Error(e2.Error(), http.StatusInternalServerError)
+	return errors.New(string(raw))
+}
+
+func writeErrorString(ctx *fasthttp.RequestCtx, e string, code int) {
+	writeError(ctx, errors.New(err), code)
+}
+
+func writeError(ctx *fasthttp.RequestCtx, err error, code int) {
+	log.Errorln(err)
+	ctx.Error(err, code)
+}
+
+func readID(in io.Reader) (id int, err error) {
+	raw, err := ioutil.ReadAll(in)
+	if err != nil {
 		return
 	}
-	ctx.SetStatusCode(http.StatusBadRequest)
-	ctx.SetBody(buf.Bytes())
+	id, err = strconv.Atoi(raw)
+	return
 }

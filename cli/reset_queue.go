@@ -47,4 +47,5 @@ func ResetQueueRun(r *cmd.RootCMD, c *cmd.CMD) {
 		fmt.Fprintf(os.Stderr, "Error while cancelling queued jobs: %v\n", err)
 		os.Exit(1)
 	}
+	fmt.Println("Successfully reset queued jobs")
 }

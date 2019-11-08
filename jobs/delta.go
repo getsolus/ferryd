@@ -19,7 +19,7 @@ package jobs
 import (
 	"fmt"
 	log "github.com/DataDrake/waterlog"
-	"github.com/getsolus/ferryd/core"
+	"github.com/getsolus/ferryd/repo"
 	"github.com/getsolus/libeopkg"
 	"os"
 	"sort"
@@ -64,7 +64,7 @@ func NewDeltaJobHandler(j *Job) (handler *DeltaJobHandler, errs []error) {
 
 // executeInternal is the common code shared in the delta jobs, and is
 // split out to save duplication.
-func (j *DeltaJobHandler) executeInternal(manager *core.Manager) (nDeltas int, err error) {
+func (j *DeltaJobHandler) executeInternal(manager *repo.Manager) (nDeltas int, err error) {
 	pkgs, err := manager.GetPackages(j.SrcRepo, j.Sources)
 	if err != nil {
 		return
@@ -158,7 +158,7 @@ func (j *DeltaJobHandler) executeInternal(manager *core.Manager) (nDeltas int, e
 
 // includeDelta will wrap up the basic functionality to get a delta package
 // imported into a target repository.
-func (j *DeltaJobHandler) includeDelta(manager *core.Manager, mapping *core.DeltaInformation, deltaPath string) error {
+func (j *DeltaJobHandler) includeDelta(manager *repo.Manager, mapping *core.DeltaInformation, deltaPath string) error {
 	// Try to insert the delta
 	if err := manager.AddDelta(j.SrcRepo, deltaPath, mapping); err != nil {
 		return err
@@ -169,7 +169,7 @@ func (j *DeltaJobHandler) includeDelta(manager *core.Manager, mapping *core.Delt
 }
 
 // Execute will delta the target package within the target repository.
-func (j *DeltaJobHandler) Execute(_ *JobStore, manager *core.Manager) error {
+func (j *DeltaJobHandler) Execute(_ *Store, manager *core.Manager) error {
 	nDeltas, err := j.executeInternal(manager)
 	if err != nil {
 		return err

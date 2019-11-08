@@ -33,25 +33,26 @@ var (
 )
 
 const (
-	// JobsDB is the filename of the jobs database
-	JobsDB = "jobs.db"
+	// DB is the filename of the jobs database
+	DB = "jobs.db"
 	// SQLiteOpts is a list of options for the go-sqlite3 driver
 	SQLiteOpts = "?cache=shared"
 )
 
-// JobStore handles the storage and manipulation of incomplete jobs
-type JobStore struct {
+// Store handles the storage and manipulation of incomplete jobs
+type Store struct {
+    sync.Mutex
+
 	db    *sqlx.DB
 	next  *Job
 	stop  chan bool
 	done  chan bool
-	wLock sync.Mutex
 }
 
-// NewStore creates a fully initialized JobStore and sets up Bolt Buckets as needed
-func NewStore(path string) (*JobStore, error) {
+// NewStore creates a fully initialized Store and sets up Bolt Buckets as needed
+func NewStore(path string) (*Store, error) {
 	// Open the database if we can
-	db, err := sqlx.Open("sqlite3", filepath.Join(path, JobsDB)+SQLiteOpts)
+	db, err := sqlx.Open("sqlite3", filepath.Join(path, DB)+SQLiteOpts)
 	if err != nil {
 		return nil, err
 	}
@@ -61,7 +62,7 @@ func NewStore(path string) (*JobStore, error) {
 	// Create "jobs" table if missing
 	db.MustExec(JobSchema)
 
-	s := &JobStore{
+	s := &Store{
 		db:   db,
 		next: nil,
 		stop: make(chan bool),
@@ -72,27 +73,34 @@ func NewStore(path string) (*JobStore, error) {
 }
 
 // Close will clean up our private job database
-func (s *JobStore) Close() {
+func (s *Store) Close() {
 	if s.db != nil {
 		s.db.Close()
 		s.db = nil
 	}
 }
 
+// GetJob retrieves a Job from the DB
+func (s *Store) GetJob(id int) (*Job, error) {
+    var j Job
+    err := d.db.NamedQuery(&j, getJob, id)
+    return &j, err
+}
+
 // UnclaimRunning will find all claimed jobs and unclaim them again
-func (s *JobStore) UnclaimRunning() error {
-	s.wLock.Lock()
+func (s *Store) UnclaimRunning() error {
+	s.Lock()
 	_, err := s.db.Exec(clearRunningJobs)
 	if err != nil {
 		err = fmt.Errorf("Failed to unclaim running jobs, reason: '%s'", err.Error())
 	}
-	s.wLock.Unlock()
+	s.Unlock()
 	return err
 }
 
 // Push inserts a new Job into the queue
-func (s *JobStore) Push(j *Job) error {
-	s.wLock.Lock()
+func (s *Store) Push(j *Job) error {
+	s.Lock()
 	j.Status = New
 	j.Created.Scan(time.Now().UTC())
 	_, err := s.db.NamedExec(insertJob, j)
@@ -100,11 +108,11 @@ func (s *JobStore) Push(j *Job) error {
 		err = fmt.Errorf("Failed to add new job, reason: '%s'", err.Error())
 		log.Errorln(err.Error())
 	}
-	s.wLock.Unlock()
+	s.Unlock()
 	return err
 }
 
-func (s *JobStore) findNewJob() {
+func (s *Store) findNewJob() {
 	// get the currently runnign jobs
 	var active []Job
 	err := s.db.Select(&active, runningJobs)
@@ -131,8 +139,8 @@ func (s *JobStore) findNewJob() {
 }
 
 // Claim gets the first available job, if one exists and is not blocked by running jobs
-func (s *JobStore) Claim() (j *Job, err error) {
-	s.wLock.Lock()
+func (s *Store) Claim() (j *Job, err error) {
+	s.Lock()
 	if s.next == nil {
 		err = ErrNoJobReady
 		goto UNLOCK
@@ -151,25 +159,25 @@ func (s *JobStore) Claim() (j *Job, err error) {
 	}
 UNLOCK:
 	s.findNewJob()
-	s.wLock.Unlock()
+	s.Unlock()
 	return
 }
 
 // Retire marks a job as completed and updates the DB record
-func (s *JobStore) Retire(j *Job) error {
-	s.wLock.Lock()
+func (s *Store) Retire(j *Job) error {
+	s.Lock()
 	j.Finished.Scan(time.Now().UTC())
 	_, err := s.db.NamedExec(markFinished, j)
 	if err != nil {
 		err = fmt.Errorf("Failed to retire job, reason: '%s'", err.Error())
 	}
-	s.wLock.Unlock()
+	s.Unlock()
 	return err
 }
 
 // Active will attempt to return a list of active jobs within
 // the scheduler suitable for consumption by the CLI client
-func (s *JobStore) Active() (List, error) {
+func (s *Store) Active() (List, error) {
 	var list List
 	var list2 List
 	err := s.db.Select(&list, newJobs)
@@ -189,7 +197,7 @@ func (s *JobStore) Active() (List, error) {
 }
 
 // Completed will return all successfully completed jobs still stored
-func (s *JobStore) Completed() (List, error) {
+func (s *Store) Completed() (List, error) {
 	var list List
 	err := s.db.Select(&list, completedJobs)
 	if err != nil {
@@ -199,7 +207,7 @@ func (s *JobStore) Completed() (List, error) {
 }
 
 // Failed will return all failed jobs that are still stored
-func (s *JobStore) Failed() (List, error) {
+func (s *Store) Failed() (List, error) {
 	var list List
 	err := s.db.Select(&list, failedJobs)
 	if err != nil {
@@ -209,34 +217,34 @@ func (s *JobStore) Failed() (List, error) {
 }
 
 // ResetCompleted will remove all completion records from our store and reset the pointer
-func (s *JobStore) ResetCompleted() error {
-	s.wLock.Lock()
+func (s *Store) ResetCompleted() error {
+	s.Lock()
 	_, err := s.db.Exec(clearCompletedJobs)
 	if err != nil {
 		err = fmt.Errorf("Failed to clear completed jobs, reason: '%s'", err.Error())
 	}
-	s.wLock.Unlock()
+	s.Unlock()
 	return err
 }
 
 // ResetFailed will remove all fail records from our store and reset the pointer
-func (s *JobStore) ResetFailed() error {
-	s.wLock.Lock()
+func (s *Store) ResetFailed() error {
+	s.Lock()
 	_, err := s.db.Exec(clearFailedJobs)
 	if err != nil {
 		err = fmt.Errorf("Failed to clear failed jobs, reason: '%s'", err.Error())
 	}
-	s.wLock.Unlock()
+	s.Unlock()
 	return err
 }
 
 // ResetQueued will remove all unexecuted records from our store and reset the pointer
-func (s *JobStore) ResetQueued() error {
-	s.wLock.Lock()
+func (s *Store) ResetQueued() error {
+	s.Lock()
 	_, err := s.db.Exec(clearQueuedJobs)
 	if err != nil {
 		err = fmt.Errorf("Failed to clear queued jobs, reason: '%s'", err.Error())
 	}
-	s.wLock.Unlock()
+	s.Unlock()
 	return err
 }

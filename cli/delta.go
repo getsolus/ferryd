@@ -45,8 +45,10 @@ func DeltaRun(r *cmd.RootCMD, c *cmd.CMD) {
 	client := v1.NewClient(flags.Socket)
 	defer client.Close()
 
-	if err := client.Delta(args.Repo); err != nil {
+	j, err := client.Delta(args.Repo)
+	if err != nil {
 		fmt.Fprintf(os.Stderr, "Error while updating repo deltas: %v\n", err)
 		os.Exit(1)
 	}
+	j.Print()
 }

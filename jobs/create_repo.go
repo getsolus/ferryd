@@ -19,7 +19,7 @@ package jobs
 import (
 	"fmt"
 	log "github.com/DataDrake/waterlog"
-	"github.com/getsolus/ferryd/core"
+	"github.com/getsolus/ferryd/repo"
 )
 
 // CreateRepoJobHandler is responsible for creating new repositories and should only
@@ -48,7 +48,7 @@ func NewCreateRepoJobHandler(j *Job, running bool) (handler *CreateRepoJobHandle
 }
 
 // Execute will construct a new repository if possible
-func (j *CreateRepoJobHandler) Execute(_ *JobStore, manager *core.Manager) error {
+func (j *CreateRepoJobHandler) Execute(_ *Store, manager *repo.Manager) error {
 	if err := manager.CreateRepo(j.DstRepo); err != nil {
 		return err
 	}

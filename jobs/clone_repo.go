@@ -19,7 +19,7 @@ package jobs
 import (
 	"fmt"
 	log "github.com/DataDrake/waterlog"
-	"github.com/getsolus/ferryd/core"
+	"github.com/getsolus/ferryd/repo"
 )
 
 const (
@@ -66,7 +66,7 @@ func NewCloneRepoJobHandler(j *Job, running bool) (handler *CloneRepoJobHandler,
 }
 
 // Execute attempt to clone the repoID to newClone, optionally at full depth
-func (j *CloneRepoJobHandler) Execute(_ *JobStore, manager *core.Manager) error {
+func (j *CloneRepoJobHandler) Execute(_ *Store, manager *repo.Manager) error {
 	fullClone := false
 	if j.Mode == CloneFull {
 		fullClone = true
