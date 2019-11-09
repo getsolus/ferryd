@@ -22,7 +22,7 @@ import (
 	"github.com/coreos/go-systemd/activation"
 	"github.com/fasthttp/router"
 	"github.com/getsolus/ferryd/jobs"
-	"github.com/getsolus/ferryd/repo"
+	"github.com/getsolus/ferryd/manager"
 	"github.com/valyala/fasthttp"
 	"net"
 	"net/http"
@@ -47,12 +47,12 @@ type Listener struct {
 	// When we first started up.
 	timeStarted time.Time
 
-	store   *jobs.Store   // Storage for jobs processor
-	manager *repo.Manager // manager of the repos
+	store   *jobs.Store      // Storage for jobs processor
+	manager *manager.Manager // manager of the repos
 }
 
 // NewListener will return a newly initialised Server which is currently unbound
-func NewListener(store *jobs.Store, manager *repo.Manager) (api *Listener, err error) {
+func NewListener(store *jobs.Store, mgr *manager.Manager) (api *Listener, err error) {
 	r := router.New()
 	api = &Listener{
 		srv: &fasthttp.Server{
@@ -62,12 +62,12 @@ func NewListener(store *jobs.Store, manager *repo.Manager) (api *Listener, err e
 		SystemdEnabled: false,
 		timeStarted:    time.Now().UTC(),
 		store:          store,
-		manager:        manager,
+		manager:        mgr,
 	}
 
 	// Set up the API bits
 	// Daemon Management
-	r.GET("/api/v1/status", api.GetStatus)
+	r.GET("/api/v1/status", api.Status)
 	r.PATCH("/api/v1/daemon", api.ModifyDaemon) // restart only, for now
 	r.DELETE("/api/v1/daemon", api.StopDaemon)
 
@@ -76,11 +76,11 @@ func NewListener(store *jobs.Store, manager *repo.Manager) (api *Listener, err e
 	r.POST("/api/v1/repos", api.CreateRepo) // Import?
 	// r.GET("/api/v1/repos/:id", api.GetRepo) // Summary of repo
 	r.PATCH("/api/v1/repos/:id", api.ModifyRepo) // ?action={check, delta, index, rescan, trim-packages, trim-obsoletes}
-	r.DELETE("/api/v1/repos/:id", api.DeleteRepo)
+	r.DELETE("/api/v1/repos/:id", api.RemoveRepo)
 
-	r.GET("/api/v1/repos/:left/cherrypick/:right", api.CherryPickRepo)
+	r.PATCH("/api/v1/repos/:left/cherrypick/:right", api.CherryPickRepo)
 	r.GET("/api/v1/repos/:left/compare/:right", api.CompareRepo)
-	r.GET("/api/v1/repos/:left/sync/:right", api.SyncRepo)
+	r.PATCH("/api/v1/repos/:left/sync/:right", api.SyncRepo)
 
 	// Job Management
 	r.DELETE("/api/v1/jobs", api.ResetJobs) // ?status={completed,failed,queued}

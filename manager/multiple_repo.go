@@ -14,11 +14,12 @@
 // limitations under the License.
 //
 
-package repo
+package manager
 
 import (
 	"errors"
 	"github.com/getsolus/ferryd/jobs"
+	"github.com/getsolus/ferryd/repo"
 )
 
 /***************************/
@@ -114,5 +115,11 @@ func (m *Manager) Sync(src, dst string) (int, error) {
 
 // SyncExecute carries out a Sync job
 func (m *Manager) SyncExecute(j *jobs.Job) error {
-	return errors.New("Function not inplemented")
+	return errors.New("Function not implemented")
+}
+
+// Repos provides a summary of all available repos
+func (m *Manager) Repos() (l repo.FullSummary, err error) {
+	err = errors.New("Function not implemented")
+	return
 }

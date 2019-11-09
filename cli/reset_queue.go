@@ -43,7 +43,7 @@ func ResetQueueRun(r *cmd.RootCMD, c *cmd.CMD) {
 	client := v1.NewClient(flags.Socket)
 	defer client.Close()
 
-	if err := client.ResetQueue(); err != nil {
+	if err := client.ResetQueued(); err != nil {
 		fmt.Fprintf(os.Stderr, "Error while cancelling queued jobs: %v\n", err)
 		os.Exit(1)
 	}

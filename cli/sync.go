@@ -20,6 +20,7 @@ import (
 	"fmt"
 	"github.com/DataDrake/cli-ng/cmd"
 	"github.com/getsolus/ferryd/api/v1"
+	"github.com/getsolus/ferryd/jobs"
 	"os"
 )
 
@@ -45,9 +46,11 @@ func SyncRun(r *cmd.RootCMD, c *cmd.CMD) {
 
 	client := v1.NewClient(flags.Socket)
 	defer client.Close()
-
-	if err := client.Sync(args.Source, args.Dest); err != nil {
+	var j *jobs.Job
+	var err error
+	if j, err = client.Sync(args.Source, args.Dest); err != nil {
 		fmt.Fprintf(os.Stderr, "Error while syncing: %v\n", err)
 		os.Exit(1)
 	}
+	j.Print()
 }

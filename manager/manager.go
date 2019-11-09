@@ -14,7 +14,7 @@
 // limitations under the License.
 //
 
-package repo
+package manager
 
 import (
 	"github.com/getsolus/ferryd/jobs"

@@ -14,17 +14,17 @@
 // limitations under the License.
 //
 
-package main
+package daemon
 
 import (
 	log "github.com/DataDrake/waterlog"
 	"github.com/coreos/go-systemd/daemon"
 	"github.com/getsolus/ferryd/api/v1"
+	"github.com/getsolus/ferryd/config"
 	"github.com/getsolus/ferryd/jobs"
-	"github.com/getsolus/ferryd/repo"
+	"github.com/getsolus/ferryd/manager"
 	"os"
 	"os/signal"
-	"path/filepath"
 	"syscall"
 )
 
@@ -33,7 +33,7 @@ import (
 type Server struct {
 	running bool
 	api     *v1.Listener     // the HTTP socket handler
-	manager *repo.Manager    // heart of the story
+	manager *manager.Manager // heart of the story
 	store   *jobs.Store      // Storage for jobs processor
 	tl      *TransitListener //Listener for TRAM files
 
@@ -45,8 +45,7 @@ type Server struct {
 // NewServer will return a newly initialised Server which is currently unbound
 func NewServer() (*Server, error) {
 	// Before we can actually bind the socket, we must lock the file
-	lockPath := filepath.Join(baseDir, LockFilePath)
-	lfile, err := NewLockFile(lockPath)
+	lfile, err := NewLockFile(config.Current.LockFile)
 
 	if err != nil {
 		return nil, err
@@ -59,7 +58,7 @@ func NewServer() (*Server, error) {
 
 	return &Server{
 		running:  false,
-		lockPath: lockPath,
+		lockPath: config.Current.LockFile,
 		lockFile: lfile,
 	}, nil
 }
@@ -80,22 +79,21 @@ func (s *Server) killHandler() {
 // Bind will attempt to set up the listener on the unix socket
 // prior to serving.
 func (s *Server) Bind() error {
-	// manager
-	m, e := core.NewManager(baseDir)
-	if e != nil {
-		return e
-	}
-	s.manager = m
+	// Load config from file
+	config.Load()
 
 	// Store
-	st, e := jobs.NewStore(baseDir)
+	st, e := jobs.NewStore()
 	if e != nil {
 		return e
 	}
 	s.store = st
 
+	// manager
+	s.manager = manager.NewManager(st)
+
 	// Set up watching the manager's incoming directory
-	tl, err := NewTransitListener(s.manager.IncomingPath, s.store)
+	tl, err := NewTransitListener(config.Current.TransitPath(), s.manager)
 	if err != nil {
 		return err
 	}

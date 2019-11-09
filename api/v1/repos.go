@@ -17,32 +17,21 @@
 package v1
 
 import (
+	"bytes"
 	"encoding/json"
 	"github.com/getsolus/ferryd/repo"
 	"github.com/valyala/fasthttp"
-	"io"
+	"net/http"
 )
 
-// RepoList is a response from the 'repos' endpoint
-type RepoList struct {
-	GenericResponse
-	// Repos is list of all the repos
-	Repos []repo.Repo
-}
-
-// Print prints out a RepoList
-func (list RepoList) Print(out io.Writer) {
-
-}
-
 // Repos will grab a list of repos from the daemon
-func (c *Client) Repos() (list RepoList, err error) {
+func (c *Client) Repos() (f repo.FullSummary, err error) {
 	resp, err := c.client.Get(formURI("api/v1/repos"))
 	if err != nil {
 		return
 	}
 	defer resp.Body.Close()
-	if err = json.NewDecoder(resp.Body).Decode(&list); err != nil {
+	if err = json.NewDecoder(resp.Body).Decode(&f); err != nil {
 		return
 	}
 	return
@@ -50,16 +39,13 @@ func (c *Client) Repos() (list RepoList, err error) {
 
 // Repos will attempt to serialise our known repositories into a response
 func (l *Listener) Repos(ctx *fasthttp.RequestCtx) {
-	resp := RepoList{}
 	//TODO: re-enable repos
-	_, err := l.manager.Repos()
+	repos, err := l.manager.Repos()
 	if err != nil {
 		writeError(ctx, err, http.StatusInternalServerError)
 	}
-	//TODO: Uncomment this
-	//resp.Repos = repos
 	buf := bytes.Buffer{}
-	if err := json.NewEncoder(&buf).Encode(&resp); err != nil {
+	if err := json.NewEncoder(&buf).Encode(&repos); err != nil {
 		writeError(ctx, err, http.StatusInternalServerError)
 		return
 	}

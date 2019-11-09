@@ -20,6 +20,7 @@ import (
 	"fmt"
 	"github.com/DataDrake/cli-ng/cmd"
 	"github.com/getsolus/ferryd/api/v1"
+	"github.com/getsolus/ferryd/jobs"
 	"os"
 )
 
@@ -46,8 +47,11 @@ func CompareRun(r *cmd.RootCMD, c *cmd.CMD) {
 	client := v1.NewClient(flags.Socket)
 	defer client.Close()
 
-	if err := client.Compare(args.Left, args.Right); err != nil {
+	var j *jobs.Job
+	var err error
+	if j, err = client.Compare(args.Left, args.Right); err != nil {
 		fmt.Fprintf(os.Stderr, "Error while comparing repos: %v\n", err)
 		os.Exit(1)
 	}
+	j.Print()
 }

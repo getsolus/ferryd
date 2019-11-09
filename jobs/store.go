@@ -20,6 +20,7 @@ import (
 	"errors"
 	"fmt"
 	log "github.com/DataDrake/waterlog"
+	"github.com/getsolus/ferryd/config"
 	"github.com/jmoiron/sqlx"
 	"path/filepath"
 	"sync"
@@ -49,9 +50,9 @@ type Store struct {
 }
 
 // NewStore creates a fully initialized Store and sets up Bolt Buckets as needed
-func NewStore(path string) (*Store, error) {
+func NewStore() (*Store, error) {
 	// Open the database if we can
-	db, err := sqlx.Open("sqlite3", filepath.Join(path, DB)+SQLiteOpts)
+	db, err := sqlx.Open("sqlite3", filepath.Join(config.Current.BaseDir, DB)+SQLiteOpts)
 	if err != nil {
 		return nil, err
 	}

@@ -19,7 +19,14 @@ package cli
 import (
 	"fmt"
 	"github.com/DataDrake/cli-ng/cmd"
+	log "github.com/DataDrake/waterlog"
+	"github.com/DataDrake/waterlog/format"
+	"github.com/DataDrake/waterlog/level"
+	"github.com/getsolus/ferryd/api/v1"
+	"github.com/getsolus/ferryd/daemon"
+	log2 "log"
 	"os"
+	"path/filepath"
 )
 
 var (
@@ -36,10 +43,10 @@ const (
 )
 
 func daemonStart() {
-	pflag.StringVarP(&baseDir, "base", "d", "/var/lib/ferryd", "Set the base directory for ferryd")
-	pflag.StringVarP(&v1.SocketPath, "socket", "s", "/run/ferryd.sock", "Set the socket path for ferryd")
-	pflag.IntVarP(&backgroundJobCount, "jobs", "j", -1, "Number of jobs to use (-1 is 50% of cores)")
-	pflag.Parse()
+	//pflag.StringVarP(&baseDir, "base", "d", "/var/lib/ferryd", "Set the base directory for ferryd")
+	//pflag.StringVarP(&v1.SocketPath, "socket", "s", "/run/ferryd.sock", "Set the socket path for ferryd")
+	//pflag.IntVarP(&backgroundJobCount, "jobs", "j", -1, "Number of jobs to use (-1 is 50% of cores)")
+	//pflag.Parse()
 
 	// We write to a logfile..
 	log.SetFormat(format.Partial)
@@ -55,13 +62,15 @@ func daemonStart() {
 	baseDir = b
 
 	// Must have a valid baseDir
+	/* TODO: Fix this
 	if !core.PathExists(baseDir) {
 		fmt.Fprintf(os.Stderr, "Base directory does not exist: %s\n", baseDir)
 		os.Exit(1)
 	}
+	*/
 
 	// Need to get a lock file before we can even grab the log file
-	srv, err := NewServer()
+	srv, err := daemon.NewServer()
 	if err != nil {
 		lockPath := filepath.Join(baseDir, LockFilePath)
 		fmt.Fprintf(os.Stderr, "Failed to start ferryd: %v (lockfile: %v)\n", err, lockPath)
@@ -109,7 +118,7 @@ type DaemonArgs struct{}
 
 // DaemonRun executes the "daemon" sub-command
 func DaemonRun(r *cmd.RootCMD, c *cmd.CMD) {
-	flags := r.Flags.(*GlobalFlags)
+	//flags := r.Flags.(*GlobalFlags)
 	//args  := c.Args.(*DaemonArgs)
 
 	daemonStart()

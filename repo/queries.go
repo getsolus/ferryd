@@ -14,9 +14,9 @@
 // limitations under the License.
 //
 
-package db
+package repo
 
-const repoPackages = `
+const reposPackages = `
 WITH ids AS (
     SELECT package_id FROM repos
     INNER JOIN repo_packages

@@ -23,10 +23,10 @@ import (
 	"github.com/valyala/fasthttp"
 	"net/http"
 	"strconv"
-	"time"
 )
 
 func (c *Client) modifyRepo(id, action string) (j *jobs.Job, err error) {
+	// build request
 	req, err := http.NewRequest("POST", formURI("api/v1/repos/"+id), nil)
 	if err != nil {
 		return
@@ -35,28 +35,21 @@ func (c *Client) modifyRepo(id, action string) (j *jobs.Job, err error) {
 	q.Add("action", "check")
 	req.URL.RawQuery = q.Encode()
 
+	// execute request
 	resp, err := c.client.Do(req)
 	if err != nil {
 		return
 	}
 	defer resp.Body.Close()
-	if resp.StatusCode != http.StatusOK {
-		err = readError(resp.Body)
-		return
-	}
-	jobID, err := readID(resp.Body)
+
+	// handle response
+	jobID, err := readID(resp)
 	if err != nil {
 		return
 	}
-	start := time.Now()
-	for {
-		time.Sleep(5 * time.Second)
-		j, err = c.GetJob(jobID)
-		if err != nil {
-			return
-		}
-		fmt.Printf("Elapsed Time: %s\n", time.Now().Sub(start).String())
-	}
+
+	// wait for job to complete
+	j, err = c.waitJob(jobID)
 	return
 }
 
@@ -105,25 +98,26 @@ func (l *Listener) ModifyRepo(ctx *fasthttp.RequestCtx) {
 		writeError(ctx, err, http.StatusInternalServerError)
 		return
 	}
+	writeID(ctx, jobID)
 }
 
-// CheckRepo will compare a repo on disk with the DB
-func (c *Client) CheckRepo(id string) (*jobs.Job, error) {
+// Check will compare a repo on disk with the DB
+func (c *Client) Check(id string) (*jobs.Job, error) {
 	return c.modifyRepo(id, "check")
 }
 
-// DeltaRepo will generate missing metas in a given repo
-func (c *Client) DeltaRepo(id string) (j *jobs.Job, err error) {
+// Delta will generate missing metas in a given repo
+func (c *Client) Delta(id string) (j *jobs.Job, err error) {
 	return c.modifyRepo(id, "delta")
 }
 
-// IndexRepo will attempt to index a repository in the daemon
-func (c *Client) IndexRepo(id string) (j *jobs.Job, err error) {
+// Index will attempt to index a repository in the daemon
+func (c *Client) Index(id string) (j *jobs.Job, err error) {
 	return c.modifyRepo(id, "index")
 }
 
-// RescanRepo will ask ferryd to re-import a repository from disk
-func (c *Client) RescanRepo(id string) (j *jobs.Job, err error) {
+// Rescan will ask ferryd to re-import a repository from disk
+func (c *Client) Rescan(id string) (j *jobs.Job, err error) {
 	return c.modifyRepo(id, "rescan")
 }
 
@@ -133,7 +127,7 @@ func (c *Client) TrimPackages(id string, maxKeep int) (j *jobs.Job, err error) {
 	return
 }
 
-// TrimObsolete will request that all packages marked obsolete are removed
-func (c *Client) TrimObsolete(id string) (j *jobs.Job, err error) {
+// TrimObsoletes will request that all packages marked obsolete are removed
+func (c *Client) TrimObsoletes(id string) (j *jobs.Job, err error) {
 	return c.modifyRepo(id, "trim-obsoletes")
 }

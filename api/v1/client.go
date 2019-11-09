@@ -18,6 +18,8 @@ package v1
 
 import (
 	"context"
+	"fmt"
+	"github.com/getsolus/ferryd/jobs"
 	"net"
 	"net/http"
 	"time"
@@ -53,4 +55,23 @@ func NewClient(address string) *Client {
 // not leaking file descriptors.
 func (c *Client) Close() {
 	c.client.Transport.(*http.Transport).CloseIdleConnections()
+}
+
+// waitJob retries periodically to read back a job.
+func (c *Client) waitJob(id int) (j *jobs.Job, err error) {
+	start := time.Now()
+	for {
+		// wait
+		time.Sleep(5 * time.Second)
+		// request
+		j, err = c.GetJob(id)
+		if err != nil {
+			return
+		}
+		// Stop if job is finished
+		if j.Status > jobs.Running {
+			return
+		}
+		fmt.Printf("Elapsed Time: %s\n", time.Now().Sub(start).String())
+	}
 }

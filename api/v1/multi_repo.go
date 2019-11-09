@@ -17,20 +17,113 @@
 package v1
 
 import (
+	"errors"
 	"github.com/getsolus/ferryd/jobs"
+	"github.com/valyala/fasthttp"
+	"net/http"
 )
 
 // CherryPick will ask the backend to sync a single package from one repo to another
-func (c *Client) CherryPick(src, dest, pkg string) (gen GenericResponse, err error) {
-	return c.createJob(jobs.NewCherryPickJob(src, dest, pkg))
+func (c *Client) CherryPick(left, right, pkg string) (j *jobs.Job, err error) {
+	req, err := http.NewRequest("PATCH", formURI("api/v1/repos/"+left+"cherrypick/"+right), nil)
+	if err != nil {
+		return
+	}
+	q := req.URL.Query()
+	q.Add("package", pkg)
+	req.URL.RawQuery = q.Encode()
+
+	resp, err := c.client.Do(req)
+	if err != nil {
+		return
+	}
+	defer resp.Body.Close()
+
+	// handle response
+	jobID, err := readID(resp)
+	if err != nil {
+		return
+	}
+
+	// wait for job to complete
+	j, err = c.waitJob(jobID)
+	return
 }
 
-// CloneRepo will ask the backend to clone an existing repository into a new repository
-func (c *Client) CloneRepo(src, dest string) (gen GenericResponse, err error) {
-	return c.createJob(jobs.NewCloneRepoJob(src, dest))
+// CherryPickRepo will ask the backend to sync a single package from one repo to another
+func (l *Listener) CherryPickRepo(ctx *fasthttp.RequestCtx) {
+	//left := ctx.UserValue("left").(string)
+	//right := ctx.UserValue("right").(string)
+	//jobID, err := l.manager.CreateRepo(id)
+	writeErrorString(ctx, "Not yet implemented", http.StatusInternalServerError)
 }
 
-// PullRepo will ask the backend to sync from one repo to another
-func (c *Client) PullRepo(src, dest string) (gen GenericResponse, err error) {
-	return c.createJob(jobs.NewSyncRepoJob(src, dest))
+// Compare will ask the backend to compare one repo to another
+func (c *Client) Compare(left, right string) (j *jobs.Job, err error) {
+	req, err := http.NewRequest("GET", formURI("api/v1/repos/"+left+"compare/"+right), nil)
+	if err != nil {
+		return
+	}
+
+	resp, err := c.client.Do(req)
+	if err != nil {
+		return
+	}
+	defer resp.Body.Close()
+
+	// handle response
+	jobID, err := readID(resp)
+	if err != nil {
+		return
+	}
+
+	// wait for job to complete
+	j, err = c.waitJob(jobID)
+	return
+}
+
+// CompareRepo will ask the backend to compare one repo to another
+func (l *Listener) CompareRepo(ctx *fasthttp.RequestCtx) {
+	//left := ctx.UserValue("left").(string)
+	//right := ctx.UserValue("right").(string)
+	//jobID, err := l.manager.CreateRepo(id)
+	writeErrorString(ctx, "Not yet implemented", http.StatusInternalServerError)
+}
+
+// Sync will ask the backend to sync one repo to another
+func (c *Client) Sync(src, dst string) (j *jobs.Job, err error) {
+	req, err := http.NewRequest("PATCH", formURI("api/v1/repos/"+src+"sync/"+dst), nil)
+	if err != nil {
+		return
+	}
+
+	resp, err := c.client.Do(req)
+	if err != nil {
+		return
+	}
+	defer resp.Body.Close()
+
+	// handle response
+	jobID, err := readID(resp)
+	if err != nil {
+		return
+	}
+
+	// wait for job to complete
+	j, err = c.waitJob(jobID)
+	return
+}
+
+// SyncRepo will ask the backend to sync one repo to another
+func (l *Listener) SyncRepo(ctx *fasthttp.RequestCtx) {
+	//left := ctx.UserValue("left").(string)
+	//right := ctx.UserValue("right").(string)
+	//jobID, err := l.manager.CreateRepo(id)
+	writeErrorString(ctx, "Not yet implemented", http.StatusInternalServerError)
+}
+
+// Clone will ask the backend to clone an existing repository into a new repository
+func (c *Client) Clone(src, dest string) (j *jobs.Job, err error) {
+	err = errors.New("Not yet implemented")
+	return
 }

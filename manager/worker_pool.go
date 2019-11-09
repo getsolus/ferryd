@@ -14,7 +14,7 @@
 // limitations under the License.
 //
 
-package repo
+package manager
 
 import (
 	log "github.com/DataDrake/waterlog"

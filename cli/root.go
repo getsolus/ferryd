@@ -46,7 +46,7 @@ func init() {
 	// Job Management
 	Root.RegisterCMD(ResetCompleted)
 	Root.RegisterCMD(ResetFailed)
-	Root.RegisterCMD(ResetQueued)
+	Root.RegisterCMD(ResetQueue)
 	// Single-Repo
 	Root.RegisterCMD(Check)
 	Root.RegisterCMD(Create)

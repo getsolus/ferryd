@@ -23,29 +23,29 @@ import (
 	"os"
 )
 
-// TrimObsolete fulfills the "trim-obsolete" sub-command
-var TrimObsolete = &cmd.CMD{
-	Name:  "trim-obsolete",
+// TrimObsoletes fulfills the "trim-obsoletes" sub-command
+var TrimObsoletes = &cmd.CMD{
+	Name:  "trim-obsoletes",
 	Alias: "to",
 	Short: "Remove all obsolete packages from a repo",
-	Args:  &TrimObsoleteArgs{},
-	Run:   TrimObsoleteRun,
+	Args:  &TrimObsoletesArgs{},
+	Run:   TrimObsoletesRun,
 }
 
-// TrimObsoleteArgs are the arguments to the "trim-obsolete" sub-command
-type TrimObsoleteArgs struct {
+// TrimObsoletesArgs are the arguments to the "trim-obsoletes" sub-command
+type TrimObsoletesArgs struct {
 	Repo string `desc:"Repo to trim"`
 }
 
-// TrimObsoleteRun executes the "trim-obsolete" sub-command
-func TrimObsoleteRun(r *cmd.RootCMD, c *cmd.CMD) {
+// TrimObsoletesRun executes the "trim-obsoletes" sub-command
+func TrimObsoletesRun(r *cmd.RootCMD, c *cmd.CMD) {
 	flags := r.Flags.(*GlobalFlags)
-	args := c.Args.(*TrimObsoleteArgs)
+	args := c.Args.(*TrimObsoletesArgs)
 
 	client := v1.NewClient(flags.Socket)
 	defer client.Close()
 
-	j, err := client.TrimObsolete(args.Repo)
+	j, err := client.TrimObsoletes(args.Repo)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Error while trimming obsolete packages in repo: %v\n", err)
 		os.Exit(1)

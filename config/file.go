@@ -41,6 +41,8 @@ const (
 	DefaultBaseDir = "/var/lib/ferryd"
 	// DefaultBuildDir for all temporary artifacts
 	DefaultBuildDir = "/tmp/ferryd"
+	// DefaultLockFile for a running daemon
+	DefaultLockFile = "/run/lock/ferryd"
 )
 
 // File contains the file configuration for ferryd
@@ -51,36 +53,46 @@ type File struct {
 	BuildDir  string
 	basePath  []string
 	buildPath []string
+	// LockFile for the Daemon
+	LockFile string
 }
 
+// Current is the configuration of the system as it was when the daemon started
+var Current *File
+
 // Load reads in a ferryd configuration and validates it
-func Load(path string) (*File, error) {
+func Load() error {
 	// Open File
-	cFile, err := os.Open(path)
+	cFile, err := os.Open("/etc/ferryd/ferryd.conf")
 	if err != nil {
-		return nil, err
+		return err
 	}
 	defer cFile.Close()
 	// Parse JSON
-	conf := &File{}
+	Current := &File{}
 	dec := json.NewDecoder(cFile)
-	err = dec.Decode(conf)
+	err = dec.Decode(Current)
 	if err != nil {
-		return nil, err
+		return err
 	}
 	// Validate Base Directory
-	if len(conf.BaseDir) == 0 {
-		conf.BaseDir = DefaultBaseDir
+	if len(Current.BaseDir) == 0 {
+		Current.BaseDir = DefaultBaseDir
 		log.Printf("No BaseDir specified. Using default: %s\n", DefaultBaseDir)
 	}
-	conf.basePath = strings.Split(conf.BaseDir, "/")
+	Current.basePath = strings.Split(Current.BaseDir, "/")
 	// Validate Build Directory
-	if len(conf.BuildDir) == 0 {
-		conf.BuildDir = DefaultBuildDir
+	if len(Current.BuildDir) == 0 {
+		Current.BuildDir = DefaultBuildDir
 		log.Printf("No BuildDir specified. Using default: %s\n", DefaultBuildDir)
 	}
-	conf.buildPath = strings.Split(conf.BuildDir, "/")
-	return conf, nil
+	Current.buildPath = strings.Split(Current.BuildDir, "/")
+	// Validate Lock File
+	if len(Current.LockFile) == 0 {
+		Current.LockFile = DefaultLockFile
+		log.Printf("No Lockfile specified. Using default: %s\n", DefaultLockFile)
+	}
+	return nil
 }
 
 // AssetPath for index generation and obsoletion

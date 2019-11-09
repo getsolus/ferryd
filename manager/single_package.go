@@ -14,7 +14,7 @@
 // limitations under the License.
 //
 
-package repo
+package manager
 
 import (
 	"errors"
@@ -26,20 +26,19 @@ import (
 /*********************/
 
 // TransitPackage processes an incoming package manifest, adding the package to "instant transit" repos
-func (m *Manager) TransitPackage(repo, pkg string) (int, error) {
-	if len(repo) == 0 {
-		return -1, errors.New("job is missing a destination repo")
-	}
+func (m *Manager) TransitPackage(pkg string) (int, error) {
+	return -1, errors.New("not yet implemented")
+	/* TODO: Finish this
 	if len(pkg) == 0 {
 		return -1, errors.New("job is missing a package")
 	}
 	j := &jobs.Job{
 		Type: jobs.TransitPackage,
-		Dst:  repo,
 		Pkg:  pkg,
 	}
 	id, err := m.store.Push(j)
 	return int(id), err
+	*/
 }
 
 // TransitPackageExecute carries out a TransitPackage job

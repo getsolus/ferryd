@@ -20,6 +20,7 @@ import (
 	"fmt"
 	"github.com/DataDrake/cli-ng/cmd"
 	"github.com/getsolus/ferryd/api/v1"
+	"github.com/getsolus/ferryd/jobs"
 	"os"
 )
 
@@ -47,8 +48,11 @@ func CherryPickRun(r *cmd.RootCMD, c *cmd.CMD) {
 	client := v1.NewClient(flags.Socket)
 	defer client.Close()
 
-	if err := client.CherryPick(args.Source, args.Dest, args.Package); err != nil {
+	var j *jobs.Job
+	var err error
+	if j, err = client.CherryPick(args.Source, args.Dest, args.Package); err != nil {
 		fmt.Fprintf(os.Stderr, "Error while cherry-picking: %v\n", err)
 		os.Exit(1)
 	}
+	j.Print()
 }

@@ -50,7 +50,7 @@ func (l *Listener) GetJob(ctx *fasthttp.RequestCtx) {
 		return
 	}
 	var job *jobs.Job
-	if job, err := l.store.GetJob(id); err != nil {
+	if job, err = l.store.GetJob(id); err != nil {
 		writeError(ctx, err, http.StatusInternalServerError)
 		return
 	}

@@ -14,12 +14,12 @@
 // limitations under the License.
 //
 
-package main
+package daemon
 
 import (
 	log "github.com/DataDrake/waterlog"
 	"github.com/getsolus/ferryd/core"
-	"github.com/getsolus/ferryd/jobs"
+	"github.com/getsolus/ferryd/manager"
 	"github.com/radu-munteanu/fsnotify"
 	"os"
 	"path/filepath"
@@ -30,18 +30,18 @@ import (
 type TransitListener struct {
 	base    string
 	watcher *fsnotify.Watcher
-	store   *jobs.Store
+	manager *manager.Manager
 	stop    chan bool
 	done    chan bool
 }
 
 // NewTransitListener creates and sets up a new TransitListener
-func NewTransitListener(base string, store *jobs.Store) (tl *TransitListener, err error) {
+func NewTransitListener(base []string, mgr *manager.Manager) (tl *TransitListener, err error) {
 	tl = &TransitListener{
-		base:  base,
-		store: store,
-		stop:  make(chan bool),
-		done:  make(chan bool),
+		base:    filepath.Join(base...),
+		manager: mgr,
+		stop:    make(chan bool),
+		done:    make(chan bool),
 	}
 	tl.watcher, err = fsnotify.NewWatcher()
 	if err != nil {
@@ -97,5 +97,5 @@ func (tl *TransitListener) processTransitManifest(name string) {
 	}
 
 	log.Infof("Received transit manifest upload: '%s'\n", name)
-	tl.store.Push(jobs.NewTransitJob(fullpath))
+	tl.manager.TransitPackage(fullpath)
 }

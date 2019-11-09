@@ -44,8 +44,8 @@ func RestartRun(r *cmd.RootCMD, c *cmd.CMD) {
 	defer client.Close()
 
 	if err := client.Restart(); err != nil {
-		fmt.Fprintf(os.Stderr, "Error while restarting daemon: %v\n", err)
+		fmt.Fprintf(os.Stderr, "Error while restarting daemon: %s\n", err.Error())
 		os.Exit(1)
 	}
-	fmt.Fprintln("Daemon has been restarted successfully.")
+	fmt.Println("Daemon has been restarted successfully.")
 }

@@ -19,9 +19,13 @@ package v1
 import (
 	"errors"
 	"fmt"
+	log "github.com/DataDrake/waterlog"
 	"github.com/valyala/fasthttp"
 	"io"
 	"io/ioutil"
+	"net/http"
+	"runtime"
+	"strconv"
 )
 
 // getMethodOrigin helps us determine the caller so that we can print
@@ -50,19 +54,29 @@ func readError(in io.Reader) error {
 }
 
 func writeErrorString(ctx *fasthttp.RequestCtx, e string, code int) {
-	writeError(ctx, errors.New(err), code)
+	log.Errorln(e)
+	ctx.Error(e, code)
 }
 
 func writeError(ctx *fasthttp.RequestCtx, err error, code int) {
-	log.Errorln(err)
-	ctx.Error(err, code)
+	writeErrorString(ctx, err.Error(), code)
 }
 
-func readID(in io.Reader) (id int, err error) {
-	raw, err := ioutil.ReadAll(in)
+func readID(resp *http.Response) (id int, err error) {
+	if resp.StatusCode != http.StatusOK {
+		err = readError(resp.Body)
+		return
+	}
+	raw, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
 		return
 	}
-	id, err = strconv.Atoi(raw)
+	id, err = strconv.Atoi(string(raw))
+	return
+}
+
+func writeID(ctx *fasthttp.RequestCtx, id int) {
+	s := strconv.Itoa(id)
+	ctx.SetBodyString(s)
 	return
 }

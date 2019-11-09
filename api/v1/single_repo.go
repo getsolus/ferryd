@@ -18,13 +18,14 @@ package v1
 
 import (
 	"encoding/json"
+	"errors"
 	"github.com/getsolus/ferryd/jobs"
 	"github.com/valyala/fasthttp"
 	"net/http"
 )
 
-// CreateRepo will attempt to create a repository in the daemon
-func (c *Client) CreateRepo(id string) (gen GenericResponse, err error) {
+// Create will attempt to create a repository in the daemon
+func (c *Client) Create(id string) (j *jobs.Job, err error) {
 	req, err := http.NewRequest("POST", formURI("api/v1/repos/"+id), nil)
 	if err != nil {
 		return
@@ -34,9 +35,11 @@ func (c *Client) CreateRepo(id string) (gen GenericResponse, err error) {
 		return
 	}
 	defer resp.Body.Close()
-	if err = json.NewDecoder(resp.Body).Decode(&gen); err != nil {
+	if resp.StatusCode != http.StatusOK {
+		err = readError(resp.Body)
 		return
 	}
+	err = json.NewDecoder(resp.Body).Decode(j)
 	return
 }
 
@@ -47,14 +50,14 @@ func (l *Listener) CreateRepo(ctx *fasthttp.RequestCtx) {
 	writeErrorString(ctx, "Not yet implemented", http.StatusInternalServerError)
 }
 
-// ImportRepo will ask ferryd to import a repository from disk
-func (c *Client) ImportRepo(id string) (j *jobs.Job, err error) {
+// Import will ask ferryd to import a repository from disk
+func (c *Client) Import(id string) (j *jobs.Job, err error) {
 	err = errors.New("Not yet implemented")
 	return
 }
 
-// RemoveRepo will attempt to remove a repository in the daemon
-func (c *Client) RemoveRepo(id string) (j *jobs.Job, err error) {
+// Remove will attempt to remove a repository in the daemon
+func (c *Client) Remove(id string) (j *jobs.Job, err error) {
 	req, err := http.NewRequest("DELETE", formURI("api/v1/repos/"+id), nil)
 	if err != nil {
 		return
@@ -64,9 +67,11 @@ func (c *Client) RemoveRepo(id string) (j *jobs.Job, err error) {
 		return
 	}
 	defer resp.Body.Close()
-	if err = json.NewDecoder(resp.Body).Decode(&gen); err != nil {
+	if resp.StatusCode != http.StatusOK {
+		err = readError(resp.Body)
 		return
 	}
+	err = json.NewDecoder(resp.Body).Decode(j)
 	return
 }
 
