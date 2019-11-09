@@ -16,6 +16,41 @@
 
 package repo
 
+// RepoSchema is the SQLite3 schema for the Repo table
+const RepoSchema = `
+CREATE TABLE IF NOT EXISTS repos (
+    id              INTEGER PRIMARY KEY,
+    name            STRING,
+    instant_transit BOOLEAN
+)
+`
+
+// Queries for retrieving Repo of a particular status
+const (
+    primaryRepo  = "SELECT * FROM repos WHERE id=1"
+    allRepos     = "SELECT * FROM repos"
+    instantRepos = "SELECT * FROM repos WHERE instant_transit=TRUE"
+)
+
+// Query for creating a new Repo
+const insertRepo = `
+INSERT INTO repos (
+    id, name, instant_transit
+) VALUES (
+    NULL, :name, :instant_transit
+)
+`
+
+// Queries for updating a repo
+const (
+    updateRepo = "UPDATE repos SET name=:name, instant_repo=:instant_repo WHERE id=:id"
+)
+
+// Queries for removing a repo
+const (
+    removeRepo = "DELETE FROM jobs WHERE id=:id"
+)
+
 const reposPackages = `
 WITH ids AS (
     SELECT package_id FROM repos

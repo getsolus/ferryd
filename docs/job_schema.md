@@ -2,11 +2,40 @@
 
 ## Job Types
 
-
-### Bulk Add
+### Check
 
 #### Description:
-    Adds one or more packages to a repository
+
+    Compares the contents of a repo on Disk with the DB
+
+#### Type:
+
+- Parallel
+
+#### Parameters:
+
+- src
+
+#### Results:
+
+- Diff
+
+#### Created By:
+
+- API Call
+- Rescan Job
+
+#### Followed By:
+
+- N/A
+
+---
+
+### CherryPick
+
+#### Description:
+
+    Syncs a single package from one repo to another
 
 #### Type:
 
@@ -14,14 +43,21 @@
 
 #### Parameters:
 
-- repoID
-- Package(s)
+- src
+- dst
+- pkg
+
+#### Results:
+
+- Diff
 
 #### Created By:
+
 - API Call
 
 #### Followed By:
-- Direct Index
+
+- Index (dst)
 
 ---
 
@@ -36,43 +72,53 @@
 
 #### Parameters:
 
-- repoID
-- newClone
-- mode
+- src
+- dst
+
+#### Results:
+
+- Diff
 
 #### Created By:
+
 - API Call
 
 #### Followed By:
-- Direct Index
+
+- Index (dst)
 
 ---
 
-### Copy Source
+### Compare
 
 #### Description:
-    Copy a particular source from one repo to another
+
+    Creates a diff of the contents of two repos
 
 #### Type:
 
-- Serial
+- Parallel
 
 #### Parameters:
 
-- repoID
-- target
-- source
-- release
+- src
+- dst
+
+#### Results:
+
+- Diff
 
 #### Created By:
+
 - API Call
 
 #### Followed By:
-- Direct Index
+
+- N/A
 
 ---
 
-### Create Repo
+### Create
 
 #### Description:
     Create a new repository by name
@@ -83,20 +129,28 @@
 
 #### Parameters:
 
-- id
+- dst
+
+#### Results:
+
+- N/A
 
 #### Created By:
+
 - API Call
+- Clone (dst)
 
 #### Followed By:
-- Direct Index
+
+- Index (dst)
 
 ---
 
-### Delete Repo
+### Delta
 
 #### Description:
-    Delete an existing repository by name
+
+    Generates missing Delta Packages for an entire repo
 
 #### Type:
 
@@ -104,19 +158,27 @@
 
 #### Parameters:
 
-- id
+- dst
+
+#### Results:
+
+- N/A
 
 #### Created By:
+
 - API Call
 
 #### Followed By:
-- None
+
+- DeltaPackage (dst, all pkgs)
+- Index (dst)
 
 ---
 
-### Delta
+### DeltaPackage
 
 #### Description:
+
     Create delta packages for a single package in a repo
 
 #### Type:
@@ -125,44 +187,28 @@
 
 #### Parameters:
 
-- repoID
-- packageID
+- dst
+- pkg
+
+#### Results:
+
+- N/A
 
 #### Created By:
-- Delta Repo Job
+
+- Delta
 
 #### Followed By:
-- None
+
+- Index (dst)
 
 ---
 
-### Delta Index
+### Import
 
 #### Description:
-    Create delta packages for a single package in a repo and re-index after
 
-#### Type:
-
-- Parallel
-
-#### Parameters:
-
-- repoID
-- packageID
-
-#### Created By:
-- Transit Process
-- Pull Repo Job
-
-#### Followed By:
-- Direct Index
-
----
-
-### Delta Repo
-
-#### Description:
-    Create delta packages for all packages in a repo
+    Adds a new repo to the DB from an existing filepath
 
 #### Type:
 
@@ -170,19 +216,26 @@
 
 #### Parameters:
 
-- repoID
+- dst
+
+#### Results:
+
+- Diff
 
 #### Created By:
+
 - API Call
 
 #### Followed By:
-- None
+
+- Index (dst)
 
 ---
 
-### Index Repo
+### Index
 
 #### Description:
+
     Update the index for a specific repo
 
 #### Type:
@@ -191,20 +244,36 @@
 
 #### Parameters:
 
-- repoID
+- dst
+
+#### Results:
+
+- N/A
 
 #### Created By:
+
 - API Call
+- Clone (dst)
+- Create (dst)
+- Delta (dst)
+- Import (dst)
+- Rescan (dst)
+- Sync (dst)
+- Trim Obsoletes (dst)
+- Trim Packages (dst)
+- Transit Package (dst)
 
 #### Followed By:
+
 - None
 
 ---
 
-### Pull Repo
+### Remove
 
 #### Description:
-    Pull one repository into another
+
+    Remove removes a repo from the DB but not its contents on disk
 
 #### Type:
 
@@ -212,21 +281,27 @@
 
 #### Parameters:
 
-- sourceID
-- targetID
+- src
+
+#### Results:
+
+- N/A
 
 #### Created By:
+
 - API Call
 
 #### Followed By:
-- Direct Index
+
+- N/A
 
 ---
 
-### Remove Source
+### Rescan
 
 #### Description:
-    Remove a specific package or release and its sub-packages/deltas
+
+    Updates the DB with the contents of a repo on disk
 
 #### Type:
 
@@ -234,22 +309,28 @@
 
 #### Parameters:
 
-- repoID
-- source
-- release
+- dst
+
+#### Results:
+
+- Diff
 
 #### Created By:
+
 - API Call
+- Import (dst)
 
 #### Followed By:
-- Direct Index
+
+- Index (dst)
 
 ---
 
-### Transit
+### Sync
 
 #### Description:
-    Add a new package or package release to a repo
+
+    Replicates the exact contents of one repo into another
 
 #### Type:
 
@@ -257,19 +338,56 @@
 
 #### Parameters:
 
-- path
+- src
+- dst
+
+#### Results:
+
+- Diff
 
 #### Created By:
-- FS Notify
+
+- API Call
+- Clone (src,dst)
 
 #### Followed By:
-- Direct Index
+
+- Index (dst)
+
+---
+
+### Transit Package
+
+#### Description:
+
+    Adds a new package to the Pool and all auto-transit repos
+
+#### Type:
+
+- Serial
+
+#### Parameters:
+
+- pkg
+
+#### Results:
+
+- N/A
+
+#### Created By:
+
+- Transit Listener
+
+#### Followed By:
+
+- Index (dst)
 
 ---
 
 ### Trim Obsoletes
 
 #### Description:
+
     Remove obsoleted packages from the repo
 
 #### Type:
@@ -278,19 +396,25 @@
 
 #### Parameters:
 
-- repoID
+- dst
+
+#### Results:
+
+- Diff
 
 #### Created By:
 - API Call
 
 #### Followed By:
-- Direct Index
+
+- Index (dst)
 
 ---
 
 ### Trim Packages
 
 #### Description:
+
     Remove old releases for packages in a repo
 
 #### Type:
@@ -299,25 +423,30 @@
 
 #### Parameters:
 
-- repoID
-- maxKeep
+- dst
+- max
+
+#### Results:
+
+- Diff
 
 #### Created By:
+
 - API Call
 
 #### Followed By:
-- Direct Index
+- Index (dst)
 
 
 ## SQLite Schema
 
-| Column Number | 0       | 1        | 2         | 3         | 4       | 5       | 6         | 7       |
-| ------------- | ------- | -------- | --------- | --------- | ------- | ------- | --------- | ------- |
-| Column Name   | id      | job_type | src\_repo | dst\_repo | sources | release | max\_keep | mode    |
-| Column Type   | INTEGER | INTEGER  | STRING    | STRING    | TEXT    | INTEGER | INTEGER   | INTEGER |
+| Column Number | 0       | 1       | 2      | 3      | 4      | 5       |
+| ------------- | ------- | ------- | ------ | ------ | ------ | ------- |
+| Column Name   | id      | type    | src    | dst    | pkg    | max     |
+| Column Type   | INTEGER | INTEGER | STRING | STRING | STRING | INTEGER |
 
-| Column Number | 8        | 9        | 10       | 11        | 12      |
-| ------------- | -------- | -------- | -------- | --------- | ------- |
-| Column Name   | created  | started  | finished | status    | message |
-| Column Type   | DATETIME | DATETIME | DATETIME | INTEGER   | TEXT    |
+| Column Number | 6        | 7        | 8        | 9         | 10      | 11      |
+| ------------- | -------- | -------- | -------- | --------- | ------- | ------- |
+| Column Name   | created  | started  | finished | status    | message | results |
+| Column Type   | DATETIME | DATETIME | DATETIME | INTEGER   | TEXT    | BLOB    |
 

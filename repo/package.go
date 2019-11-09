@@ -20,19 +20,6 @@ import (
 	"database/sql"
 )
 
-// PackageSchema is the SQLite3 schema for the Package table
-const PackageSchema = `
-CREATE TABLE IF NOT EXISTS packages (
-    id      INTEGER PRIMARY KEY,
-    name    STRING,
-    uri     STRING,
-    size    INTEGER,
-    hash    TEXT,
-    release INTEGER,
-    meta    BLOB
-)
-`
-
 // Package is an entry in the Package Table
 type Package struct {
 	ID      int
@@ -43,29 +30,3 @@ type Package struct {
 	Release int
 	Meta    []byte
 }
-
-// Queries for retrieving Packages
-const (
-	namedPackage = "SELECT * FROM packages WHERE name=:name"
-)
-
-// Query for creating a new Package
-const insertPackage = `
-INSERT INTO packages (
-    id, name, uri, size, hash, release, meta
-) VALUES (
-    NULL, :name, :uri, :size, :hash, :release, :meta
-)
-`
-
-// Queries for updating a Package
-const (
-	updatePackage = "UPDATE packages SET size=:size, hash=:hash, meta=:meta WHERE id=:id"
-)
-
-// Queries for removing a Package
-const (
-	trimPackages  = "DELETE FROM packages WHERE name=:name AND release < :release"
-	trimObsoletes = "DELETE FROM packages WHERE name=:name"
-	removePackage = "DELETE FROM packages WHERE id=:id"
-)

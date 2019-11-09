@@ -46,12 +46,12 @@ const (
 	Rescan = 11
 	// Sync replicates the contents of one repo into another
 	Sync = 12
+ 	// TransitPackage adds a new package to the Pool and any auto-transit repos
+	TransitPackage = 13
 	// TrimObsoletes removes obsoleted packages from the repo
-	TrimObsoletes = 13
+	TrimObsoletes = 14
 	// TrimPackages removes old release of packages from the repo
-	TrimPackages = 14
-	// TransitPackage addss a new package to the Pool and any auto-transit repos
-	TransitPackage = 15
+	TrimPackages = 15
 )
 
 var typeMap = map[JobType]string{

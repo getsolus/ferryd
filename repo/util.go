@@ -20,9 +20,9 @@ import (
 	"database/sql"
 )
 
-// Repo is an entry in the Repo Table
-type Repo struct {
-	ID             int
-	Name           sql.NullString
-	InstantTransit bool `db:"instant_transit"`
+func NullStringEqual(ns1, ns2 sql.NullString) {
+    if !ns1.Valid || !ns2.Valid {
+        return false
+    }
+    return ns1.String == ns2.String
 }

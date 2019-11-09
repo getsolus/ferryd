@@ -20,49 +20,43 @@ import (
 	"database/sql"
 )
 
-// DeltaSchema is the SQLite3 schema for the Delta table
-const DeltaSchema = `
-CREATE TABLE IF NOT EXISTS deltas (
-    id           INTEGER PRIMARY KEY,
-    package_name STRING,
-    uri          STRING,
-    size         INTEGER,
-    hash         TEXT,
-    from_rel     INTEGER,
-    to_rel       INTEGER,
-    skip         BOOLEAN,
-)
-`
-
 // Delta is an entry in the Delta Table
 type Delta struct {
-	ID          int
+	ID          int            `db:"id"`
 	PackageName sql.NullString `db:"package_name"`
 	URI         sql.NullString `db:"uri"`
-	Size        int
-	Hash        sql.NullString
-	FromRelease int  `db:"from_release"`
-	ToRelease   int  `db:"to_release"`
-	Skip        bool `db:"skip"`
+	Size        int            `db:"size"`
+	Hash        sql.NullString `db:"hash"`
+	FromRelease int            `db:"from_release"`
+	ToRelease   int            `db:"to_release"`
 }
 
-// Queries for retrieving Deltas
-const (
-	namedDeltas = "SELECT * FROM deltas WHERE package_name=:package_name"
-)
+func (d *Delta) Insert(tx *sqlx.TX, repoID int) error {
+    // Insert New Delta
+    resp, err := tx.NamedExec(insertDelta, d)
+    if err != nil {
+        return error
+    }
+    // Get ID of new Delta record
+    id, err := resp.LastInsertId()
+    if err != nil {
+        return error
+    }
+    d.ID = int(id)
+    // Insert New RepoDelta to pair with repo
+    rd := &RepoDelta {
+        RepoID: repoID,
+        DeltaID: int(id),
+    }
+    return rd.Insert(tx)
+}
 
-// Query for creating a new Delta
-const insertDelta = `
-INSERT INTO deltas (
-    id, package_name, uri, size, hash, from_release, to_release, skip
-) VALUES (
-    NULL, :package_name, :uri, :size, :hash, :from_release, :to_release, :skip
-)
-`
-
-// Queries for removing a Delta
-const (
-	trimDeltas     = "DELETE FROM deltas WHERE package_name=:package_name AND to_release < :to_release"
-	obsoleteDeltas = "DELETE FROM deltas WHERE package_name=:package_name"
-	removeDelta    = "DELETE FROM deltas WHERE package_name=:package_name AND to_release = :to_release"
-)
+func (d *Delta) Equal(d2 *Delta) bool {
+    same := NullStringEqual(d.PackageName, d2.PackageName)
+    same &= NullStringEqual(d.URI,d2.URI)
+    same &= d.Size == d2.Size
+    same &= NullStringEqual(d.Hash,d2.Hash)
+    same &= d.FromRelease == d2.FromRelease
+    same &= d.ToRelease == d2.ToRelease
+    return same
+}

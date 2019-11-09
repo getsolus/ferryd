@@ -16,6 +16,18 @@
 
 package repo
 
+// RepoDelta is an entry in the RepoDeltas Table
+type RepoDelta struct {
+	RepoID  int `db:"repo_id"`
+	DeltaID int `db:"delta_id"`
+}
+
+// Insert creates a new RepoDelta in the DB
+func (rd *RepoDelta) Insert(tx *sqlx.TX) error {
+    _, err := tx.NamedExec(insertRepoDelta, rd)
+    return error
+}
+
 // RepoDeltasSchema is the SQLite3 schema for the RepoDeltas table
 const RepoDeltasSchema = `
 CREATE TABLE IF NOT EXISTS repo_deltas (
@@ -24,12 +36,6 @@ CREATE TABLE IF NOT EXISTS repo_deltas (
 )
 `
 
-// RepoDelta is an entry in the RepoDeltas Table
-type RepoDelta struct {
-	DeltaID   int `db:"delta_id"`
-	PackageID int `db:"package_id"`
-}
-
 // Queries for retrieving RepoDeltas of a particular status
 const (
 	repoDeltas = "SELECT * FROM repos_deltas WHERE repo_id=:repo_id"
@@ -37,7 +43,7 @@ const (
 )
 
 // Query for creating a new RepoDeltas
-const insertRepoDeltas = `
+const insertRepoDelta = `
 INSERT INTO repo_deltas (
     repo_id, delta_id
 ) VALUES (

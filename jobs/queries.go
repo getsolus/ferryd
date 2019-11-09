@@ -23,7 +23,7 @@ CREATE TABLE IF NOT EXISTS jobs (
     type     INTEGER,
     src      STRING,
     dst      STRING,
-    pkg      TEXT,
+    pkg      STRING,
     max      INTEGER,
     created  DATETIME,
     started  DATETIME,

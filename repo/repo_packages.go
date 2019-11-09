@@ -16,6 +16,13 @@
 
 package repo
 
+
+// RepoPackage is an entry in the RepoPackages Table
+type RepoPackage struct {
+	RepoID    int `db:"repo_id"`
+	PackageID int `db:"package_id"`
+}
+
 // RepoPackagesSchema is the SQLite3 schema for the RepoPackages table
 const RepoPackagesSchema = `
 CREATE TABLE IF NOT EXISTS repo_packages (
@@ -23,12 +30,6 @@ CREATE TABLE IF NOT EXISTS repo_packages (
     package_id INTEGER
 )
 `
-
-// RepoPackage is an entry in the RepoPackages Table
-type RepoPackage struct {
-	RepoID    int `db:"repo_id"`
-	PackageID int `db:"package_id"`
-}
 
 // Queries for retrieving RepoPackages of a particular status
 const (
