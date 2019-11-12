@@ -18,6 +18,7 @@ package repo
 
 import (
 	"database/sql"
+	"github.com/jmoiron/sqlx"
 )
 
 // Delta is an entry in the Delta Table
@@ -31,32 +32,34 @@ type Delta struct {
 	ToRelease   int            `db:"to_release"`
 }
 
-func (d *Delta) Insert(tx *sqlx.TX, repoID int) error {
-    // Insert New Delta
-    resp, err := tx.NamedExec(insertDelta, d)
-    if err != nil {
-        return error
-    }
-    // Get ID of new Delta record
-    id, err := resp.LastInsertId()
-    if err != nil {
-        return error
-    }
-    d.ID = int(id)
-    // Insert New RepoDelta to pair with repo
-    rd := &RepoDelta {
-        RepoID: repoID,
-        DeltaID: int(id),
-    }
-    return rd.Insert(tx)
+// Insert creates a new delta in the DB
+func (d *Delta) Insert(tx *sqlx.Tx, repoID int) error {
+	// Insert New Delta
+	resp, err := tx.NamedExec(insertDelta, d)
+	if err != nil {
+		return err
+	}
+	// Get ID of new Delta record
+	id, err := resp.LastInsertId()
+	if err != nil {
+		return err
+	}
+	d.ID = int(id)
+	// Insert New RepoDelta to pair with repo
+	rd := &RepoDelta{
+		RepoID:  repoID,
+		DeltaID: int(id),
+	}
+	return rd.Insert(tx)
 }
 
+// Equal checks if this delta is equal to another
 func (d *Delta) Equal(d2 *Delta) bool {
-    same := NullStringEqual(d.PackageName, d2.PackageName)
-    same &= NullStringEqual(d.URI,d2.URI)
-    same &= d.Size == d2.Size
-    same &= NullStringEqual(d.Hash,d2.Hash)
-    same &= d.FromRelease == d2.FromRelease
-    same &= d.ToRelease == d2.ToRelease
-    return same
+	same := NullStringEqual(d.PackageName, d2.PackageName)
+	same = same && NullStringEqual(d.URI, d2.URI)
+	same = same && d.Size == d2.Size
+	same = same && NullStringEqual(d.Hash, d2.Hash)
+	same = same && d.FromRelease == d2.FromRelease
+	same = same && d.ToRelease == d2.ToRelease
+	return same
 }

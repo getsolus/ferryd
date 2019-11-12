@@ -16,6 +16,10 @@
 
 package repo
 
+import (
+	"github.com/jmoiron/sqlx"
+)
+
 // RepoDelta is an entry in the RepoDeltas Table
 type RepoDelta struct {
 	RepoID  int `db:"repo_id"`
@@ -23,9 +27,9 @@ type RepoDelta struct {
 }
 
 // Insert creates a new RepoDelta in the DB
-func (rd *RepoDelta) Insert(tx *sqlx.TX) error {
-    _, err := tx.NamedExec(insertRepoDelta, rd)
-    return error
+func (rd *RepoDelta) Insert(tx *sqlx.Tx) error {
+	_, err := tx.NamedExec(insertRepoDelta, rd)
+	return err
 }
 
 // RepoDeltasSchema is the SQLite3 schema for the RepoDeltas table

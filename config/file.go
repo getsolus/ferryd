@@ -20,7 +20,7 @@ import (
 	"encoding/json"
 	"log"
 	"os"
-	"strings"
+	"path/filepath"
 )
 
 const (
@@ -42,7 +42,7 @@ const (
 	// DefaultBuildDir for all temporary artifacts
 	DefaultBuildDir = "/tmp/ferryd"
 	// DefaultLockFile for a running daemon
-	DefaultLockFile = "/run/lock/ferryd"
+	DefaultLockFile = "/var/lib/ferryd/ferryd.lock"
 )
 
 // File contains the file configuration for ferryd
@@ -69,7 +69,7 @@ func Load() error {
 	}
 	defer cFile.Close()
 	// Parse JSON
-	Current := &File{}
+	Current = &File{}
 	dec := json.NewDecoder(cFile)
 	err = dec.Decode(Current)
 	if err != nil {
@@ -80,13 +80,13 @@ func Load() error {
 		Current.BaseDir = DefaultBaseDir
 		log.Printf("No BaseDir specified. Using default: %s\n", DefaultBaseDir)
 	}
-	Current.basePath = strings.Split(Current.BaseDir, "/")
+	Current.basePath = filepath.SplitList(Current.BaseDir)
 	// Validate Build Directory
 	if len(Current.BuildDir) == 0 {
 		Current.BuildDir = DefaultBuildDir
 		log.Printf("No BuildDir specified. Using default: %s\n", DefaultBuildDir)
 	}
-	Current.buildPath = strings.Split(Current.BuildDir, "/")
+	Current.buildPath = filepath.SplitList(Current.BuildDir)
 	// Validate Lock File
 	if len(Current.LockFile) == 0 {
 		Current.LockFile = DefaultLockFile

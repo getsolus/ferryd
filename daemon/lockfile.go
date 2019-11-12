@@ -19,7 +19,6 @@ package daemon
 import (
 	"errors"
 	"fmt"
-	"github.com/getsolus/ferryd/core"
 	"os"
 	"path/filepath"
 	"sync"
@@ -54,14 +53,6 @@ func NewLockFile(path string) (*LockFile, error) {
 		conlock:   new(sync.RWMutex),
 		fd:        nil,
 		owner:     false,
-	}
-
-	// Automatically create the leading directory structure
-	dir := filepath.Dir(path)
-	if !core.PathExists(dir) {
-		if err := os.MkdirAll(dir, 00755); err != nil {
-			return nil, err
-		}
 	}
 
 	// We can consider setting the permissions to 0600

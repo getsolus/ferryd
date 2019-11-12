@@ -44,6 +44,10 @@ type Server struct {
 
 // NewServer will return a newly initialised Server which is currently unbound
 func NewServer() (*Server, error) {
+	err := config.Load()
+	if err != nil {
+		return nil, err
+	}
 	// Before we can actually bind the socket, we must lock the file
 	lfile, err := NewLockFile(config.Current.LockFile)
 
@@ -80,7 +84,10 @@ func (s *Server) killHandler() {
 // prior to serving.
 func (s *Server) Bind() error {
 	// Load config from file
-	config.Load()
+	e := config.Load()
+	if e != nil {
+		return e
+	}
 
 	// Store
 	st, e := jobs.NewStore()

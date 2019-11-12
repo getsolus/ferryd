@@ -77,7 +77,7 @@ func (c *Client) Remove(id string) (j *jobs.Job, err error) {
 
 // RemoveRepo will handle remote requests for repository deletion
 func (l *Listener) RemoveRepo(ctx *fasthttp.RequestCtx) {
-	// id := ctx.UserValue("id").(string)
+	// id := ctx.UserValue("left").(string)
 	// l.store.Push(jobs.NewRemoveRepoJob(id))
 	writeErrorString(ctx, "Not yet implemented", http.StatusInternalServerError)
 }

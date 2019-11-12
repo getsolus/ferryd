@@ -16,7 +16,6 @@
 
 package repo
 
-
 // RepoPackage is an entry in the RepoPackages Table
 type RepoPackage struct {
 	RepoID    int `db:"repo_id"`

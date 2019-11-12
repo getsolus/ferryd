@@ -27,9 +27,9 @@ CREATE TABLE IF NOT EXISTS repos (
 
 // Queries for retrieving Repo of a particular status
 const (
-    primaryRepo  = "SELECT * FROM repos WHERE id=1"
-    allRepos     = "SELECT * FROM repos"
-    instantRepos = "SELECT * FROM repos WHERE instant_transit=TRUE"
+	primaryRepo  = "SELECT * FROM repos WHERE id=1"
+	allRepos     = "SELECT * FROM repos"
+	instantRepos = "SELECT * FROM repos WHERE instant_transit=TRUE"
 )
 
 // Query for creating a new Repo
@@ -43,12 +43,12 @@ INSERT INTO repos (
 
 // Queries for updating a repo
 const (
-    updateRepo = "UPDATE repos SET name=:name, instant_repo=:instant_repo WHERE id=:id"
+	updateRepo = "UPDATE repos SET name=:name, instant_repo=:instant_repo WHERE id=:id"
 )
 
 // Queries for removing a repo
 const (
-    removeRepo = "DELETE FROM jobs WHERE id=:id"
+	removeRepo = "DELETE FROM jobs WHERE id=:id"
 )
 
 const reposPackages = `

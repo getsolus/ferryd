@@ -43,6 +43,13 @@ func NewTransitListener(base []string, mgr *manager.Manager) (tl *TransitListene
 		stop:    make(chan bool),
 		done:    make(chan bool),
 	}
+	_, err = os.Stat(tl.base)
+	if os.IsNotExist(err) {
+		err = os.Mkdir(tl.base, 0755)
+		if err != nil {
+			return
+		}
+	}
 	tl.watcher, err = fsnotify.NewWatcher()
 	if err != nil {
 		return

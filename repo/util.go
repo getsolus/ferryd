@@ -20,9 +20,10 @@ import (
 	"database/sql"
 )
 
-func NullStringEqual(ns1, ns2 sql.NullString) {
-    if !ns1.Valid || !ns2.Valid {
-        return false
-    }
-    return ns1.String == ns2.String
+// NullStringEqual checks for equality of two MullStrings
+func NullStringEqual(ns1, ns2 sql.NullString) bool {
+	if !ns1.Valid || !ns2.Valid {
+		return false
+	}
+	return ns1.String == ns2.String
 }

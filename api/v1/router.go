@@ -30,11 +30,8 @@ import (
 	"time"
 )
 
-// Default socket path we expect to use
-const defaultSocketPath = "/run/ferryd.sock"
-
 // SocketPath is the path to find the ferryd socket
-var SocketPath string
+const SocketPath = "/run/ferryd.sock"
 
 // Listener sits on a unix socket accepting connections from authenticated
 // client, i.e. root or those in the "ferry" group
@@ -74,9 +71,9 @@ func NewListener(store *jobs.Store, mgr *manager.Manager) (api *Listener, err er
 	// Repo management
 	r.GET("/api/v1/repos", api.Repos)       // Summaries of all repos
 	r.POST("/api/v1/repos", api.CreateRepo) // Import?
-	// r.GET("/api/v1/repos/:id", api.GetRepo) // Summary of repo
-	r.PATCH("/api/v1/repos/:id", api.ModifyRepo) // ?action={check, delta, index, rescan, trim-packages, trim-obsoletes}
-	r.DELETE("/api/v1/repos/:id", api.RemoveRepo)
+	// r.GET("/api/v1/repos/:left", api.GetRepo) // Summary of repo
+	r.PATCH("/api/v1/repos/:left", api.ModifyRepo) // ?action={check, delta, index, rescan, trim-packages, trim-obsoletes}
+	r.DELETE("/api/v1/repos/:left", api.RemoveRepo)
 
 	r.PATCH("/api/v1/repos/:left/cherrypick/:right", api.CherryPickRepo)
 	r.GET("/api/v1/repos/:left/compare/:right", api.CompareRepo)

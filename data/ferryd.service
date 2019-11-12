@@ -6,7 +6,7 @@ Requires=ferryd.socket
 [Service]
 Type=notify
 WorkingDirectory=/srv/ferryd/root
-ExecStart=/usr/bin/ferryd -d /srv/ferryd/root -s /run/ferryd.sock
+ExecStart=/usr/bin/ferryd daemon
 User=ferryd
 Group=ferryd
 

@@ -1,7 +1,9 @@
-PKGNAME  = ferryd
-DESTDIR ?=
-PREFIX  ?= /usr
-BINDIR   = $(PREFIX)/bin
+PKGNAME    = ferryd
+DESTDIR   ?=
+PREFIX    ?= /usr
+BINDIR     = $(PREFIX)/bin
+SYSCONFDIR = /etc
+SYSTEMD   ?= $(SYSCONFDIR)/systemd/system
 
 GOPROJROOT  = $(GOSRC)/$(PROJREPO)
 
@@ -46,7 +48,11 @@ validate:
 
 install:
 	@$(call stage,INSTALL)
-	install -D -m 00755 $(PKGNAME) $(DESTDIR)$(BINDIR)/$(PKGNAME)
+	install -Dm 00755 $(PKGNAME) $(DESTDIR)$(BINDIR)/$(PKGNAME)
+	ln -sf $(BINDIR)/$(PKGNAME) $(DESTDIR)$(BINDIR)/ferryctl
+	install -Dm 00644 data/ferryd.conf $(SYSCONFDIR)/ferryd/ferryd.conf
+	install -Dm 00644 data/ferryd.service $(SYSTEMD)/ferryd.service
+	install -Dm 00644 data/ferryd.socket $(SYSTEMD)/ferryd.socket
 	@$(call pass,INSTALL)
 
 uninstall:

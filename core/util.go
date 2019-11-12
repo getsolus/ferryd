@@ -147,7 +147,7 @@ func WriteSha256sum(inpPath, outPath string) error {
 // PathExists is a trivial helper to figure out if a path exists or not
 func PathExists(path string) bool {
 	_, err := os.Stat(path)
-	if err == nil {
+	if !os.IsNotExist(err) {
 		return true
 	}
 	return false
