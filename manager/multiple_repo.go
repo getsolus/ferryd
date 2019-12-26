@@ -120,6 +120,31 @@ func (m *Manager) SyncExecute(j *jobs.Job) error {
 
 // Repos provides a summary of all available repos
 func (m *Manager) Repos() (l repo.FullSummary, err error) {
-	err = errors.New("Function not implemented")
+	var s repo.Summary
+	// start tx
+	tx, err := m.db.Beginx()
+	if err != nil {
+		return
+	}
+	// get list of repos
+	rs, err := repo.All(tx)
+	if err != nil {
+		goto CLEANUP
+	}
+	// get summary for each repo
+	for _, r := range rs {
+		s, err = r.Summarize(tx)
+		if err != nil {
+			goto CLEANUP
+		}
+		l = append(l, s)
+	}
+
+CLEANUP:
+	if err != nil {
+		tx.Rollback()
+	} else {
+		tx.Commit()
+	}
 	return
 }

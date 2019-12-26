@@ -14,19 +14,28 @@
 // limitations under the License.
 //
 
-package repo
+package pkgs
 
 import (
-	"database/sql"
+	"github.com/getsolus/ferryd/repo/releases"
+	"github.com/jmoiron/sqlx"
 )
 
 // Package is an entry in the Package Table
 type Package struct {
-	ID      int
-	Name    sql.NullString
-	URI     sql.NullString `db:"uri"`
-	Size    int
-	Hash    sql.NullString
-	Release int
-	Meta    []byte
+	RepoID    int
+	ReleaseID int
+	Data      releases.Release
+	Deltas    []releases.Release
+}
+
+// Save adds a new entry to the package table
+func (p *Package) Save(tx *sqlx.Tx) error {
+	_, err := tx.NamedExec(Insert, p)
+	return err
+}
+
+// AddDelta adds a delta to this Package
+func (p *Package) AddDelta(r releases.Release) {
+	p.Deltas = append(p.Deltas, r)
 }

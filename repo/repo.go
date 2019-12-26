@@ -17,12 +17,97 @@
 package repo
 
 import (
-	"database/sql"
+	"errors"
+	"github.com/getsolus/ferryd/repo/pkgs"
+	"github.com/jmoiron/sqlx"
 )
 
 // Repo is an entry in the Repo Table
 type Repo struct {
-	ID             int
-	Name           sql.NullString
-	InstantTransit bool `db:"instant_transit"`
+	ID             int    `db:"id"`
+	Name           string `db:"name"`
+	InstantTransit bool   `db:"instant_transit"`
+}
+
+// Get retrieves a single repo by name
+func Get(tx *sqlx.Tx, name string) (r *Repo, err error) {
+	err = tx.Get(r, GetSingle, name)
+	return
+}
+
+// All retrieves a list of all the repos in the DB
+func All(tx *sqlx.Tx) (rs []*Repo, err error) {
+	err = tx.Get(rs, GetAll)
+	return
+}
+
+// Create inserts a new repo into the database
+func (r *Repo) Create(tx *sqlx.Tx) error {
+	res, err := tx.NamedExec(Insert, r)
+	if err != nil {
+		return err
+	}
+	id, err := res.LastInsertId()
+	if err != nil {
+		return err
+	}
+	r.ID = int(id)
+	return nil
+}
+
+// Remove deletes all of the DB records for this repo
+func (r *Repo) Remove(tx *sqlx.Tx) error {
+	// Remove Packages
+	_, err := tx.Exec(pkgs.RemoveByRepo, r.ID)
+	if err != nil {
+		return nil
+	}
+	// Remove Repo record
+	_, err = tx.NamedExec(Remove, r)
+	return err
+}
+
+// Summarize gets a summary for this repo
+func (r *Repo) Summarize(tx *sqlx.Tx) (s Summary, err error) {
+	s.Name = r.Name
+	err = tx.Get(&s.Packages, PackageCount, r.ID)
+	if err != nil {
+		return
+	}
+	err = tx.Get(&s.Deltas, DeltaCount, r.ID)
+	if err != nil {
+		return
+	}
+	err = tx.Get(&s.Size, GetSize, r.ID)
+	return
+}
+
+// Import adds all of the files in a repo to the DB
+func (r *Repo) Import(tx *sqlx.Tx) error {
+	return errors.New("Function not implemented")
+}
+
+// Check makes sure the DB matches disk
+func (r *Repo) Check(tx *sqlx.Tx) error {
+	return errors.New("Function not implemented")
+}
+
+// Delta generates missing deltas and removes unneeded ones
+func (r *Repo) Delta(tx *sqlx.Tx) error {
+	return errors.New("Function not implemented")
+}
+
+// Index regenerates the index for a repo
+func (r *Repo) Index(tx *sqlx.Tx) error {
+	return errors.New("Function not implemented")
+}
+
+// TrimObsolete removes obsolete packages for a repo
+func (r *Repo) TrimObsolete(tx *sqlx.Tx) error {
+	return errors.New("Function not implemented")
+}
+
+// TrimPackages removes packages which are older than "max" releases from the latest
+func (r *Repo) TrimPackages(tx *sqlx.Tx, max int) error {
+	return errors.New("Function not implemented")
 }

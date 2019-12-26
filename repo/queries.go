@@ -25,15 +25,48 @@ CREATE TABLE IF NOT EXISTS repos (
 )
 `
 
-// Queries for retrieving Repo of a particular status
+// Queries for retrieving Repos
 const (
-	primaryRepo  = "SELECT * FROM repos WHERE id=1"
-	allRepos     = "SELECT * FROM repos"
-	instantRepos = "SELECT * FROM repos WHERE instant_transit=TRUE"
+	// GetSingle retrieves a repo by name
+	GetSingle = "SELECT * FROM repos WHERE name=?"
+	// GetAll retrieves all repos
+	GetAll = "SELECT * FROM repos"
 )
 
-// Query for creating a new Repo
-const insertRepo = `
+// GetSize gives a total size in bytes of the repo
+const GetSize = `
+WITH ids AS (
+    SELECT release_id FROM packages
+    WHERE repo_id=?
+)
+SELECT sum(size) FROM releases
+INNER JOIN ids ON ids.release_id = releases.id
+`
+
+// PackageCount gets the number of packages in a repo
+const PackageCount = `
+WITH ids AS (
+    SELECT release_id FROM packages
+    WHERE repo_id=?
+)
+SELECT count(*) FROM releases
+INNER JOIN ids ON ids.release_id = releases.id
+WHERE from_release IS NULL
+`
+
+// DeltaCount gets the number of deltas in a repo
+const DeltaCount = `
+WITH ids AS (
+    SELECT release_id FROM packages
+    WHERE repo_id=?
+)
+SELECT count(*) FROM releases
+INNER JOIN ids ON ids.release_id = releases.id
+WHERE from_release IS NOT NULL
+`
+
+// Insert is a Query for creating a new Repo
+const Insert = `
 INSERT INTO repos (
     id, name, instant_transit
 ) VALUES (
@@ -41,14 +74,9 @@ INSERT INTO repos (
 )
 `
 
-// Queries for updating a repo
-const (
-	updateRepo = "UPDATE repos SET name=:name, instant_repo=:instant_repo WHERE id=:id"
-)
-
 // Queries for removing a repo
 const (
-	removeRepo = "DELETE FROM jobs WHERE id=:id"
+	Remove = "DELETE FROM repos WHERE id=:id"
 )
 
 const reposPackages = `
