@@ -40,11 +40,15 @@
 
 - [ ] Remove Repo
   - [x] Remove a repo from the DB
+  - [x] Remove all package for a repo from the DB
 
 ## Cherry-Pick
 
 - [ ] Single Package Sync
-  - [ ] Single Package Diff
+  - [x] Single Package Diff
+  - [x] Remove a specific package from the DB
+  - [ ] Remove a specific package from disk
+  - [ ] Link a package between repos
 
 ## Clone
 

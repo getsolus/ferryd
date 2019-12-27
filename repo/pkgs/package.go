@@ -17,7 +17,6 @@
 package pkgs
 
 import (
-	"github.com/getsolus/ferryd/repo/releases"
 	"github.com/jmoiron/sqlx"
 )
 
@@ -25,8 +24,6 @@ import (
 type Package struct {
 	RepoID    int
 	ReleaseID int
-	Data      releases.Release
-	Deltas    []releases.Release
 }
 
 // Save adds a new entry to the package table
@@ -35,7 +32,8 @@ func (p *Package) Save(tx *sqlx.Tx) error {
 	return err
 }
 
-// AddDelta adds a delta to this Package
-func (p *Package) AddDelta(r releases.Release) {
-	p.Deltas = append(p.Deltas, r)
+// Remove deletes an exact match for this package in the DB
+func (p *Package) Remove(tx *sqlx.Tx) error {
+	_, err := tx.NamedExec(Remove, p)
+	return err
 }

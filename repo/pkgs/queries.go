@@ -35,6 +35,17 @@ SELECT id, package, uri, size, hash, release, from_release, meta FROM releases
 INNER JOIN ids ON ids.release_id = releases.id
 `
 
+// PackageReleases gets all the releases for Package in a Repo
+const PackageReleases = `
+WITH ids AS (
+    SELECT release_id FROM packages
+    WHERE repo_id IN (SELECT repo_id FROM repos WHERE name=?)
+)
+SELECT * FROM releases
+INNER JOIN ids ON ids.release_id = releases.id
+WHERE releases.package=?
+`
+
 // Insert Query for creating a new Package entry
 const Insert = `
 INSERT INTO packages (
