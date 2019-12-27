@@ -39,16 +39,18 @@ type IndexArgs struct {
 
 // IndexRun executes the "index" sub-command
 func IndexRun(r *cmd.RootCMD, c *cmd.CMD) {
+	// Convert our flags
 	flags := r.Flags.(*GlobalFlags)
 	args := c.Args.(*IndexArgs)
-
+	// Create a Client
 	client := v1.NewClient(flags.Socket)
 	defer client.Close()
-
+	// Run the job
 	j, err := client.Index(args.Repo)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Error while generating repo Index: %v\n", err)
 		os.Exit(1)
 	}
+	// Print a summary of the job
 	j.Print()
 }

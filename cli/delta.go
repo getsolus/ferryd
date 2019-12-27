@@ -20,6 +20,7 @@ import (
 	"fmt"
 	"github.com/DataDrake/cli-ng/cmd"
 	"github.com/getsolus/ferryd/api/v1"
+	"github.com/getsolus/ferryd/repo"
 	"os"
 )
 
@@ -39,16 +40,26 @@ type DeltaArgs struct {
 
 // DeltaRun executes the "delta" sub-command
 func DeltaRun(r *cmd.RootCMD, c *cmd.CMD) {
+	// Convert our flags
 	flags := r.Flags.(*GlobalFlags)
 	args := c.Args.(*DeltaArgs)
-
+	// Create a Client
 	client := v1.NewClient(flags.Socket)
 	defer client.Close()
-
+	// Run the job
 	j, err := client.Delta(args.Repo)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Error while updating repo deltas: %v\n", err)
 		os.Exit(1)
 	}
+	// Print the job Summary
 	j.Print()
+	// Decode the Diff
+	var d *repo.Diff
+	if err = d.UnmarshalBinary(j.Results); err != nil {
+		fmt.Fprintf(os.Stderr, "Error while decoding diff: %v\n", err)
+		os.Exit(1)
+	}
+	// Print the diff
+	d.Print(os.Stdout, false, !flags.NoColor)
 }

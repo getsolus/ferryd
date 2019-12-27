@@ -21,6 +21,7 @@ import (
 	"github.com/DataDrake/cli-ng/cmd"
 	"github.com/getsolus/ferryd/api/v1"
 	"github.com/getsolus/ferryd/jobs"
+	"github.com/getsolus/ferryd/repo"
 	"os"
 )
 
@@ -41,16 +42,27 @@ type SyncArgs struct {
 
 // SyncRun executes the "sync" sub-command
 func SyncRun(r *cmd.RootCMD, c *cmd.CMD) {
+	// Convert our flags
 	flags := r.Flags.(*GlobalFlags)
 	args := c.Args.(*SyncArgs)
-
+	// Create a Client
 	client := v1.NewClient(flags.Socket)
 	defer client.Close()
+	// Run the job
 	var j *jobs.Job
 	var err error
 	if j, err = client.Sync(args.Source, args.Dest); err != nil {
 		fmt.Fprintf(os.Stderr, "Error while syncing: %v\n", err)
 		os.Exit(1)
 	}
+	// Print the job summary
 	j.Print()
+	// Decode the Diff
+	var d *repo.Diff
+	if err = d.UnmarshalBinary(j.Results); err != nil {
+		fmt.Fprintf(os.Stderr, "Error while decoding diff: %v\n", err)
+		os.Exit(1)
+	}
+	// Print the diff
+	d.Print(os.Stdout, false, !flags.NoColor)
 }

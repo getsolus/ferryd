@@ -37,15 +37,17 @@ type ResetFailedArgs struct{}
 
 // ResetFailedRun executes the "reset-failed" sub-command
 func ResetFailedRun(r *cmd.RootCMD, c *cmd.CMD) {
+	// Convert our flags
 	flags := r.Flags.(*GlobalFlags)
 	//args  := c.Args.(*ResetFailedArgs)
-
+	// Create a Client
 	client := v1.NewClient(flags.Socket)
 	defer client.Close()
-
+	// Send the request
 	if err := client.ResetFailed(); err != nil {
 		fmt.Fprintf(os.Stderr, "Error while resetting failed jobs: %v\n", err)
 		os.Exit(1)
 	}
+	// Report finished
 	fmt.Println("Successfully reset failed jobs")
 }

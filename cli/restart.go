@@ -37,15 +37,17 @@ type RestartArgs struct{}
 
 // RestartRun executes the "restart" sub-command
 func RestartRun(r *cmd.RootCMD, c *cmd.CMD) {
+	// Convert our flags
 	flags := r.Flags.(*GlobalFlags)
 	//args  := c.Args.(*RestartArgs)
-
+	// Create a Client
 	client := v1.NewClient(flags.Socket)
 	defer client.Close()
-
+	// Send the request
 	if err := client.Restart(); err != nil {
 		fmt.Fprintf(os.Stderr, "Error while restarting daemon: %s\n", err.Error())
 		os.Exit(1)
 	}
+	// Report finished
 	fmt.Println("Daemon has been restarted successfully.")
 }

@@ -25,14 +25,15 @@ var Root *cmd.RootCMD
 
 // GlobalFlags contains the flags for all commands
 type GlobalFlags struct {
-	Socket string `short:"s" arg:"true" long:"socket" desc:"Set the socket path to talk to ferryd"`
+	Socket  string `short:"s" arg:"true" long:"socket" desc:"Set the socket path to talk to ferryd"`
+	NoColor bool   `short:"N" long:"no-color" desc:"Disable color in the output"`
 }
 
 func init() {
 	Root = &cmd.RootCMD{
 		Name:  "ferryd",
 		Short: "ferryd is the Solus package repository tool",
-		Flags: &GlobalFlags{"/run/ferryd.sock"},
+		Flags: &GlobalFlags{"/run/ferryd.sock", false},
 	}
 
 	Root.RegisterCMD(&cmd.Help)

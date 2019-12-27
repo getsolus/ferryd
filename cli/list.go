@@ -38,16 +38,19 @@ type ListArgs struct{}
 
 // ListRun executes the "list-repo" sub-command
 func ListRun(r *cmd.RootCMD, c *cmd.CMD) {
+	// Convert our flags
 	flags := r.Flags.(*GlobalFlags)
 	//args  := c.Args.(*ListArgs)
-
+	// Create a Client
 	client := v1.NewClient(flags.Socket)
 	defer client.Close()
+	// Request a summary
 	var f repo.FullSummary
 	var err error
 	if f, err = client.Repos(); err != nil {
 		fmt.Fprintf(os.Stderr, "Error while listing repos: %v\n", err)
 		os.Exit(1)
 	}
+	// Print the summary
 	f.Print(os.Stdout)
 }

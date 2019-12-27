@@ -31,6 +31,10 @@ type Summary struct {
 
 // Print writes out a Summary in a human-readable format
 func (s *Summary) Print(out io.Writer, single bool) {
+	if s == nil {
+		fmt.Fprintln(out, "No summary found.")
+		return
+	}
 	if single {
 		fmt.Fprintf(out, "Name: %s\n", s.Name)
 		fmt.Fprintf(out, "\tPackages: %d\n", s.Packages)

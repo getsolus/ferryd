@@ -39,16 +39,20 @@ type ImportArgs struct {
 
 // ImportRun executes the "import" sub-command
 func ImportRun(r *cmd.RootCMD, c *cmd.CMD) {
+	// Convert our flags
 	flags := r.Flags.(*GlobalFlags)
 	args := c.Args.(*ImportArgs)
-
+	// Create a Client
 	client := v1.NewClient(flags.Socket)
 	defer client.Close()
-
-	j, err := client.Import(args.Repo)
+	// Run the job
+	s, j, err := client.Import(args.Repo)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Error while importing repo: %v\n", err)
 		os.Exit(1)
 	}
+	// Print a summary of the job
 	j.Print()
+	// Print the repo summary
+	s.Print(os.Stdout, true)
 }

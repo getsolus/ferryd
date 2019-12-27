@@ -21,6 +21,7 @@ import (
 	"github.com/DataDrake/cli-ng/cmd"
 	"github.com/getsolus/ferryd/api/v1"
 	"github.com/getsolus/ferryd/jobs"
+	"github.com/getsolus/ferryd/repo"
 	"os"
 )
 
@@ -37,21 +38,32 @@ var Compare = &cmd.CMD{
 type CompareArgs struct {
 	Left  string `desc:"First repo to compare"`
 	Right string `desc:"Second repo to compare"`
+	Full  bool   `desc:"Print the full diff and not just the changes"`
 }
 
 // CompareRun executes the "compare" sub-command
 func CompareRun(r *cmd.RootCMD, c *cmd.CMD) {
+	// Convert our flags
 	flags := r.Flags.(*GlobalFlags)
 	args := c.Args.(*CompareArgs)
-
+	// Create a Client
 	client := v1.NewClient(flags.Socket)
 	defer client.Close()
-
+	// Run the job
 	var j *jobs.Job
 	var err error
 	if j, err = client.Compare(args.Left, args.Right); err != nil {
 		fmt.Fprintf(os.Stderr, "Error while comparing repos: %v\n", err)
 		os.Exit(1)
 	}
+	// Print the job summary
 	j.Print()
+	// Decode the Diff
+	var d *repo.Diff
+	if err = d.UnmarshalBinary(j.Results); err != nil {
+		fmt.Fprintf(os.Stderr, "Error while decoding diff: %v\n", err)
+		os.Exit(1)
+	}
+	// Print the diff
+	d.Print(os.Stdout, args.Full, !flags.NoColor)
 }

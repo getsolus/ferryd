@@ -20,6 +20,7 @@ import (
 	"fmt"
 	"github.com/DataDrake/cli-ng/cmd"
 	"github.com/getsolus/ferryd/api/v1"
+	"github.com/getsolus/ferryd/repo"
 	"os"
 )
 
@@ -39,16 +40,26 @@ type CheckArgs struct {
 
 // CheckRun executes the "check" sub-command
 func CheckRun(r *cmd.RootCMD, c *cmd.CMD) {
+	// Convert our flags
 	flags := r.Flags.(*GlobalFlags)
 	args := c.Args.(*CheckArgs)
-
+	// Create a client
 	client := v1.NewClient(flags.Socket)
 	defer client.Close()
-
+	// Run the job
 	j, err := client.Check(args.Repo)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Error while checking repo: %v\n", err)
 		os.Exit(1)
 	}
+	// Print the job summary
 	j.Print()
+	// Decode the Diff
+	var d *repo.Diff
+	if err = d.UnmarshalBinary(j.Results); err != nil {
+		fmt.Fprintf(os.Stderr, "Error while decoding diff: %v\n", err)
+		os.Exit(1)
+	}
+	// Print the diff
+	d.Print(os.Stdout, false, !flags.NoColor)
 }

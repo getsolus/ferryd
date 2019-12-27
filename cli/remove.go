@@ -40,16 +40,19 @@ type RemoveArgs struct {
 
 // RemoveRun executes the "remove-repo" sub-command
 func RemoveRun(r *cmd.RootCMD, c *cmd.CMD) {
+	// Convert our flags
 	flags := r.Flags.(*GlobalFlags)
 	args := c.Args.(*RemoveArgs)
-
+	// Create a Client
 	client := v1.NewClient(flags.Socket)
 	defer client.Close()
+	// Run the job
 	var j *jobs.Job
 	var err error
 	if j, err = client.Remove(args.Repo); err != nil {
 		fmt.Fprintf(os.Stderr, "Error while removing repo: %v\n", err)
 		os.Exit(1)
 	}
+	// Print a summary of the job
 	j.Print()
 }

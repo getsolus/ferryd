@@ -37,15 +37,17 @@ type ResetQueueArgs struct{}
 
 // ResetQueueRun executes the "reset-queue" sub-command
 func ResetQueueRun(r *cmd.RootCMD, c *cmd.CMD) {
+	// Convert our flags
 	flags := r.Flags.(*GlobalFlags)
 	//args  := c.Args.(*ResetQueueArgs)
-
+	// Create a Client
 	client := v1.NewClient(flags.Socket)
 	defer client.Close()
-
+	// Send the request
 	if err := client.ResetQueued(); err != nil {
 		fmt.Fprintf(os.Stderr, "Error while cancelling queued jobs: %v\n", err)
 		os.Exit(1)
 	}
+	// Report finished
 	fmt.Println("Successfully reset queued jobs")
 }

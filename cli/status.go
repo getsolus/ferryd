@@ -37,16 +37,18 @@ type StatusArgs struct{}
 
 // StatusRun executes the "status" sub-command
 func StatusRun(r *cmd.RootCMD, c *cmd.CMD) {
+	// Convert our flags
 	flags := r.Flags.(*GlobalFlags)
 	//args  := c.Args.(*StatusArgs)
-
+	// Create a Client
 	client := v1.NewClient(flags.Socket)
 	defer client.Close()
-
+	// Request a status update
 	status, err := client.Status()
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Error while getting status: %v\n", err)
 		os.Exit(1)
 	}
+	// Print out the status
 	status.Print(os.Stdout)
 }

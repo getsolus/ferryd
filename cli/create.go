@@ -39,16 +39,18 @@ type CreateArgs struct {
 
 // CreateRun executes the "create-repo" sub-command
 func CreateRun(r *cmd.RootCMD, c *cmd.CMD) {
+	// Convert our flags
 	flags := r.Flags.(*GlobalFlags)
 	args := c.Args.(*CreateArgs)
-
+	// Create a Client
 	client := v1.NewClient(flags.Socket)
 	defer client.Close()
-
+	// Run the job
 	j, err := client.Create(args.Repo)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Error while creating repo: %v\n", err)
 		os.Exit(1)
 	}
+	// Print a summary of the job
 	j.Print()
 }

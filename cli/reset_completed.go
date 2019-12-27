@@ -37,15 +37,17 @@ type ResetCompletedArgs struct{}
 
 // ResetCompletedRun executes the "reset-completed" sub-command
 func ResetCompletedRun(r *cmd.RootCMD, c *cmd.CMD) {
+	// Convert our flags
 	flags := r.Flags.(*GlobalFlags)
 	// args  := c.Args.(*ResetCompletedArgs)
-
+	// Create a Client
 	client := v1.NewClient(flags.Socket)
 	defer client.Close()
-
+	// Send the request
 	if err := client.ResetCompleted(); err != nil {
 		fmt.Fprintf(os.Stderr, "Error while resetting complete jobs: %v\n", err)
 		os.Exit(1)
 	}
+	// Report finished
 	fmt.Println("Successfully reset completed jobs")
 }

@@ -20,7 +20,6 @@ import (
 	"fmt"
 	"github.com/DataDrake/cli-ng/cmd"
 	"github.com/getsolus/ferryd/api/v1"
-	"github.com/getsolus/ferryd/jobs"
 	"os"
 )
 
@@ -41,17 +40,20 @@ type CloneArgs struct {
 
 // CloneRun executes the "clone" sub-command
 func CloneRun(r *cmd.RootCMD, c *cmd.CMD) {
+	// Convert our flags
 	flags := r.Flags.(*GlobalFlags)
 	args := c.Args.(*CloneArgs)
-
+	// Create a client
 	client := v1.NewClient(flags.Socket)
 	defer client.Close()
-
-	var j *jobs.Job
-	var err error
-	if j, err = client.Clone(args.Source, args.Dest); err != nil {
+	// Run the job
+	s, j, err := client.Clone(args.Source, args.Dest)
+	if err != nil {
 		fmt.Fprintf(os.Stderr, "Error while cloning repo: %v\n", err)
 		os.Exit(1)
 	}
+	// Print the job summary
 	j.Print()
+	// Print repo summary
+	s.Print(os.Stdout, true)
 }

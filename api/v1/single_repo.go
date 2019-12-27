@@ -20,6 +20,7 @@ import (
 	"encoding/json"
 	"errors"
 	"github.com/getsolus/ferryd/jobs"
+	"github.com/getsolus/ferryd/repo"
 	"github.com/valyala/fasthttp"
 	"net/http"
 )
@@ -51,7 +52,7 @@ func (l *Listener) CreateRepo(ctx *fasthttp.RequestCtx) {
 }
 
 // Import will ask ferryd to import a repository from disk
-func (c *Client) Import(id string) (j *jobs.Job, err error) {
+func (c *Client) Import(id string) (r *repo.Summary, j *jobs.Job, err error) {
 	err = errors.New("Not yet implemented")
 	return
 }

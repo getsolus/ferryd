@@ -17,6 +17,8 @@
 package repo
 
 import (
+	"bytes"
+	"encoding/gob"
 	"fmt"
 	"github.com/getsolus/ferryd/repo/releases"
 	"io"
@@ -85,6 +87,13 @@ func NewDiff(l, r, s []releases.Release) Diff {
 	}
 	sort.Sort(d.keys)
 	return d
+}
+
+// UnmarshalBinary converts a Gob encoded Diff back to its useful form
+func (d *Diff) UnmarshalBinary(data []byte) error {
+	buff := bytes.NewBuffer(data)
+	dec := gob.NewDecoder(buff)
+	return dec.Decode(d)
 }
 
 // Print writes out a Diff in a human-readable format

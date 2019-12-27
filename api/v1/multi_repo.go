@@ -19,6 +19,7 @@ package v1
 import (
 	"errors"
 	"github.com/getsolus/ferryd/jobs"
+	"github.com/getsolus/ferryd/repo"
 	"github.com/valyala/fasthttp"
 	"net/http"
 )
@@ -123,7 +124,7 @@ func (l *Listener) SyncRepo(ctx *fasthttp.RequestCtx) {
 }
 
 // Clone will ask the backend to clone an existing repository into a new repository
-func (c *Client) Clone(src, dest string) (j *jobs.Job, err error) {
+func (c *Client) Clone(src, dest string) (s *repo.Summary, j *jobs.Job, err error) {
 	err = errors.New("Not yet implemented")
 	return
 }

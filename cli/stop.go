@@ -37,15 +37,17 @@ type StopArgs struct{}
 
 // StopRun executes the "stop" sub-command
 func StopRun(r *cmd.RootCMD, c *cmd.CMD) {
+	// Convert our flags
 	flags := r.Flags.(*GlobalFlags)
 	//args  := c.Args.(*StopArgs)
-
+	// Create a Client
 	client := v1.NewClient(flags.Socket)
 	defer client.Close()
-
+	// Send the request
 	if err := client.Stop(); err != nil {
 		fmt.Fprintf(os.Stderr, "Error while stopping daemon: %s\n", err.Error())
 		os.Exit(1)
 	}
+	// Report finished
 	fmt.Println("Daemon has been stopped successfully.")
 }
