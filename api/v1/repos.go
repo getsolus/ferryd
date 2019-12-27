@@ -26,11 +26,13 @@ import (
 
 // Repos will grab a list of repos from the daemon
 func (c *Client) Repos() (f repo.FullSummary, err error) {
+	// Send the request
 	resp, err := c.client.Get(formURI("api/v1/repos"))
 	if err != nil {
 		return
 	}
 	defer resp.Body.Close()
+	// Decode the body as a full repo summary
 	if err = json.NewDecoder(resp.Body).Decode(&f); err != nil {
 		return
 	}
@@ -39,13 +41,14 @@ func (c *Client) Repos() (f repo.FullSummary, err error) {
 
 // Repos will attempt to serialise our known repositories into a response
 func (l *Listener) Repos(ctx *fasthttp.RequestCtx) {
-	//TODO: re-enable repos
-	repos, err := l.manager.Repos()
+	// Request a full repo summary
+	f, err := l.manager.Repos()
 	if err != nil {
 		writeError(ctx, err, http.StatusInternalServerError)
 	}
+	// Encode as JSON in the response
 	buf := bytes.Buffer{}
-	if err := json.NewEncoder(&buf).Encode(&repos); err != nil {
+	if err := json.NewEncoder(&buf).Encode(&f); err != nil {
 		writeError(ctx, err, http.StatusInternalServerError)
 		return
 	}

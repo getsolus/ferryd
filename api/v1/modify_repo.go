@@ -26,28 +26,26 @@ import (
 )
 
 func (c *Client) modifyRepo(id, action string) (j *jobs.Job, err error) {
-	// build request
+	// Create a new request
 	req, err := http.NewRequest("POST", formURI("api/v1/repos/"+id), nil)
 	if err != nil {
 		return
 	}
+	// Set the query parameters
 	q := req.URL.Query()
 	q.Add("action", "check")
 	req.URL.RawQuery = q.Encode()
-
 	// execute request
 	resp, err := c.client.Do(req)
 	if err != nil {
 		return
 	}
 	defer resp.Body.Close()
-
-	// handle response
+	// Read and decode the Job ID for the newly created job
 	jobID, err := readID(resp)
 	if err != nil {
 		return
 	}
-
 	// wait for job to complete
 	j, err = c.waitJob(jobID)
 	return
@@ -55,16 +53,19 @@ func (c *Client) modifyRepo(id, action string) (j *jobs.Job, err error) {
 
 // ModifyRepo performs a modification to an existing repo
 func (l *Listener) ModifyRepo(ctx *fasthttp.RequestCtx) {
+	// Get the "left" query parameter as the repo name
 	id := ctx.UserValue("left").(string)
 	if len(id) == 0 {
 		writeErrorString(ctx, "ID required when modifying repo", http.StatusBadRequest)
 		return
 	}
+	// Get the "action" query parameter
 	action := string(ctx.QueryArgs().Peek("action"))
 	if len(action) == 0 {
 		writeErrorString(ctx, "Action required when modifying repo", http.StatusBadRequest)
 		return
 	}
+	// Pivot by the requested action
 	var err error
 	var jobID int
 	switch action {
@@ -77,6 +78,7 @@ func (l *Listener) ModifyRepo(ctx *fasthttp.RequestCtx) {
 	case "rescan":
 		jobID, err = l.manager.Rescan(id)
 	case "trim-packages":
+		// Get the "max" query parameter
 		max := string(ctx.QueryArgs().Peek("max"))
 		if len(max) == 0 {
 			writeErrorString(ctx, "Max required when trimming packages", http.StatusBadRequest)
@@ -94,10 +96,12 @@ func (l *Listener) ModifyRepo(ctx *fasthttp.RequestCtx) {
 		writeErrorString(ctx, fmt.Sprintf("Invalid action '%s' when modifying repo", action), http.StatusBadRequest)
 		return
 	}
+	// Check for any errors
 	if err != nil {
 		writeError(ctx, err, http.StatusInternalServerError)
 		return
 	}
+	// Send back the ID of the created job
 	writeID(ctx, jobID)
 }
 

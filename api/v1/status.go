@@ -51,11 +51,14 @@ func (s StatusResponse) Uptime() time.Duration {
 
 // Print out all the failed jobs
 func (s StatusResponse) printFailed(out io.Writer) {
+	// Print header
 	fmt.Fprintf(out, "Failed jobs: (%d tracked)\n\n", len(s.Failed))
 	if len(s.Failed) == 0 {
 		return
 	}
+	// Sort newest to oldest
 	sort.Sort(sort.Reverse(s.Failed))
+	// Setup for writing as a table
 	table := tablewriter.NewWriter(out)
 	table.SetHeader([]string{
 		"Status",
@@ -65,9 +68,8 @@ func (s StatusResponse) printFailed(out io.Writer) {
 		"Error",
 	})
 	table.SetBorder(false)
-
+	// Print the 10 most recent failures
 	i := 0
-
 	for _, j := range s.Failed {
 		if i >= 10 {
 			break
@@ -86,11 +88,14 @@ func (s StatusResponse) printFailed(out io.Writer) {
 
 // Print out all the completed jobs
 func (s StatusResponse) printCompleted(out io.Writer) {
+	// Print header
 	fmt.Fprintf(out, "Completed jobs: (%d tracked)\n\n", len(s.Completed))
 	if len(s.Completed) == 0 {
 		return
 	}
+	// Sort from newest to oldest
 	sort.Sort(sort.Reverse(s.Completed))
+	// Setup for writing as a table
 	table := tablewriter.NewWriter(out)
 	table.SetHeader([]string{
 		"Status",
@@ -101,9 +106,8 @@ func (s StatusResponse) printCompleted(out io.Writer) {
 		"Message",
 	})
 	table.SetBorder(false)
-
+	// Print the 10 most recent completed jobs
 	i := 0
-
 	for _, j := range s.Completed {
 		if i >= 10 {
 			break
@@ -123,11 +127,14 @@ func (s StatusResponse) printCompleted(out io.Writer) {
 
 // Print out all the queued jobs
 func (s StatusResponse) printCurrent(out io.Writer) {
-	fmt.Fprintf(out, "Quened jobs: (%d tracked)\n\n", len(s.Current))
+	// Print the header
+	fmt.Fprintf(out, "Queued jobs: (%d tracked)\n\n", len(s.Current))
 	if len(s.Completed) == 0 {
 		return
 	}
-	sort.Sort(sort.Reverse(s.Completed))
+	// Sort from newest to oldest
+	sort.Sort(sort.Reverse(s.Current))
+	// Setup to print as a table
 	table := tablewriter.NewWriter(out)
 	table.SetHeader([]string{
 		"Status",
@@ -136,10 +143,9 @@ func (s StatusResponse) printCurrent(out io.Writer) {
 		"Description",
 	})
 	table.SetBorder(false)
-
+	// Print the 10 most recently queued jobs
 	i := 0
-
-	for _, j := range s.Failed {
+	for _, j := range s.Current {
 		if i >= 10 {
 			break
 		}
@@ -160,9 +166,10 @@ func (s StatusResponse) printCurrent(out io.Writer) {
 
 // Print writes out a StatusResponse
 func (s StatusResponse) Print(out io.Writer) {
+	// Print daemon statistics
 	fmt.Fprintf(out, " - Daemon uptime: %v\n", s.Uptime())
 	fmt.Fprintf(out, " - Daemon version: %v\n", s.Version)
-
+	// Print jobs
 	s.printFailed(out)
 	s.printCurrent(out)
 	s.printCompleted(out)
@@ -170,11 +177,13 @@ func (s StatusResponse) Print(out io.Writer) {
 
 // Status retrieves the status of the ferryd service
 func (c *Client) Status() (status StatusResponse, err error) {
+	// Send the request
 	resp, err := c.client.Get(formURI("api/v1/status"))
 	if err != nil {
 		return
 	}
 	defer resp.Body.Close()
+	// Decode the body as a StatusResponse
 	if err = json.NewDecoder(resp.Body).Decode(&status); err != nil {
 		return
 	}
@@ -183,33 +192,33 @@ func (c *Client) Status() (status StatusResponse, err error) {
 
 // Status will return the current status of the ferryd instance
 func (l *Listener) Status(ctx *fasthttp.RequestCtx) {
+	// Create the new response
 	ret := StatusResponse{
 		TimeStarted: l.timeStarted,
 		Version:     Version,
 	}
-
-	// Stuff the active jobs in
+	// Add the active jobs
 	jo, err := l.store.Active()
 	if err != nil {
 		writeError(ctx, err, http.StatusInternalServerError)
 		return
 	}
 	ret.Current = jo
-
+	// Add the failed jobs
 	fj, err := l.store.Failed()
 	if err != nil {
 		writeError(ctx, err, http.StatusInternalServerError)
 		return
 	}
 	ret.Failed = fj
-
+	// Add the completed jobs
 	cj, err := l.store.Completed()
 	if err != nil {
 		writeError(ctx, err, http.StatusInternalServerError)
 		return
 	}
 	ret.Completed = cj
-
+	// Encode the StatusResponse as JSON in the body
 	buf := bytes.Buffer{}
 	if err := json.NewEncoder(&buf).Encode(&ret); err != nil {
 		writeError(ctx, err, http.StatusInternalServerError)

@@ -26,26 +26,26 @@ import (
 
 // CherryPick will ask the backend to sync a single package from one repo to another
 func (c *Client) CherryPick(left, right, pkg string) (j *jobs.Job, err error) {
+	// Create a new request
 	req, err := http.NewRequest("PATCH", formURI("api/v1/repos/"+left+"cherrypick/"+right), nil)
 	if err != nil {
 		return
 	}
+	// Set the query parameters
 	q := req.URL.Query()
 	q.Add("package", pkg)
 	req.URL.RawQuery = q.Encode()
-
+	// Send the request
 	resp, err := c.client.Do(req)
 	if err != nil {
 		return
 	}
 	defer resp.Body.Close()
-
-	// handle response
+	// Read back the Job ID
 	jobID, err := readID(resp)
 	if err != nil {
 		return
 	}
-
 	// wait for job to complete
 	j, err = c.waitJob(jobID)
 	return
@@ -61,23 +61,22 @@ func (l *Listener) CherryPickRepo(ctx *fasthttp.RequestCtx) {
 
 // Compare will ask the backend to compare one repo to another
 func (c *Client) Compare(left, right string) (j *jobs.Job, err error) {
+	// Create a new request
 	req, err := http.NewRequest("GET", formURI("api/v1/repos/"+left+"compare/"+right), nil)
 	if err != nil {
 		return
 	}
-
+	// Send the request
 	resp, err := c.client.Do(req)
 	if err != nil {
 		return
 	}
 	defer resp.Body.Close()
-
-	// handle response
+	// Read back the job ID
 	jobID, err := readID(resp)
 	if err != nil {
 		return
 	}
-
 	// wait for job to complete
 	j, err = c.waitJob(jobID)
 	return
@@ -93,23 +92,22 @@ func (l *Listener) CompareRepo(ctx *fasthttp.RequestCtx) {
 
 // Sync will ask the backend to sync one repo to another
 func (c *Client) Sync(src, dst string) (j *jobs.Job, err error) {
+	// Create a new request
 	req, err := http.NewRequest("PATCH", formURI("api/v1/repos/"+src+"sync/"+dst), nil)
 	if err != nil {
 		return
 	}
-
+	// Send the request
 	resp, err := c.client.Do(req)
 	if err != nil {
 		return
 	}
 	defer resp.Body.Close()
-
-	// handle response
+	// Read back the Job ID
 	jobID, err := readID(resp)
 	if err != nil {
 		return
 	}
-
 	// wait for job to complete
 	j, err = c.waitJob(jobID)
 	return

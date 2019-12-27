@@ -63,10 +63,12 @@ func writeError(ctx *fasthttp.RequestCtx, err error, code int) {
 }
 
 func readID(resp *http.Response) (id int, err error) {
+	// Check for failure
 	if resp.StatusCode != http.StatusOK {
 		err = readError(resp.Body)
 		return
 	}
+	// Read body as ID
 	raw, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
 		return

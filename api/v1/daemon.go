@@ -24,28 +24,34 @@ import (
 
 // Restart terminates the running ferryd service and starts a new one
 func (c *Client) Restart() error {
+	// Create the request
 	req, err := http.NewRequest("PATCH", formURI("api/v1/daemon"), nil)
 	if err != nil {
 		return err
 	}
+	// Set the query parameters
 	q := req.URL.Query()
 	q.Add("action", "restart")
 	req.URL.RawQuery = q.Encode()
+	// Send the request
 	resp, err := c.client.Do(req)
 	if err != nil {
 		return err
 	}
 	defer resp.Body.Close()
+	// Read the response
 	return readError(resp.Body)
 }
 
 // ModifyDaemon makes a requested change to the daemon
 func (l *Listener) ModifyDaemon(ctx *fasthttp.RequestCtx) {
+	// Get the "action" query argument
 	action := string(ctx.QueryArgs().Peek("action"))
 	if len(action) == 0 {
 		writeErrorString(ctx, "Action not specified when modifying daemon", http.StatusBadRequest)
 		return
 	}
+	// Pivot by action
 	switch action {
 	case "restart":
 		writeErrorString(ctx, "Restart of Daemon not yet implemented", http.StatusBadRequest)
@@ -57,15 +63,18 @@ func (l *Listener) ModifyDaemon(ctx *fasthttp.RequestCtx) {
 
 // Stop terminates the running ferryd service
 func (c *Client) Stop() error {
+	// Create the request
 	req, err := http.NewRequest("DELETE", formURI("api/v1/daemon"), nil)
 	if err != nil {
 		return err
 	}
+	// Send the request
 	resp, err := c.client.Do(req)
 	if err != nil {
 		return err
 	}
 	defer resp.Body.Close()
+	// Read the response
 	return readError(resp.Body)
 }
 

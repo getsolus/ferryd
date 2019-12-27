@@ -27,19 +27,23 @@ import (
 
 // Create will attempt to create a repository in the daemon
 func (c *Client) Create(id string) (j *jobs.Job, err error) {
+	// Create a new request
 	req, err := http.NewRequest("POST", formURI("api/v1/repos/"+id), nil)
 	if err != nil {
 		return
 	}
+	// Send the request
 	resp, err := c.client.Do(req)
 	if err != nil {
 		return
 	}
 	defer resp.Body.Close()
+	// Check for failure
 	if resp.StatusCode != http.StatusOK {
 		err = readError(resp.Body)
 		return
 	}
+	// Decode the body as a Job
 	err = json.NewDecoder(resp.Body).Decode(j)
 	return
 }
@@ -59,19 +63,23 @@ func (c *Client) Import(id string) (r *repo.Summary, j *jobs.Job, err error) {
 
 // Remove will attempt to remove a repository in the daemon
 func (c *Client) Remove(id string) (j *jobs.Job, err error) {
+	// Create a enw request
 	req, err := http.NewRequest("DELETE", formURI("api/v1/repos/"+id), nil)
 	if err != nil {
 		return
 	}
+	// Send the request
 	resp, err := c.client.Do(req)
 	if err != nil {
 		return
 	}
 	defer resp.Body.Close()
+	// Check for failure
 	if resp.StatusCode != http.StatusOK {
 		err = readError(resp.Body)
 		return
 	}
+	// Decode the result as a Job
 	err = json.NewDecoder(resp.Body).Decode(j)
 	return
 }

@@ -43,19 +43,23 @@ func (resp GenericResponse) Print(out io.Writer) {
 // sendStockErrors is a utility to send a standard response to the ferry
 // client that embeds the error message from ourside.
 func (l *Listener) sendStockErrors(errs []error, ctx *fasthttp.RequestCtx) {
+	// Build a list of errors
 	errors := make([]string, len(errs))
 	for i, err := range errs {
 		errors[i] = err.Error()
 		log.Errorf("Client communication error for method '%s', message: '%s'\n", getMethodCaller(), errors[i])
 	}
+	// Create the response
 	response := GenericResponse{
 		Errors: errors,
 	}
+	// Encode the response body as JSON
 	buf := bytes.Buffer{}
 	if e2 := json.NewEncoder(&buf).Encode(&response); e2 != nil {
 		ctx.Error(e2.Error(), http.StatusInternalServerError)
 		return
 	}
+	// Update the response in the context
 	ctx.SetStatusCode(http.StatusBadRequest)
 	ctx.SetBody(buf.Bytes())
 }
