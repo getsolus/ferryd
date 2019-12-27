@@ -18,7 +18,6 @@ package v1
 
 import (
 	"encoding/json"
-	"errors"
 	"github.com/getsolus/ferryd/jobs"
 	"github.com/getsolus/ferryd/repo"
 	"github.com/valyala/fasthttp"
@@ -50,20 +49,60 @@ func (c *Client) Create(id string) (j *jobs.Job, err error) {
 
 // CreateRepo will handle remote requests for repository creation
 func (l *Listener) CreateRepo(ctx *fasthttp.RequestCtx) {
-	//id := ctx.UserValue("id").(string)
-	//jobID, err := l.manager.CreateRepo(id)
-	writeErrorString(ctx, "Not yet implemented", http.StatusInternalServerError)
+	// Get the query parameters
+	id := ctx.UserValue("id").(string)
+	imp := ctx.QueryArgs().GetBool("import")
+	// Request the repo creation
+	var jobID int
+	var err error
+	if imp {
+		jobID, err = l.manager.Import(id)
+	} else {
+		src := string(ctx.QueryArgs().Peek("clone"))
+		if len(src) == 0 {
+			jobID, err = l.manager.Create(id)
+		} else {
+			jobID, err = l.manager.Clone(id, src)
+		}
+	}
+	if err != nil {
+		writeError(ctx, err, http.StatusInternalServerError)
+		return
+	}
+	// Write the ID for the client
+	writeID(ctx, jobID)
 }
 
 // Import will ask ferryd to import a repository from disk
 func (c *Client) Import(id string) (r *repo.Summary, j *jobs.Job, err error) {
-	err = errors.New("Not yet implemented")
+	// Create a new request
+	req, err := http.NewRequest("POST", formURI("api/v1/repos/"+id), nil)
+	if err != nil {
+		return
+	}
+	// Set the query parameters
+	q := req.URL.Query()
+	q.Add("import", "true")
+	req.URL.RawQuery = q.Encode()
+	// Send the request
+	resp, err := c.client.Do(req)
+	if err != nil {
+		return
+	}
+	defer resp.Body.Close()
+	// Check for failure
+	if resp.StatusCode != http.StatusOK {
+		err = readError(resp.Body)
+		return
+	}
+	// Decode the body as a Job
+	err = json.NewDecoder(resp.Body).Decode(j)
 	return
 }
 
 // Remove will attempt to remove a repository in the daemon
 func (c *Client) Remove(id string) (j *jobs.Job, err error) {
-	// Create a enw request
+	// Create a new request
 	req, err := http.NewRequest("DELETE", formURI("api/v1/repos/"+id), nil)
 	if err != nil {
 		return
@@ -86,7 +125,14 @@ func (c *Client) Remove(id string) (j *jobs.Job, err error) {
 
 // RemoveRepo will handle remote requests for repository deletion
 func (l *Listener) RemoveRepo(ctx *fasthttp.RequestCtx) {
-	// id := ctx.UserValue("left").(string)
-	// l.store.Push(jobs.NewRemoveRepoJob(id))
-	writeErrorString(ctx, "Not yet implemented", http.StatusInternalServerError)
+	// Get the query parameters
+	id := ctx.UserValue("id").(string)
+	// Request the repo creation
+	jobID, err := l.manager.Remove(id)
+	if err != nil {
+		writeError(ctx, err, http.StatusInternalServerError)
+		return
+	}
+	// Write the ID for the client
+	writeID(ctx, jobID)
 }

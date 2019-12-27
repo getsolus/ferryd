@@ -17,7 +17,6 @@
 package v1
 
 import (
-	"errors"
 	"fmt"
 	"github.com/getsolus/ferryd/jobs"
 	"github.com/valyala/fasthttp"
@@ -27,13 +26,13 @@ import (
 
 func (c *Client) modifyRepo(id, action string) (j *jobs.Job, err error) {
 	// Create a new request
-	req, err := http.NewRequest("POST", formURI("api/v1/repos/"+id), nil)
+	req, err := http.NewRequest("PATCH", formURI("api/v1/repos/"+id), nil)
 	if err != nil {
 		return
 	}
 	// Set the query parameters
 	q := req.URL.Query()
-	q.Add("action", "check")
+	q.Add("action", action)
 	req.URL.RawQuery = q.Encode()
 	// execute request
 	resp, err := c.client.Do(req)
@@ -127,7 +126,29 @@ func (c *Client) Rescan(id string) (j *jobs.Job, err error) {
 
 // TrimPackages will request that packages in the repo are trimmed to maxKeep
 func (c *Client) TrimPackages(id string, maxKeep int) (j *jobs.Job, err error) {
-	err = errors.New("Not yet implemented")
+	// Create a new request
+	req, err := http.NewRequest("PATCH", formURI("api/v1/repos/"+id), nil)
+	if err != nil {
+		return
+	}
+	// Set the query parameters
+	q := req.URL.Query()
+	q.Add("action", "trim-packages")
+	q.Add("max", strconv.Itoa(maxKeep))
+	req.URL.RawQuery = q.Encode()
+	// execute request
+	resp, err := c.client.Do(req)
+	if err != nil {
+		return
+	}
+	defer resp.Body.Close()
+	// Read and decode the Job ID for the newly created job
+	jobID, err := readID(resp)
+	if err != nil {
+		return
+	}
+	// wait for job to complete
+	j, err = c.waitJob(jobID)
 	return
 }
 
