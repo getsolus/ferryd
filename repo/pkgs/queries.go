@@ -16,8 +16,8 @@
 
 package pkgs
 
-// PackageSchema is the SQLite3 schema for the Package table
-const PackageSchema = `
+// Schema is the SQLite3 schema for the Package table
+const Schema = `
 CREATE TABLE IF NOT EXISTS packages (
     repo_id    INTEGER,
     release_id INTEGER,

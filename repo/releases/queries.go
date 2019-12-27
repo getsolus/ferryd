@@ -16,8 +16,8 @@
 
 package releases
 
-// ReleaseSchema is the SQLite3 schema for the Releases table
-const ReleaseSchema = `
+// Schema is the SQLite3 schema for the Releases table
+const Schema = `
 CREATE TABLE IF NOT EXISTS releases (
     id           INTEGER PRIMARY KEY,
     package      STRING,

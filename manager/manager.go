@@ -18,6 +18,7 @@ package manager
 
 import (
 	"github.com/getsolus/ferryd/jobs"
+	"github.com/getsolus/ferryd/repo"
 	"github.com/jmoiron/sqlx"
 )
 
@@ -37,7 +38,8 @@ func NewManager(store *jobs.Store) *Manager {
 	manager := &Manager{
 		store: store,
 	}
-	// TODO: Open the repo DB
+	// Open the DB
+	manager.db = repo.OpenDB()
 	return manager
 }
 

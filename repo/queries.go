@@ -16,8 +16,8 @@
 
 package repo
 
-// RepoSchema is the SQLite3 schema for the Repo table
-const RepoSchema = `
+// Schema is the SQLite3 schema for the Repo table
+const Schema = `
 CREATE TABLE IF NOT EXISTS repos (
     id              INTEGER PRIMARY KEY,
     name            STRING,
