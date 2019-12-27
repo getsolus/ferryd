@@ -43,5 +43,6 @@ func (m *Manager) TransitPackage(pkg string) (int, error) {
 
 // TransitPackageExecute carries out a TransitPackage job
 func (m *Manager) TransitPackageExecute(j *jobs.Job) error {
-	return errors.New("Function not inplemented")
+	// TODO: Implement
+	return errors.New("Function not implemented")
 }

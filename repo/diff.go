@@ -61,6 +61,7 @@ func NewDiff(l, r, s []releases.Release) Diff {
 	d := Diff{
 		Lines: make(map[ReleasePair]string),
 	}
+	// Process all of the releases the need to be added
 	for _, e := range l {
 		rp := ReleasePair{
 			To:   e.Release,
@@ -69,6 +70,7 @@ func NewDiff(l, r, s []releases.Release) Diff {
 		d.keys = append(d.keys, rp)
 		d.Lines[rp] = fmt.Sprintf("+ %s", e.URI)
 	}
+	// Process all of the releases that need to be removed
 	for _, e := range r {
 		rp := ReleasePair{
 			To:   e.Release,
@@ -77,6 +79,7 @@ func NewDiff(l, r, s []releases.Release) Diff {
 		d.keys = append(d.keys, rp)
 		d.Lines[rp] = fmt.Sprintf("- %s", e.URI)
 	}
+	// Process all of the releases that will not be changed
 	for _, e := range s {
 		rp := ReleasePair{
 			To:   e.Release,
@@ -100,10 +103,12 @@ func (d *Diff) UnmarshalBinary(data []byte) error {
 func (d Diff) Print(out io.Writer, full, color bool) {
 	plusFmt := "%s\n"
 	minusFmt := "%s\n"
+	// Override the format strings if printing with color
 	if color {
 		plusFmt = "\033[49;38;5;208%s\033[0m\n"
 		minusFmt = "\033[49;38;5;040%s\033[0m\n"
 	}
+	// Print each line
 	for _, k := range d.keys {
 		line := d.Lines[k]
 		rs := []rune(line)

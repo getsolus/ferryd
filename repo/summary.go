@@ -31,17 +31,20 @@ type Summary struct {
 
 // Print writes out a Summary in a human-readable format
 func (s *Summary) Print(out io.Writer, single bool) {
+	// Don't try to print a null summary
 	if s == nil {
 		fmt.Fprintln(out, "No summary found.")
 		return
 	}
 	if single {
+		// No indent
 		fmt.Fprintf(out, "Name: %s\n", s.Name)
 		fmt.Fprintf(out, "\tPackages: %d\n", s.Packages)
 		fmt.Fprintf(out, "\t  Deltas: %d\n", s.Deltas)
 		fmt.Fprintf(out, "\t    Size: %d\n", s.Size)
 		fmt.Fprintln(out)
 	} else {
+		// One Indent
 		fmt.Fprintf(out, "\tName: %s\n", s.Name)
 		fmt.Fprintf(out, "\t\tPackages: %d\n", s.Packages)
 		fmt.Fprintf(out, "\t\t  Deltas: %d\n", s.Deltas)

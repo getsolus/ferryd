@@ -43,6 +43,7 @@ func (m *Manager) CheckExecute(j *jobs.Job) error {
 	if len(j.Src) == 0 {
 		return errors.New("job is missing a source repo")
 	}
+	// TODO: Implement
 	return errors.New("Function not implemented")
 }
 
@@ -64,6 +65,7 @@ func (m *Manager) CreateExecute(j *jobs.Job) error {
 	if len(j.Dst) == 0 {
 		return errors.New("job is missing a destination repo")
 	}
+	// TODO: Implement
 	return errors.New("Function not implemented")
 }
 
@@ -82,6 +84,7 @@ func (m *Manager) Delta(name string) (int, error) {
 
 // DeltaExecute carries out a Delta job
 func (m *Manager) DeltaExecute(j *jobs.Job) error {
+	// TODO: Implement
 	return errors.New("Function not implemented")
 }
 
@@ -104,6 +107,7 @@ func (m *Manager) DeltaPackage(dst, pkg string) (int, error) {
 
 // DeltaPackageExecute carries out a DeltaPackage job
 func (m *Manager) DeltaPackageExecute(j *jobs.Job) error {
+	// TODO: Implement
 	return errors.New("Function not implemented")
 }
 
@@ -122,6 +126,7 @@ func (m *Manager) Import(name string) (int, error) {
 
 // ImportExecute carries out an Import job
 func (m *Manager) ImportExecute(j *jobs.Job) error {
+	// TODO: Implement
 	return errors.New("Function not implemented")
 }
 
@@ -140,6 +145,7 @@ func (m *Manager) Index(name string) (int, error) {
 
 // IndexExecute carries out an Index job
 func (m *Manager) IndexExecute(j *jobs.Job) error {
+	// TODO: Implement
 	return errors.New("Function not implemented")
 }
 
@@ -158,6 +164,7 @@ func (m *Manager) Remove(name string) (int, error) {
 
 // RemoveExecute carries out a Remove job
 func (m *Manager) RemoveExecute(j *jobs.Job) error {
+	// TODO: Implement
 	return errors.New("Function not implemented")
 }
 
@@ -176,6 +183,7 @@ func (m *Manager) Rescan(name string) (int, error) {
 
 // RescanExecute carries out a Rescan job
 func (m *Manager) RescanExecute(j *jobs.Job) error {
+	// TODO: Implement
 	return errors.New("Function not implemented")
 }
 
@@ -198,7 +206,8 @@ func (m *Manager) TrimPackages(name string, max int) (int, error) {
 
 // TrimPackagesExecute carries out a TrimPackages job
 func (m *Manager) TrimPackagesExecute(j *jobs.Job) error {
-	return errors.New("Function not inplemented")
+	// TODO: Implement
+	return errors.New("Function not implemented")
 }
 
 // TrimObsoletes removes obsolete packages and their deltas
@@ -216,5 +225,6 @@ func (m *Manager) TrimObsoletes(name string) (int, error) {
 
 // TrimObsoletesExecute carries out the TrimObsoletes job
 func (m *Manager) TrimObsoletesExecute(j *jobs.Job) error {
-	return errors.New("Function not inplemented")
+	// TODO: Implement
+	return errors.New("Function not implemented")
 }

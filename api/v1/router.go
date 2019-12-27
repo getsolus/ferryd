@@ -69,11 +69,11 @@ func NewListener(store *jobs.Store, mgr *manager.Manager) (api *Listener, err er
 	r.DELETE("/api/v1/daemon", api.StopDaemon)
 
 	// Repo management
-	r.GET("/api/v1/repos", api.Repos)       // Summaries of all repos
-	r.POST("/api/v1/repos", api.CreateRepo) // Import?
-	// r.GET("/api/v1/repos/:left", api.GetRepo) // Summary of repo
-	r.PATCH("/api/v1/repos/:left", api.ModifyRepo) // ?action={check, delta, index, rescan, trim-packages, trim-obsoletes}
-	r.DELETE("/api/v1/repos/:left", api.RemoveRepo)
+	r.GET("/api/v1/repos", api.Repos)           // Summaries of all repos
+	r.POST("/api/v1/repos/:id", api.CreateRepo) // Clone, Create, Import
+	// r.GET("/api/v1/repos/:id", api.GetRepo) // Summary of repo
+	r.PATCH("/api/v1/repos/:id", api.ModifyRepo) // ?action={check, delta, index, rescan, trim-packages, trim-obsoletes}
+	r.DELETE("/api/v1/repos/:id", api.RemoveRepo)
 
 	r.PATCH("/api/v1/repos/:left/cherrypick/:right", api.CherryPickRepo)
 	r.GET("/api/v1/repos/:left/compare/:right", api.CompareRepo)

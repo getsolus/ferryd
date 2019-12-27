@@ -102,14 +102,17 @@ func (s *Store) UnclaimRunning() error {
 // Push inserts a new Job into the queue
 func (s *Store) Push(j *Job) (id int64, err error) {
 	s.Lock()
+	// Set Job parameters
 	j.Status = New
 	j.Created.Scan(time.Now().UTC())
+	// Insert the New Job
 	res, err := s.db.NamedExec(insertJob, j)
 	if err != nil {
 		err = fmt.Errorf("Failed to add new job, reason: '%s'", err.Error())
 		log.Errorln(err.Error())
 		goto UNLOCK
 	}
+	// Get the ID of the Job
 	id, err = res.LastInsertId()
 	if err != nil {
 		err = fmt.Errorf("Failed to get ID of new job, reason: '%s'", err.Error())
@@ -185,18 +188,21 @@ func (s *Store) Retire(j *Job) error {
 func (s *Store) Active() (List, error) {
 	var list List
 	var list2 List
+	// Get all new jobs
 	err := s.db.Select(&list, newJobs)
 	if err != nil {
 		err = fmt.Errorf("Failed to read new jobs, reason: '%s'", err.Error())
 		log.Errorln(err.Error())
 		return nil, err
 	}
+	// Get All running jobs
 	err = s.db.Select(&list2, runningJobs)
 	if err != nil {
 		err = fmt.Errorf("Failed to read active jobs, reason: '%s'", err.Error())
 		log.Errorln(err.Error())
 		return nil, err
 	}
+	// Append them together
 	list = append(list, list2...)
 	return list, err
 }
