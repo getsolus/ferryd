@@ -25,12 +25,20 @@ import (
 )
 
 // Create will attempt to create a repository in the daemon
-func (c *Client) Create(id string) (j *jobs.Job, err error) {
+func (c *Client) Create(id string, instant bool) (j *jobs.Job, err error) {
 	// Create a new request
 	req, err := http.NewRequest("POST", formURI("api/v1/repos/"+id), nil)
 	if err != nil {
 		return
 	}
+	// Set the query parameters
+	i := "false"
+	if instant {
+		i = "true"
+	}
+	q := req.URL.Query()
+	q.Add("instant", i)
+	req.URL.RawQuery = q.Encode()
 	// Send the request
 	resp, err := c.client.Do(req)
 	if err != nil {
@@ -52,15 +60,16 @@ func (l *Listener) CreateRepo(ctx *fasthttp.RequestCtx) {
 	// Get the query parameters
 	id := ctx.UserValue("id").(string)
 	imp := ctx.QueryArgs().GetBool("import")
+	instant := ctx.QueryArgs().GetBool("instant")
 	// Request the repo creation
 	var jobID int
 	var err error
 	if imp {
-		jobID, err = l.manager.Import(id)
+		jobID, err = l.manager.Import(id, instant)
 	} else {
 		src := string(ctx.QueryArgs().Peek("clone"))
 		if len(src) == 0 {
-			jobID, err = l.manager.Create(id)
+			jobID, err = l.manager.Create(id, instant)
 		} else {
 			jobID, err = l.manager.Clone(id, src)
 		}
@@ -74,15 +83,20 @@ func (l *Listener) CreateRepo(ctx *fasthttp.RequestCtx) {
 }
 
 // Import will ask ferryd to import a repository from disk
-func (c *Client) Import(id string) (r *repo.Summary, j *jobs.Job, err error) {
+func (c *Client) Import(id string, instant bool) (r *repo.Summary, j *jobs.Job, err error) {
 	// Create a new request
 	req, err := http.NewRequest("POST", formURI("api/v1/repos/"+id), nil)
 	if err != nil {
 		return
 	}
 	// Set the query parameters
+	i := "false"
+	if instant {
+		i = "true"
+	}
 	q := req.URL.Query()
 	q.Add("import", "true")
+	q.Add("instant", i)
 	req.URL.RawQuery = q.Encode()
 	// Send the request
 	resp, err := c.client.Do(req)

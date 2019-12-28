@@ -20,56 +20,24 @@ import (
 	"crypto/sha1"
 	"crypto/sha256"
 	"encoding/hex"
+	"github.com/getsolus/ferryd/util"
 	"github.com/getsolus/libeopkg"
-	"io"
 	"io/ioutil"
 	"os"
 	"path/filepath"
 )
-
-// CopyFile will copy the file and permissions to the new target
-func CopyFile(source, dest string) error {
-	var src *os.File
-	var dst *os.File
-	var err error
-	var st os.FileInfo
-
-	// Stat the source first
-	st, err = os.Stat(source)
-	if err != nil {
-		return nil
-	}
-	if src, err = os.Open(source); err != nil {
-		return err
-	}
-	defer src.Close()
-	if dst, err = os.OpenFile(dest, os.O_TRUNC|os.O_CREATE|os.O_WRONLY, st.Mode()); err != nil {
-		return err
-	}
-	// Copy the files
-	if _, err = io.Copy(dst, src); err != nil {
-		dst.Close()
-		return err
-	}
-	dst.Close()
-	// If it fails, meh.
-	os.Chtimes(dest, st.ModTime(), st.ModTime())
-	os.Chown(dest, os.Getuid(), os.Getgid())
-	os.Chmod(dest, 00644)
-	return nil
-}
 
 // LinkOrCopyFile is a helper which will initially try to hard link,
 // however if we hit an error (because we tried a cross-filesystem hardlink)
 // we'll try to copy instead.
 func LinkOrCopyFile(source, dest string, forceCopy bool) error {
 	if forceCopy {
-		return CopyFile(source, dest)
+		return util.CopyFile(source, dest)
 	}
 	if os.Link(source, dest) == nil {
 		return nil
 	}
-	return CopyFile(source, dest)
+	return util.CopyFile(source, dest)
 }
 
 // RemovePackageParents will try to remove the leading components of

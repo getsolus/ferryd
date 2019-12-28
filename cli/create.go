@@ -34,7 +34,8 @@ var Create = &cmd.CMD{
 
 // CreateArgs are the arguments to the "create-repo" sub-command
 type CreateArgs struct {
-	Repo string `desc:"Name of the repo to create"`
+	Repo    string `desc:"Name of the repo to create"`
+	Instant bool   `desc:"Decide whether or not a repo should have instant transit"`
 }
 
 // CreateRun executes the "create-repo" sub-command
@@ -46,7 +47,7 @@ func CreateRun(r *cmd.RootCMD, c *cmd.CMD) {
 	client := v1.NewClient(flags.Socket)
 	defer client.Close()
 	// Run the job
-	j, err := client.Create(args.Repo)
+	j, err := client.Create(args.Repo, args.Instant)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Error while creating repo: %v\n", err)
 		os.Exit(1)

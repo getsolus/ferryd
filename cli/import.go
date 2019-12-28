@@ -34,7 +34,8 @@ var Import = &cmd.CMD{
 
 // ImportArgs are the arguments to the "import" sub-command
 type ImportArgs struct {
-	Repo string `desc:"Repo to import"`
+	Repo    string `desc:"Repo to import"`
+	Instant bool   `desc:"Indicate whether this repo should be instant transit or not"`
 }
 
 // ImportRun executes the "import" sub-command
@@ -46,7 +47,7 @@ func ImportRun(r *cmd.RootCMD, c *cmd.CMD) {
 	client := v1.NewClient(flags.Socket)
 	defer client.Close()
 	// Run the job
-	s, j, err := client.Import(args.Repo)
+	s, j, err := client.Import(args.Repo, args.Instant)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Error while importing repo: %v\n", err)
 		os.Exit(1)

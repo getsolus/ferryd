@@ -27,22 +27,31 @@ import (
 
 // TransitPackage processes an incoming package manifest, adding the package to "instant transit" repos
 func (m *Manager) TransitPackage(pkg string) (int, error) {
-	return -1, errors.New("not yet implemented")
-	/* TODO: Finish this
+	// Check arguments
 	if len(pkg) == 0 {
 		return -1, errors.New("job is missing a package")
 	}
+	// Create new job
 	j := &jobs.Job{
 		Type: jobs.TransitPackage,
 		Pkg:  pkg,
 	}
+	// Add to the DB
 	id, err := m.store.Push(j)
 	return int(id), err
-	*/
 }
 
 // TransitPackageExecute carries out a TransitPackage job
 func (m *Manager) TransitPackageExecute(j *jobs.Job) error {
 	// TODO: Implement
+	// Get the list of repos
+	// Verify the manifest
+	// Copy the package files into the pool
+	// Create the delta packages
+	// Create the release entries for the new packages
+	// For each repo with instant_transit=true
+	// if not pool, create links from the pool
+	// add package links from repo to release in the DB
+	// Re-Index
 	return errors.New("Function not implemented")
 }

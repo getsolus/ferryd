@@ -20,9 +20,9 @@
 
 ## Create
 
-- [ ] Create Repo
+- [x] Create Repo
   - [x] Adding a repo to DB
-  - [ ] Adding a repo to disk
+  - [x] Adding a repo to disk
 
 ## Rescan
 
@@ -33,12 +33,12 @@
 
 ## Import
 
-- [ ] Create Repo
+- [x] Create Repo
 - [ ] Rescan Repo
 
 ## Remove
 
-- [ ] Remove Repo
+- [x] Remove Repo
   - [x] Remove a repo from the DB
   - [x] Remove all package for a repo from the DB
 
@@ -52,7 +52,7 @@
 
 ## Clone
 
-- [ ] Create Repo
+- [x] Create Repo
 - [ ] Full Repo Sync
 
 ## Compare

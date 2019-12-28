@@ -18,8 +18,13 @@ package manager
 
 import (
 	"errors"
+	"fmt"
+	"github.com/getsolus/ferryd/config"
 	"github.com/getsolus/ferryd/jobs"
 	"github.com/getsolus/ferryd/repo"
+	"github.com/getsolus/ferryd/util"
+	"os"
+	"path/filepath"
 )
 
 /*************************/
@@ -28,14 +33,18 @@ import (
 
 // Check compares an existing repo on Disk with its DB
 func (m *Manager) Check(name string) (int, error) {
+	// Validate the job arguments
 	if len(name) == 0 {
 		return -1, errors.New("job is missing a source repo")
 	}
+	// Create the job
 	j := &jobs.Job{
 		Type: jobs.Check,
 		Src:  name,
 	}
+	// Add the job to the DB
 	id, err := m.store.Push(j)
+	// Return the new Job ID
 	return int(id), err
 }
 
@@ -73,25 +82,65 @@ ROLLBACK:
 }
 
 // Create sets up a new repo
-func (m *Manager) Create(name string) (int, error) {
+func (m *Manager) Create(name string, instant bool) (int, error) {
+	// Validate the job arguments
 	if len(name) == 0 {
 		return -1, errors.New("job is missing a destination repo")
+	}
+	// Create a new job
+	max := 0
+	if instant {
+		max = 1
 	}
 	j := &jobs.Job{
 		Type: jobs.Create,
 		Dst:  name,
+		Max:  max,
 	}
+	// Add it to the DB
 	id, err := m.store.Push(j)
+	// Return the new Job ID
 	return int(id), err
 }
 
 // CreateExecute carries out a Create job
 func (m *Manager) CreateExecute(j *jobs.Job) error {
+	// Validate the job arguments
 	if len(j.Dst) == 0 {
 		return errors.New("job is missing a destination repo")
 	}
-	// TODO: Implement
-	return errors.New("Function not implemented")
+	// Create the repo directory
+	repoDir := append(config.Current.RepoPath(), j.Dst)
+	if err := os.Mkdir(filepath.Join(repoDir...), 00755); err != nil {
+		if os.IsExist(err) {
+			return fmt.Errorf("repo directory for '%s' already exists", j.Dst)
+		}
+		return err
+	}
+	// Create the assets directory
+	assetsDir := filepath.Join(append(config.Current.AssetPath(), j.Dst)...)
+	poolAssets := filepath.Join(append(config.Current.AssetPath(), "pool")...)
+	if err := util.CopyDir(poolAssets, assetsDir, false); err != nil {
+		return fmt.Errorf("Failed to create assets dir, reason: '%s'", err.Error())
+	}
+	// Add the repo to the DB
+	// Create a DB transaction
+	tx, err := m.db.Beginx()
+	if err != nil {
+		return fmt.Errorf("Failed to create transaction, reason: '%s'", err.Error())
+	}
+	// Create a new repo object
+	r := &repo.Repo{
+		Name:           j.Dst,
+		InstantTransit: j.Max == 1,
+	}
+	// Insert into the DB
+	if err = r.Create(tx); err != nil {
+		tx.Rollback()
+		return fmt.Errorf("Failed to create repo entry in DB, reason: '%s'", err.Error())
+	}
+	// End the transaction
+	return tx.Commit()
 }
 
 // Delta generates missing package deltas for an entire repo
@@ -137,22 +186,63 @@ func (m *Manager) DeltaPackageExecute(j *jobs.Job) error {
 }
 
 // Import adds an existing repo to the database
-func (m *Manager) Import(name string) (int, error) {
+func (m *Manager) Import(name string, instant bool) (int, error) {
+	// Validate the arguments
 	if len(name) == 0 {
 		return -1, errors.New("job is missing a source repo")
+	}
+	// Create a new job instance
+	max := 0
+	if instant {
+		max = 1
 	}
 	j := &jobs.Job{
 		Type: jobs.Import,
 		Src:  name,
+		Max:  max,
 	}
+	// Insert the new job into the DB
 	id, err := m.store.Push(j)
+	// Return the job ID
 	return int(id), err
 }
 
 // ImportExecute carries out an Import job
 func (m *Manager) ImportExecute(j *jobs.Job) error {
-	// TODO: Implement
-	return errors.New("Function not implemented")
+	// Validate the job arguments
+	if len(j.Dst) == 0 {
+		return errors.New("job is missing a destination repo")
+	}
+	// Create the repo directory
+	repoDir := append(config.Current.RepoPath(), j.Dst)
+	if _, err := os.Stat(filepath.Join(repoDir...)); err != nil {
+		if os.IsNotExist(err) {
+			return fmt.Errorf("repo directory for '%s' does not exist", j.Dst)
+		}
+		return err
+	}
+	// Add the repo to the DB
+	// Create a DB transaction
+	tx, err := m.db.Beginx()
+	if err != nil {
+		return fmt.Errorf("Failed to create transaction, reason: '%s'", err.Error())
+	}
+	// Create a new repo object
+	r := &repo.Repo{
+		Name:           j.Dst,
+		InstantTransit: j.Max == 1,
+	}
+	// Insert into the DB
+	if err = r.Create(tx); err != nil {
+		tx.Rollback()
+		return fmt.Errorf("Failed to create repo entry in DB, reason: '%s'", err.Error())
+	}
+	// End the transaction
+	if err = tx.Commit(); err != nil {
+		return fmt.Errorf("Failed to create repo entry in DB, reason: '%s'", err.Error())
+	}
+	// Scan and add all of the package to the DB
+	return m.RescanExecute(j)
 }
 
 // Index generates a new package index
@@ -176,21 +266,48 @@ func (m *Manager) IndexExecute(j *jobs.Job) error {
 
 // Remove deletes a repo from the DB
 func (m *Manager) Remove(name string) (int, error) {
+	// Validate the arguments
 	if len(name) == 0 {
 		return -1, errors.New("job is missing a source repo")
 	}
+	// Create a new job instance
 	j := &jobs.Job{
 		Type: jobs.Remove,
 		Src:  name,
 	}
+	// Add the job to the DB
 	id, err := m.store.Push(j)
+	// Get the ID of the new job
 	return int(id), err
 }
 
 // RemoveExecute carries out a Remove job
 func (m *Manager) RemoveExecute(j *jobs.Job) error {
-	// TODO: Implement
-	return errors.New("Function not implemented")
+	// Validate the arguments
+	if len(j.Src) == 0 {
+		return errors.New("job is missing a source repo")
+	}
+	// Begin a DB Transaction
+	tx, err := m.db.Beginx()
+	if err != nil {
+		return fmt.Errorf("Failed to start DB transaction, reason: '%s'", err.Error())
+	}
+	// Get the Repo instance
+	r, err := repo.Get(tx, j.Src)
+	if err != nil {
+		tx.Rollback()
+		return fmt.Errorf("Failed to get the Repo entry from the DB, reason: '%s'", err.Error())
+	}
+	// Remove the repo
+	if err = r.Remove(tx); err != nil {
+		tx.Rollback()
+		return fmt.Errorf("Failed to remove the Repo from the DB, reason: '%s'", err.Error())
+	}
+	// Save the transaction
+	if err = tx.Commit(); err != nil {
+		return fmt.Errorf("Failed to remove the Repo from the DB, reason: '%s'", err.Error())
+	}
+	return nil
 }
 
 // Rescan rebuild the database for an existing repo
