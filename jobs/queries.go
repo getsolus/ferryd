@@ -43,8 +43,8 @@ const (
 	completedJobs = "SELECT * FROM jobs WHERE status=4"
 )
 
-// Query for creating a new Job
-const insertJob = `
+// Insert is a query for creating a new Job
+const Insert = `
 INSERT INTO jobs (
     id, type,
     src, dst, pkg, max,
@@ -56,15 +56,21 @@ INSERT INTO jobs (
 )
 `
 
+// Update is a query for updating an existing job
+const Update = `
+UPDATE jobs
+SET created=:created,
+    started=:started,
+    finished=:finished,
+    status=:status,
+    message=:message,
+    results=:results
+WHERE id=:id
+`
+
 const (
 	getJob  = "SELECT * FROM jobs WHERE id=?"
 	nextJob = "SELECT * FROM jobs WHERE status=0 ORDER BY id LIMIT 1"
-)
-
-// Queries for updating the status of a job
-const (
-	markRunning  = "UPDATE jobs SET status=:status, started=:started WHERE id=:id"
-	markFinished = "UPDATE jobs SET status=:status, finished=:finished, message=:message WHERE id=:id"
 )
 
 // Queries for Cleaning up the Job queue

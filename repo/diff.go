@@ -92,6 +92,17 @@ func NewDiff(l, r, s []releases.Release) Diff {
 	return d
 }
 
+// MarshalBinary converts a Diff to its Gob encoded form
+func (d *Diff) MarshalBinary() (data []byte, err error) {
+	buff := bytes.NewBuffer([]byte{})
+	enc := gob.NewEncoder(buff)
+	err = enc.Encode(d)
+	if err == nil {
+		data = buff.Bytes()
+	}
+	return
+}
+
 // UnmarshalBinary converts a Gob encoded Diff back to its useful form
 func (d *Diff) UnmarshalBinary(data []byte) error {
 	buff := bytes.NewBuffer(data)

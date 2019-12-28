@@ -19,6 +19,7 @@ package manager
 import (
 	"errors"
 	"github.com/getsolus/ferryd/jobs"
+	"github.com/getsolus/ferryd/repo"
 )
 
 /*************************/
@@ -40,11 +41,35 @@ func (m *Manager) Check(name string) (int, error) {
 
 // CheckExecute carries out a Check job
 func (m *Manager) CheckExecute(j *jobs.Job) error {
+	var d *repo.Diff
+	// Validate arguments
 	if len(j.Src) == 0 {
 		return errors.New("job is missing a source repo")
 	}
-	// TODO: Implement
-	return errors.New("Function not implemented")
+	// Start transaction
+	tx, err := m.db.Beginx()
+	if err != nil {
+		return err
+	}
+	// Get repo by name
+	r, err := repo.Get(tx, j.Src)
+	if err != nil {
+		goto ROLLBACK
+	}
+	// Run the check
+	d, err = r.Check(tx)
+	if err != nil {
+		goto ROLLBACK
+	}
+	// End transaction
+	tx.Commit()
+	// Save the result
+	j.Results, err = d.MarshalBinary()
+	return err
+
+ROLLBACK:
+	tx.Rollback()
+	return err
 }
 
 // Create sets up a new repo

@@ -19,6 +19,7 @@ package jobs
 import (
 	"database/sql"
 	"fmt"
+    "github.com/jmoiron/sqlx"
 	"time"
 )
 
@@ -150,4 +151,26 @@ func (j *Job) Print() {
 	if l := len(j.Results); l > 0 {
 		fmt.Printf("Results:     %dB\n", l)
 	}
+}
+
+// Insert adds this job to the DB
+func (j *Job) Create(tx *sqlx.Tx) error {
+    // Create the record
+    res, err := tx.NamedExec(Insert, j)
+    if err != nil {
+        return err
+    }
+    // Get the ID of the new record
+    id, err := res.LastInsertId()
+    if err != nil {
+        return err
+    }
+    j.ID = int(id)
+    return nil
+}
+
+// Save updates this job in the DB
+func (j *Job) Save(tx *sqlx.Tx) error {
+    _, err := tx.NamedExec(Update, j)
+    return err
 }

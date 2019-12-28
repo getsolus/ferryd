@@ -89,9 +89,9 @@ func (r *Repo) Import(tx *sqlx.Tx) error {
 }
 
 // Check makes sure the DB matches disk
-func (r *Repo) Check(tx *sqlx.Tx) error {
+func (r *Repo) Check(tx *sqlx.Tx) (d *Diff, err error) {
 	// TODO: Implement
-	return errors.New("Function not implemented")
+	return nil, errors.New("Function not implemented")
 }
 
 // Delta generates missing deltas and removes unneeded ones
