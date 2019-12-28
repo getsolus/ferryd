@@ -14,20 +14,21 @@
 // limitations under the License.
 //
 
-package core
+package transit
 
 import (
 	"errors"
 	"fmt"
 	"github.com/BurntSushi/toml"
+	"github.com/getsolus/ferryd/core"
 	"io/ioutil"
 	"path/filepath"
 	"strings"
 )
 
 const (
-	// TransitManifestSuffix is the extension that a valid transit manifest must have
-	TransitManifestSuffix = ".tram"
+	// ManifestSuffix is the extension that a valid transit manifest must have
+	ManifestSuffix = ".tram"
 )
 
 var (
@@ -47,9 +48,9 @@ var (
 	ErrIllegalUpload = errors.New("The manifest file is NOT an eopkg")
 )
 
-// A TransitManifestHeader is required in all .tram uploads to ensure that both
+// A ManifestHeader is required in all .tram uploads to ensure that both
 // the sender and recipient are talking in the same fashion.
-type TransitManifestHeader struct {
+type ManifestHeader struct {
 	// Versioning to protect against future format changes
 	Version string `toml:"version"`
 
@@ -57,18 +58,18 @@ type TransitManifestHeader struct {
 	Target string `toml:"target"`
 }
 
-// A TransitManifest is provided by build servers to validate the upload of
+// A Manifest is provided by build servers to validate the upload of
 // packages into the incoming directory.
 //
 // This is to ensure all uploads are intentional, complete and verifiable.
-type TransitManifest struct {
+type Manifest struct {
 
 	// Every .tram file has a [manifest] header - this will never change and is
 	// version agnostic.
-	Manifest TransitManifestHeader `toml:"manifest"`
+	Manifest ManifestHeader `toml:"manifest"`
 
 	// A list of files that accompanied this .tram upload
-	File []TransitManifestFile `toml:"file"`
+	File []ManifestFile `toml:"file"`
 
 	Path string // Privately held path to the file
 	dir  string // Where the .tram was loaded from
@@ -76,12 +77,12 @@ type TransitManifest struct {
 }
 
 // ID will return the unique ID for the transit manifest file
-func (t *TransitManifest) ID() string {
+func (t *Manifest) ID() string {
 	return t.id
 }
 
 // GetPaths will return the package paths as a slice of strings
-func (t *TransitManifest) GetPaths() []string {
+func (t *Manifest) GetPaths() []string {
 	var ret []string
 	for i := range t.File {
 		f := &t.File[i]
@@ -90,9 +91,9 @@ func (t *TransitManifest) GetPaths() []string {
 	return ret
 }
 
-// TransitManifestFile provides simple verification data for each file in the
+// ManifestFile provides simple verification data for each file in the
 // uploaded payload.
-type TransitManifestFile struct {
+type ManifestFile struct {
 
 	// Relative filename, i.e. nano-2.7.5-68-1-x86_64.eopkg
 	Path string `toml:"path"`
@@ -101,15 +102,15 @@ type TransitManifestFile struct {
 	Sha256 string `toml:"sha256"`
 }
 
-// NewTransitManifest will attempt to load the transit manifest from the
+// NewManifest will attempt to load the transit manifest from the
 // named path and perform *basic* validation.
-func NewTransitManifest(path string) (*TransitManifest, error) {
+func NewManifest(path string) (*Manifest, error) {
 	abs, err := filepath.Abs(path)
 	if err != nil {
 		return nil, err
 	}
 
-	ret := &TransitManifest{
+	ret := &Manifest{
 		Path: abs,
 		dir:  filepath.Dir(abs),
 		id:   filepath.Base(abs),
@@ -159,11 +160,11 @@ func NewTransitManifest(path string) (*TransitManifest, error) {
 // ValidatePayload will verify the files listed in the manifest locally, ensuring
 // that they actually exist, and that the hashes match to prevent any corrupted
 // uploads being inadvertently imported
-func (t *TransitManifest) ValidatePayload() error {
+func (t *Manifest) ValidatePayload() error {
 	for i := range t.File {
 		f := &t.File[i]
 		path := filepath.Join(t.dir, f.Path)
-		sha, err := FileSha256sum(path)
+		sha, err := core.FileSha256sum(path)
 		if err != nil {
 			return err
 		}

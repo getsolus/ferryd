@@ -14,11 +14,10 @@
 // limitations under the License.
 //
 
-package daemon
+package transit
 
 import (
 	log "github.com/DataDrake/waterlog"
-	"github.com/getsolus/ferryd/core"
 	"github.com/getsolus/ferryd/manager"
 	"github.com/radu-munteanu/fsnotify"
 	"os"
@@ -26,8 +25,8 @@ import (
 	"strings"
 )
 
-// TransitListener is a process that creates jobs in response to new TRAM files
-type TransitListener struct {
+// Listener is a process that creates jobs in response to new TRAM files
+type Listener struct {
 	base    string
 	watcher *fsnotify.Watcher
 	manager *manager.Manager
@@ -35,21 +34,22 @@ type TransitListener struct {
 	done    chan bool
 }
 
-// NewTransitListener creates and sets up a new TransitListener
-func NewTransitListener(base []string, mgr *manager.Manager) (tl *TransitListener, err error) {
-	tl = &TransitListener{
+// NewListener creates and sets up a new TransitListener
+func NewListener(base []string, mgr *manager.Manager) (tl *Listener, err error) {
+	// Create a new listener
+	tl = &Listener{
 		base:    filepath.Join(base...),
 		manager: mgr,
 		stop:    make(chan bool),
 		done:    make(chan bool),
 	}
-	_, err = os.Stat(tl.base)
-	if os.IsNotExist(err) {
-		err = os.Mkdir(tl.base, 0755)
-		if err != nil {
+	// Make sure the transit dir exists, creating it if missing
+	if _, err = os.Stat(tl.base); os.IsNotExist(err) {
+		if err = os.Mkdir(tl.base, 0755); err != nil {
 			return
 		}
 	}
+	// Create a watcher
 	tl.watcher, err = fsnotify.NewWatcher()
 	if err != nil {
 		return
@@ -61,7 +61,7 @@ func NewTransitListener(base []string, mgr *manager.Manager) (tl *TransitListene
 
 // Start creates a gorouting than will wait for events on the incoming directory
 // and process incoming .tram files
-func (tl *TransitListener) Start() {
+func (tl *Listener) Start() {
 	go func() {
 		for {
 			select {
@@ -70,9 +70,10 @@ func (tl *TransitListener) Start() {
 				if filepath.Dir(event.Name) != tl.base {
 					continue
 				}
+				// Filtering on Update events
 				if event.Op&fsnotify.Update == fsnotify.Update {
-					if strings.HasSuffix(event.Name, core.TransitManifestSuffix) {
-						tl.processTransitManifest(filepath.Base(event.Name))
+					if strings.HasSuffix(event.Name, ManifestSuffix) {
+						tl.processManifest(filepath.Base(event.Name))
 					}
 				}
 			case <-tl.stop:
@@ -84,25 +85,25 @@ func (tl *TransitListener) Start() {
 }
 
 // Stop will force the fsnotify code to shut down
-func (tl *TransitListener) Stop() bool {
+func (tl *Listener) Stop() bool {
 	tl.stop <- true
 	return <-tl.done
 }
 
-// processTransitManifest is invoked when a .tram file is closed in our incoming
+// processManifest is invoked when a .tram file is closed in our incoming
 // directory. We'll now push it for further processing
-func (tl *TransitListener) processTransitManifest(name string) {
+func (tl *Listener) processManifest(name string) {
+	// Check that the path still exists
 	fullpath := filepath.Join(tl.base, name)
-
 	st, err := os.Stat(fullpath)
 	if err != nil {
 		return
 	}
-
+	// Make sure it is a regular file
 	if !st.Mode().IsRegular() {
 		return
 	}
-
+	// Transit the new packages
 	log.Infof("Received transit manifest upload: '%s'\n", name)
 	tl.manager.TransitPackage(fullpath)
 }

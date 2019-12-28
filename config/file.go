@@ -43,6 +43,8 @@ const (
 	DefaultBuildDir = "/tmp/ferryd"
 	// DefaultLockFile for a running daemon
 	DefaultLockFile = "/var/lib/ferryd/ferryd.lock"
+	// DefaultSocket for a running daemon
+	DefaultSocket = "/run/ferryd.sock"
 )
 
 // File contains the file configuration for ferryd
@@ -55,6 +57,8 @@ type File struct {
 	buildPath []string
 	// LockFile for the Daemon
 	LockFile string
+	// Socket for the Daemon
+	Socket string
 }
 
 // Current is the configuration of the system as it was when the daemon started
@@ -92,7 +96,18 @@ func Load() error {
 		Current.LockFile = DefaultLockFile
 		log.Printf("No Lockfile specified. Using default: %s\n", DefaultLockFile)
 	}
+	// Validate Socket
+	if len(Current.Socket) == 0 {
+		Current.Socket = DefaultSocket
+		log.Printf("No Socket specified. Using default: %s\n", DefaultSocket)
+	}
 	return nil
+}
+
+func init() {
+	if err := Load(); err != nil {
+		panic(err.Error())
+	}
 }
 
 // AssetPath for index generation and obsoletion

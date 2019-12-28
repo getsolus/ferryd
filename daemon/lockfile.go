@@ -20,8 +20,6 @@ import (
 	"errors"
 	"fmt"
 	"os"
-	"path/filepath"
-	"sync"
 	"syscall"
 )
 
@@ -36,154 +34,79 @@ var (
 
 // A LockFile encapsulates locking functionality
 type LockFile struct {
-	path      string        // Path of the lockfile
-	owningPID int           // Process ID of the lockfile owner
-	ourPID    int           // Our own process ID
-	conlock   *sync.RWMutex // Concurrency lock for library use
-	fd        *os.File      // Actual file being locked
-	owner     bool          // Whether we're the owner..
+	path string   // Path of the lockfile
+	fd   *os.File // Actual file being locked
 }
 
 // NewLockFile will return a new lockfile for the given path
-func NewLockFile(path string) (*LockFile, error) {
-	lock := &LockFile{
-		path:      path,
-		owningPID: -1,
-		ourPID:    os.Getpid(),
-		conlock:   new(sync.RWMutex),
-		fd:        nil,
-		owner:     false,
+func NewLockFile(path string) *LockFile {
+	return &LockFile{
+		path: path,
 	}
-
-	// We can consider setting the permissions to 0600
-	w, err := os.OpenFile(lock.path, os.O_RDWR|os.O_CREATE, 00644)
-	if err != nil {
-		return nil, err
-	}
-	// Store the file descriptor
-	lock.fd = w
-
-	return lock, nil
-}
-
-// GetOwnerPID will return the owner PID, if it exists
-func (l *LockFile) GetOwnerPID() int {
-	return l.owningPID
-}
-
-// GetOwnerProcess will return the executable name if possible
-func (l *LockFile) GetOwnerProcess() string {
-	fp := fmt.Sprintf("/proc/%d/exe", l.owningPID)
-	str, err := filepath.EvalSymlinks(fp)
-	if err != nil {
-		return "unknown process"
-	}
-	return str
 }
 
 // Lock will attempt to lock the file, or return an error if this fails
 func (l *LockFile) Lock() error {
-	pid, err := l.readPID()
-
-	// Bail now.
-	if err != ErrDeadLockFile && err != ErrOwnedLockFile && err != nil {
-		return err
+	exists := true
+	// Stat the file
+	fi, err := os.Stat(l.path)
+	if err != nil {
+		if !os.IsNotExist(err) {
+			return err
+		}
+		err = nil
+		exists = false
 	}
-
-	// Not gonna test our *own* PID
-	if pid > 0 && pid != l.ourPID {
-		// Process is still active
-		// Unix this always works
-		p, _ := os.FindProcess(pid)
-		if err2 := p.Signal(syscall.Signal(0)); err2 == nil {
-			if p.Pid != l.ourPID {
-				l.owningPID = p.Pid
-				return ErrOwnedLockFile
+	pid := -1
+	if exists {
+		// Check for empty
+		if fi.Size() > 0 {
+			// Try to open the lock file
+			w, err := os.OpenFile(l.path, os.O_RDONLY, 00644)
+			if err != nil {
+				return err
 			}
+			l.fd = w
+			// Read its contents
+			_, err = fmt.Fscanf(l.fd, "%d", &pid)
+			if err != nil {
+				return ErrDeadLockFile
+			}
+			// check if the PID matches the current process
+			if pid != os.Getpid() {
+				// check if the the PID is still running
+				// Process is still active
+				// Unix this always works
+				p, _ := os.FindProcess(pid)
+				if err2 := p.Signal(syscall.Signal(0)); err2 == nil {
+					return ErrOwnedLockFile
+				}
+				// Close file to force overwrite
+				l.fd.Close()
+				l.fd = nil
+			}
+		} else {
+			return ErrDeadLockFile
 		}
 	}
-
-	l.conlock.Lock()
-
-	// Finally lock it.
-	if err := syscall.Flock(int(l.fd.Fd()), syscall.LOCK_EX|syscall.LOCK_NB); err != nil {
-		l.conlock.Unlock()
-		return err
-	}
-
-	l.owner = true
-
-	l.conlock.Unlock()
-
-	// Write the PID now we have an exclusive lock on it
-	if err := l.writePID(); err != nil {
-		return err
-	}
-
-	return nil
-}
-
-// Unlock will attempt to unlock the file, or return an error if this fails
-func (l *LockFile) Unlock() error {
-	if l.fd == nil || !l.owner {
-		return errors.New("cannot unlock that which we don't own")
-	}
-
-	if err := syscall.Flock(int(l.fd.Fd()), syscall.LOCK_UN); err != nil {
-		return err
-	}
-	return nil
-}
-
-// readPID is a simple utility to extract the PID from a file
-func (l *LockFile) readPID() (int, error) {
-	l.conlock.RLock()
-	defer l.conlock.RUnlock()
-
-	fi, err := os.Open(l.path)
-	// Likely a permission issue.
-	if err != nil {
-		return -1, err
-	}
-	defer fi.Close()
-	var pid int
-	var n int
-
-	// This is ok, we can just nuke it..
-	if n, err = fmt.Fscanf(fi, "%d", &pid); err != nil {
-		return -1, ErrDeadLockFile
-	}
-	// This is actually ok.
-	if n != 1 {
-		return -1, ErrDeadLockFile
-	}
-	return pid, nil
-}
-
-// writePID will store our PID in the lockfile
-func (l *LockFile) writePID() error {
+	// Create a new lock file
 	if l.fd == nil {
-		panic(errors.New("cannot write PID for no file"))
+		// Try to open the lock file
+		w, err := os.OpenFile(l.path, os.O_RDWR|os.O_CREATE|os.O_TRUNC, 00644)
+		if err != nil {
+			return err
+		}
+		l.fd = w
+		// write our PID to the file
+		pid = os.Getpid()
+		fmt.Fprintf(l.fd, "%d", pid)
+		err = l.fd.Sync()
 	}
-	l.conlock.Lock()
-	defer l.conlock.Unlock()
-	if _, err := fmt.Fprintf(l.fd, "%d", l.ourPID); err != nil {
-		return err
-	}
-	return l.fd.Sync()
+	return err
 }
 
-// Clean will dispose of the lock file and hopefully the lockfile itself
-func (l *LockFile) Clean() error {
-	l.conlock.Lock()
-	defer l.conlock.Unlock()
-	if l.fd == nil || !l.owner {
-		return nil
-	}
-
+// Close will dispose of the lock file
+func (l *LockFile) Close() error {
 	l.fd.Close()
-	if l.owner {
-		return os.Remove(l.path)
-	}
-	return nil
+	return os.Remove(l.path)
 }

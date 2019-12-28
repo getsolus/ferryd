@@ -14,7 +14,7 @@
 // limitations under the License.
 //
 
-package core
+package transit
 
 import (
 	"testing"
@@ -24,8 +24,8 @@ const (
 	transitTestFile = "testdata/nano.tram"
 )
 
-func TestTransitManifest(t *testing.T) {
-	tm, err := NewTransitManifest(transitTestFile)
+func TestManifest(t *testing.T) {
+	tm, err := NewManifest(transitTestFile)
 	if err != nil {
 		t.Fatalf("Failed to load valid tram file: %v", err)
 	}

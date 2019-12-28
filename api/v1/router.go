@@ -21,6 +21,7 @@ import (
 	log "github.com/DataDrake/waterlog"
 	"github.com/coreos/go-systemd/activation"
 	"github.com/fasthttp/router"
+	"github.com/getsolus/ferryd/config"
 	"github.com/getsolus/ferryd/jobs"
 	"github.com/getsolus/ferryd/manager"
 	"github.com/valyala/fasthttp"
@@ -29,9 +30,6 @@ import (
 	"os"
 	"time"
 )
-
-// SocketPath is the path to find the ferryd socket
-const SocketPath = "/run/ferryd.sock"
 
 // Listener sits on a unix socket accepting connections from authenticated
 // client, i.e. root or those in the "ferry" group
@@ -112,7 +110,7 @@ func (api *Listener) Bind() error {
 		}
 		api.SystemdEnabled = true
 	} else {
-		l, e := net.Listen("unix", SocketPath)
+		l, e := net.Listen("unix", config.Current.Socket)
 		if e != nil {
 			return e
 		}
@@ -123,11 +121,11 @@ func (api *Listener) Bind() error {
 	gid := os.Getgid()
 	if !api.SystemdEnabled {
 		// Avoid umask issues
-		if e := os.Chown(SocketPath, uid, gid); e != nil {
+		if e := os.Chown(config.Current.Socket, uid, gid); e != nil {
 			return e
 		}
 		// Fatal if we cannot chmod the socket to be ours only
-		if e := os.Chmod(SocketPath, 0660); e != nil {
+		if e := os.Chmod(config.Current.Socket, 0660); e != nil {
 			return e
 		}
 	}
@@ -154,6 +152,6 @@ func (api *Listener) Close() {
 
 	// We don't technically fully own it if systemd created it
 	if !api.SystemdEnabled {
-		os.Remove(SocketPath)
+		os.Remove(config.Current.Socket)
 	}
 }

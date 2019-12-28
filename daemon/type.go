@@ -23,6 +23,7 @@ import (
 	"github.com/getsolus/ferryd/config"
 	"github.com/getsolus/ferryd/jobs"
 	"github.com/getsolus/ferryd/manager"
+	"github.com/getsolus/ferryd/transit"
 	"os"
 	"os/signal"
 	"syscall"
@@ -31,40 +32,20 @@ import (
 // Server sits on a unix socket accepting connections from authenticated
 // client, i.e. root or those in the "ferry" group
 type Server struct {
-	running bool
-	api     *v1.Listener     // the HTTP socket handler
-	manager *manager.Manager // heart of the story
-	store   *jobs.Store      // Storage for jobs processor
-	tl      *TransitListener //Listener for TRAM files
+	api     *v1.Listener      // the HTTP socket handler
+	manager *manager.Manager  // heart of the story
+	tl      *transit.Listener // Listener for TRAM files
 
 	// We store a global lock file ..
 	lockFile *LockFile
-	lockPath string
+	running  bool
 }
 
 // NewServer will return a newly initialised Server which is currently unbound
-func NewServer() (*Server, error) {
-	err := config.Load()
-	if err != nil {
-		return nil, err
-	}
-	// Before we can actually bind the socket, we must lock the file
-	lfile, err := NewLockFile(config.Current.LockFile)
-
-	if err != nil {
-		return nil, err
-	}
-
-	// Try to lock our lockfile now
-	if err := lfile.Lock(); err != nil {
-		return nil, err
-	}
-
+func NewServer() *Server {
 	return &Server{
-		running:  false,
-		lockPath: config.Current.LockFile,
-		lockFile: lfile,
-	}, nil
+		lockFile: NewLockFile(config.Current.LockFile),
+	}
 }
 
 // killHandler will ensure we cleanly tear down on a ctrl+c/sigint
@@ -83,35 +64,30 @@ func (s *Server) killHandler() {
 // Bind will attempt to set up the listener on the unix socket
 // prior to serving.
 func (s *Server) Bind() error {
-	// Load config from file
-	e := config.Load()
+	e := s.lockFile.Lock()
 	if e != nil {
 		return e
 	}
-
-	// Store
-	st, e := jobs.NewStore()
+	// Set up Job Store
+	store, e := jobs.NewStore()
 	if e != nil {
 		return e
 	}
-	s.store = st
-
-	// manager
-	s.manager = manager.NewManager(st)
-
-	// Set up watching the manager's incoming directory
-	tl, err := NewTransitListener(config.Current.TransitPath(), s.manager)
+	// Set up Repo Manager
+	s.manager = manager.NewManager(store)
+	// Set up Transit Listener
+	tl, err := transit.NewListener(config.Current.TransitPath(), s.manager)
 	if err != nil {
 		return err
 	}
 	s.tl = tl
-
-	// api
-	api, err := v1.NewListener(s.store, s.manager)
+	// Set up the API
+	api, err := v1.NewListener(store, s.manager)
 	if err != nil {
 		return err
 	}
 	s.api = api
+	// Bind the API Server to its socket
 	return s.api.Bind()
 }
 
@@ -119,9 +95,6 @@ func (s *Server) Bind() error {
 func (s *Server) Serve() error {
 	s.running = true
 	s.killHandler()
-	defer func() {
-		s.running = false
-	}()
 	// Serve the job queue
 	s.tl.Start()
 	if s.api.SystemdEnabled {
@@ -136,12 +109,8 @@ func (s *Server) Serve() error {
 			log.Goodln("SdNotify successful")
 		}
 	}
-	err := s.api.Start()
-	if err != nil {
-		return err
-	}
-
-	return nil
+	// Start the API server
+	return s.api.Start()
 }
 
 // Close will shut down and cleanup the socket
@@ -149,14 +118,12 @@ func (s *Server) Close() {
 	if !s.running {
 		return
 	}
-	if s.lockFile != nil {
-		s.lockFile.Unlock()
-		s.lockFile.Clean()
-		s.lockFile = nil
-	}
+	// Shutdown the services
 	s.api.Close()
 	s.tl.Stop()
-	s.store.Close()
 	s.manager.Close()
+	// Cleanup the lock file
+	s.lockFile.Close()
+	// Mark as stopped
 	s.running = false
 }

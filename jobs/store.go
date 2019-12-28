@@ -105,19 +105,19 @@ func (s *Store) Push(j *Job) (id int64, err error) {
 	// Set Job parameters
 	j.Status = New
 	j.Created.Scan(time.Now().UTC())
-    // Start a DB transaction
-    tx, err := s.db.Beginx()
-    if err != nil {
-        goto UNLOCK
-    }
+	// Start a DB transaction
+	tx, err := s.db.Beginx()
+	if err != nil {
+		goto UNLOCK
+	}
 	// Insert the New Job
-    err = j.Create(tx)
-    if err != nil {
-        tx.Rollback()
-        goto UNLOCK
-    }
-    // Complete the transaction
-    err = tx.Commit()
+	err = j.Create(tx)
+	if err != nil {
+		tx.Rollback()
+		goto UNLOCK
+	}
+	// Complete the transaction
+	err = tx.Commit()
 UNLOCK:
 	s.Unlock()
 	return id, err
@@ -151,7 +151,7 @@ func (s *Store) findNewJob() {
 
 // Claim gets the first available job, if one exists and is not blocked by running jobs
 func (s *Store) Claim() (j *Job, err error) {
-    var tx *sqlx.Tx
+	var tx *sqlx.Tx
 	s.Lock()
 	if s.next == nil {
 		err = ErrNoJobReady
@@ -160,22 +160,22 @@ func (s *Store) Claim() (j *Job, err error) {
 	// claim the next job
 	s.next.Status = Running
 	s.next.Started.Scan(time.Now().UTC())
-    // Start a DB transaction
-    tx, err = s.db.Beginx()
-    if err != nil {
-        goto UNLOCK
-    }
-    // Save the status change
-    err = s.next.Save(tx)
+	// Start a DB transaction
+	tx, err = s.db.Beginx()
 	if err != nil {
-        tx.Rollback()
 		goto UNLOCK
 	}
-    // Finish the transaction
-    err = tx.Commit()
-    if err != nil {
-        goto UNLOCK
-    }
+	// Save the status change
+	err = s.next.Save(tx)
+	if err != nil {
+		tx.Rollback()
+		goto UNLOCK
+	}
+	// Finish the transaction
+	err = tx.Commit()
+	if err != nil {
+		goto UNLOCK
+	}
 	// find the next replacement job
 	j, s.next = s.next, nil
 UNLOCK:
@@ -187,20 +187,20 @@ UNLOCK:
 // Retire marks a job as completed and updates the DB record
 func (s *Store) Retire(j *Job) error {
 	s.Lock()
-    // Start a DB transaction
-    tx, err := s.db.Beginx()
-    if err != nil {
-        goto UNLOCK
-    }
-    // Mark as finished
+	// Start a DB transaction
+	tx, err := s.db.Beginx()
+	if err != nil {
+		goto UNLOCK
+	}
+	// Mark as finished
 	j.Finished.Scan(time.Now().UTC())
-    err = j.Save(tx)
-    if err != nil {
-        tx.Rollback()
-        goto UNLOCK
-    }
-    // Finish the transaction
-    err = tx.Commit()
+	err = j.Save(tx)
+	if err != nil {
+		tx.Rollback()
+		goto UNLOCK
+	}
+	// Finish the transaction
+	err = tx.Commit()
 UNLOCK:
 	s.Unlock()
 	return err
