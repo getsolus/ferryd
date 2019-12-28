@@ -14,7 +14,7 @@
 // limitations under the License.
 //
 
-package transit
+package manifest
 
 import (
 	"testing"
@@ -29,11 +29,11 @@ func TestManifest(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Failed to load valid tram file: %v", err)
 	}
-	if tm.Manifest.Version != "1.0" {
-		t.Fatalf("Invalid header version: %s", tm.Manifest.Version)
+	if tm.Head.Version != "1.0" {
+		t.Fatalf("Invalid header version: %s", tm.Head.Version)
 	}
-	if tm.Manifest.Target != "unstable" {
-		t.Fatalf("Invalid header target: %s", tm.Manifest.Target)
+	if tm.Head.Target != "unstable" {
+		t.Fatalf("Invalid header target: %s", tm.Head.Target)
 	}
 	if len(tm.File) != 2 {
 		t.Fatalf("Invalid number of files in payload: %d", len(tm.File))

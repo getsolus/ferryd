@@ -23,7 +23,6 @@ import (
 	"github.com/getsolus/ferryd/config"
 	"github.com/getsolus/ferryd/jobs"
 	"github.com/getsolus/ferryd/manager"
-	"github.com/getsolus/ferryd/transit"
 	"os"
 	"os/signal"
 	"syscall"
@@ -34,7 +33,7 @@ import (
 type Server struct {
 	api     *v1.Listener      // the HTTP socket handler
 	manager *manager.Manager  // heart of the story
-	tl      *transit.Listener // Listener for TRAM files
+	tl      *manager.Listener // Listener for TRAM files
 
 	// We store a global lock file ..
 	lockFile *LockFile
@@ -76,7 +75,7 @@ func (s *Server) Bind() error {
 	// Set up Repo Manager
 	s.manager = manager.NewManager(store)
 	// Set up Transit Listener
-	tl, err := transit.NewListener(config.Current.TransitPath(), s.manager)
+	tl, err := manager.NewListener(config.Current.TransitPath(), s.manager)
 	if err != nil {
 		return err
 	}

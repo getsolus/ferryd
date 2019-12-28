@@ -14,7 +14,7 @@
 // limitations under the License.
 //
 
-package transit
+package manifest
 
 import (
 	"errors"
@@ -27,8 +27,8 @@ import (
 )
 
 const (
-	// ManifestSuffix is the extension that a valid transit manifest must have
-	ManifestSuffix = ".tram"
+	// Suffix is the extension that a valid transit manifest must have
+	Suffix = ".tram"
 )
 
 var (
@@ -48,9 +48,9 @@ var (
 	ErrIllegalUpload = errors.New("The manifest file is NOT an eopkg")
 )
 
-// A ManifestHeader is required in all .tram uploads to ensure that both
+// A Header is required in all .tram uploads to ensure that both
 // the sender and recipient are talking in the same fashion.
-type ManifestHeader struct {
+type Header struct {
 	// Versioning to protect against future format changes
 	Version string `toml:"version"`
 
@@ -66,10 +66,10 @@ type Manifest struct {
 
 	// Every .tram file has a [manifest] header - this will never change and is
 	// version agnostic.
-	Manifest ManifestHeader `toml:"manifest"`
+	Head Header `toml:"manifest"`
 
 	// A list of files that accompanied this .tram upload
-	File []ManifestFile `toml:"file"`
+	File []File `toml:"file"`
 
 	Path string // Privately held path to the file
 	dir  string // Where the .tram was loaded from
@@ -91,9 +91,9 @@ func (t *Manifest) GetPaths() []string {
 	return ret
 }
 
-// ManifestFile provides simple verification data for each file in the
+// File provides simple verification data for each file in the
 // uploaded payload.
-type ManifestFile struct {
+type File struct {
 
 	// Relative filename, i.e. nano-2.7.5-68-1-x86_64.eopkg
 	Path string `toml:"path"`
@@ -125,14 +125,14 @@ func NewManifest(path string) (*Manifest, error) {
 		return nil, err
 	}
 
-	ret.Manifest.Target = strings.TrimSpace(ret.Manifest.Target)
-	ret.Manifest.Version = strings.TrimSpace(ret.Manifest.Version)
+	ret.Head.Target = strings.TrimSpace(ret.Head.Target)
+	ret.Head.Version = strings.TrimSpace(ret.Head.Version)
 
-	if ret.Manifest.Version != "1.0" {
+	if ret.Head.Version != "1.0" {
 		return nil, ErrInvalidHeader
 	}
 
-	if len(ret.Manifest.Target) < 1 {
+	if len(ret.Head.Target) < 1 {
 		return nil, ErrMissingTarget
 	}
 
@@ -157,10 +157,10 @@ func NewManifest(path string) (*Manifest, error) {
 	return ret, nil
 }
 
-// ValidatePayload will verify the files listed in the manifest locally, ensuring
+// Verify will verify the files listed in the manifest locally, ensuring
 // that they actually exist, and that the hashes match to prevent any corrupted
 // uploads being inadvertently imported
-func (t *Manifest) ValidatePayload() error {
+func (t *Manifest) Verify() error {
 	for i := range t.File {
 		f := &t.File[i]
 		path := filepath.Join(t.dir, f.Path)

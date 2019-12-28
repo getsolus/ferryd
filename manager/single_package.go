@@ -18,7 +18,10 @@ package manager
 
 import (
 	"errors"
+	"fmt"
 	"github.com/getsolus/ferryd/jobs"
+	"github.com/getsolus/ferryd/manifest"
+	"github.com/getsolus/ferryd/repo"
 )
 
 /*********************/
@@ -43,15 +46,76 @@ func (m *Manager) TransitPackage(pkg string) (int, error) {
 
 // TransitPackageExecute carries out a TransitPackage job
 func (m *Manager) TransitPackageExecute(j *jobs.Job) error {
-	// TODO: Implement
-	// Get the list of repos
+	// Check arguments
+	if len(j.Pkg) == 0 {
+		return errors.New("job is missing a package")
+	}
+	// Read the manifest
+	manifest, err := manifest.NewManifest(j.Pkg)
+	if err != nil {
+		return fmt.Errorf("Failed to read in the manifest, reason: '%s'", err.Error())
+	}
 	// Verify the manifest
-	// Copy the package files into the pool
-	// Create the delta packages
-	// Create the release entries for the new packages
+	if err = manifest.Verify(); err != nil {
+		return fmt.Errorf("Failed to verify the manifest, reason: '%s'", err.Error())
+	}
+	// Create a DB transaction
+	tx, err := m.db.Beginx()
+	if err != nil {
+		return fmt.Errorf("Failed to create transaction, reason: '%s'", err.Error())
+	}
+	// Get the list of repos
+	rs, err := repo.All(tx)
+	if err != nil {
+		tx.Rollback()
+		return fmt.Errorf("Failed to get the list of repos, reason: '%s'", err.Error())
+	}
+	// Find pool
+	var pool *repo.Repo
+	for _, r := range rs {
+		if r.Name == "pool" {
+			pool = r
+			break
+		}
+	}
+	if pool == nil {
+		tx.Rollback()
+		return errors.New("Could not find a DB entry for the pool")
+	}
+	// Copy the package files into the pool, create deltas, and add releases to the DB
+	add, del, err := pool.Transit(tx, manifest)
+	if err != nil {
+		tx.Rollback()
+		return fmt.Errorf("Failed to transit into the pool, reason: '%s'", err.Error())
+	}
+	// End the transaction
+	if err = tx.Commit(); err != nil {
+		return fmt.Errorf("Failed to end the transaction, reason: '%s'", err.Error())
+	}
 	// For each repo with instant_transit=true
-	// if not pool, create links from the pool
-	// add package links from repo to release in the DB
-	// Re-Index
-	return errors.New("Function not implemented")
+	for _, r := range rs {
+		// Skip pool
+		if r.Name == "pool" {
+			continue
+		}
+		// Create a DB transaction
+		tx, err := m.db.Beginx()
+		if err != nil {
+			return fmt.Errorf("Failed to create transaction, reason: '%s'", err.Error())
+		}
+		// Copy in the new packages
+		if err = r.Link(tx, add, del); err != nil {
+			return fmt.Errorf("Failed to link new packages, reason: '%s'", err.Error())
+		}
+		// Re-Index
+		if err = r.Index(tx); err != nil {
+			tx.Rollback()
+			return fmt.Errorf("Failed to reindex the repo '%s', reason: '%s'", r.Name, err.Error())
+		}
+		// End the transaction
+		if err = tx.Commit(); err != nil {
+			return fmt.Errorf("Failed to end the transaction, reason: '%s'", err.Error())
+		}
+	}
+	return nil
 }

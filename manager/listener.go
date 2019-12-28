@@ -14,11 +14,11 @@
 // limitations under the License.
 //
 
-package transit
+package manager
 
 import (
 	log "github.com/DataDrake/waterlog"
-	"github.com/getsolus/ferryd/manager"
+	"github.com/getsolus/ferryd/manifest"
 	"github.com/radu-munteanu/fsnotify"
 	"os"
 	"path/filepath"
@@ -29,13 +29,13 @@ import (
 type Listener struct {
 	base    string
 	watcher *fsnotify.Watcher
-	manager *manager.Manager
+	manager *Manager
 	stop    chan bool
 	done    chan bool
 }
 
 // NewListener creates and sets up a new TransitListener
-func NewListener(base []string, mgr *manager.Manager) (tl *Listener, err error) {
+func NewListener(base []string, mgr *Manager) (tl *Listener, err error) {
 	// Create a new listener
 	tl = &Listener{
 		base:    filepath.Join(base...),
@@ -72,7 +72,7 @@ func (tl *Listener) Start() {
 				}
 				// Filtering on Update events
 				if event.Op&fsnotify.Update == fsnotify.Update {
-					if strings.HasSuffix(event.Name, ManifestSuffix) {
+					if strings.HasSuffix(event.Name, manifest.Suffix) {
 						tl.processManifest(filepath.Base(event.Name))
 					}
 				}

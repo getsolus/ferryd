@@ -17,7 +17,6 @@
 package repo
 
 import (
-	"errors"
 	"github.com/getsolus/ferryd/repo/pkgs"
 	"github.com/jmoiron/sqlx"
 )
@@ -80,40 +79,4 @@ func (r *Repo) Summarize(tx *sqlx.Tx) (s Summary, err error) {
 	}
 	err = tx.Get(&s.Size, GetSize, r.ID)
 	return
-}
-
-// Import adds all of the files in a repo to the DB
-func (r *Repo) Import(tx *sqlx.Tx) error {
-	// TODO: Implement
-	return errors.New("Function not implemented")
-}
-
-// Check makes sure the DB matches disk
-func (r *Repo) Check(tx *sqlx.Tx) (d *Diff, err error) {
-	// TODO: Implement
-	return nil, errors.New("Function not implemented")
-}
-
-// Delta generates missing deltas and removes unneeded ones
-func (r *Repo) Delta(tx *sqlx.Tx) error {
-	// TODO: Implement
-	return errors.New("Function not implemented")
-}
-
-// Index regenerates the index for a repo
-func (r *Repo) Index(tx *sqlx.Tx) error {
-	// TODO: Implement
-	return errors.New("Function not implemented")
-}
-
-// TrimObsolete removes obsolete packages for a repo
-func (r *Repo) TrimObsolete(tx *sqlx.Tx) error {
-	// TODO: Implement
-	return errors.New("Function not implemented")
-}
-
-// TrimPackages removes packages which are older than "max" releases from the latest
-func (r *Repo) TrimPackages(tx *sqlx.Tx, max int) error {
-	// TODO: Implement
-	return errors.New("Function not implemented")
 }

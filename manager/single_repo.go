@@ -145,44 +145,101 @@ func (m *Manager) CreateExecute(j *jobs.Job) error {
 
 // Delta generates missing package deltas for an entire repo
 func (m *Manager) Delta(name string) (int, error) {
+	// Validate the arguments
 	if len(name) == 0 {
 		return -1, errors.New("job is missing a destination repo")
 	}
+	// Create a new job instance
 	j := &jobs.Job{
 		Type: jobs.Delta,
 		Dst:  name,
 	}
+	// Add the job to the DB
 	id, err := m.store.Push(j)
+	// Return the ID of the new job
 	return int(id), err
 }
 
 // DeltaExecute carries out a Delta job
 func (m *Manager) DeltaExecute(j *jobs.Job) error {
-	// TODO: Implement
-	return errors.New("Function not implemented")
+	// Validate the arguments
+	if len(j.Dst) == 0 {
+		return errors.New("job is missing a destination repo")
+	}
+	// Begin a DB Transaction
+	tx, err := m.db.Beginx()
+	if err != nil {
+		return fmt.Errorf("Failed to start DB transaction, reason: '%s'", err.Error())
+	}
+	// Get the Repo instance
+	r, err := repo.Get(tx, j.Dst)
+	if err != nil {
+		tx.Rollback()
+		return fmt.Errorf("Failed to get the Repo entry from the DB, reason: '%s'", err.Error())
+	}
+	// Delta the repo
+	if err = r.Delta(tx); err != nil {
+		tx.Rollback()
+		return fmt.Errorf("Failed to update deltas, reason: '%s'", err.Error())
+	}
+	// End the transaction
+	if err = tx.Commit(); err != nil {
+		return fmt.Errorf("Failed to commit the transaction, reason: '%s'", err.Error())
+	}
+	return nil
 }
 
 // DeltaPackage generates missing package deltas for a single package
 func (m *Manager) DeltaPackage(dst, pkg string) (int, error) {
+	// Validate the arguments
 	if len(dst) == 0 {
 		return -1, errors.New("job is missing a destination repo")
 	}
 	if len(pkg) == 0 {
 		return -1, errors.New("job is missing a package name")
 	}
+	// Create a new job instance
 	j := &jobs.Job{
 		Type: jobs.DeltaPackage,
 		Dst:  dst,
 		Pkg:  pkg,
 	}
+	// Add the job to the DB
 	id, err := m.store.Push(j)
+	// Return the ID of the new job
 	return int(id), err
 }
 
 // DeltaPackageExecute carries out a DeltaPackage job
 func (m *Manager) DeltaPackageExecute(j *jobs.Job) error {
-	// TODO: Implement
-	return errors.New("Function not implemented")
+	// Validate the arguments
+	if len(j.Dst) == 0 {
+		return errors.New("job is missing a destination repo")
+	}
+	if len(j.Pkg) == 0 {
+		return errors.New("job is missing a package name")
+	}
+	// Begin a DB Transaction
+	tx, err := m.db.Beginx()
+	if err != nil {
+		return fmt.Errorf("Failed to start DB transaction, reason: '%s'", err.Error())
+	}
+	// Get the Repo instance
+	r, err := repo.Get(tx, j.Dst)
+	if err != nil {
+		tx.Rollback()
+		return fmt.Errorf("Failed to get the Repo entry from the DB, reason: '%s'", err.Error())
+	}
+	// Delta the repo
+	if err = r.DeltaPackage(tx, j.Pkg); err != nil {
+		tx.Rollback()
+		return fmt.Errorf("Failed to update deltas, reason: '%s'", err.Error())
+	}
+	// End the transaction
+	if err = tx.Commit(); err != nil {
+		return fmt.Errorf("Failed to commit the transaction, reason: '%s'", err.Error())
+	}
+	return nil
 }
 
 // Import adds an existing repo to the database
@@ -247,21 +304,48 @@ func (m *Manager) ImportExecute(j *jobs.Job) error {
 
 // Index generates a new package index
 func (m *Manager) Index(name string) (int, error) {
+	// Validating the arguments
 	if len(name) == 0 {
 		return -1, errors.New("job is missing a destination repo")
 	}
+	// Create a new job instance
 	j := &jobs.Job{
 		Type: jobs.Index,
 		Dst:  name,
 	}
+	// Add job to the DB
 	id, err := m.store.Push(j)
+	// Return the ID of the new job
 	return int(id), err
 }
 
 // IndexExecute carries out an Index job
 func (m *Manager) IndexExecute(j *jobs.Job) error {
-	// TODO: Implement
-	return errors.New("Function not implemented")
+	// Validating the arguments
+	if len(j.Dst) == 0 {
+		return errors.New("job is missing a destination repo")
+	}
+	// Begin a DB Transaction
+	tx, err := m.db.Beginx()
+	if err != nil {
+		return fmt.Errorf("Failed to start DB transaction, reason: '%s'", err.Error())
+	}
+	// Get the Repo instance
+	r, err := repo.Get(tx, j.Dst)
+	if err != nil {
+		tx.Rollback()
+		return fmt.Errorf("Failed to get the Repo entry from the DB, reason: '%s'", err.Error())
+	}
+	// Index the repo
+	if err = r.Index(tx); err != nil {
+		tx.Rollback()
+		return fmt.Errorf("Failed to update the index, reason: '%s'", err.Error())
+	}
+	// End the transaction
+	if err = tx.Commit(); err != nil {
+		return fmt.Errorf("Failed to commit the transaction, reason: '%s'", err.Error())
+	}
+	return nil
 }
 
 // Remove deletes a repo from the DB
@@ -312,61 +396,145 @@ func (m *Manager) RemoveExecute(j *jobs.Job) error {
 
 // Rescan rebuild the database for an existing repo
 func (m *Manager) Rescan(name string) (int, error) {
+	// Validate the arguments
 	if len(name) == 0 {
 		return -1, errors.New("job is missing a source repo")
 	}
+	// Create a new job instance
 	j := &jobs.Job{
 		Type: jobs.Rescan,
 		Src:  name,
 	}
+	// Add the job to the DB
 	id, err := m.store.Push(j)
+	// Return the ID of the new job
 	return int(id), err
 }
 
 // RescanExecute carries out a Rescan job
 func (m *Manager) RescanExecute(j *jobs.Job) error {
-	// TODO: Implement
-	return errors.New("Function not implemented")
+	// Validate the arguments
+	if len(j.Src) == 0 {
+		return errors.New("job is missing a source repo")
+	}
+	// Begin a DB Transaction
+	tx, err := m.db.Beginx()
+	if err != nil {
+		return fmt.Errorf("Failed to start DB transaction, reason: '%s'", err.Error())
+	}
+	// Get the Repo instance
+	r, err := repo.Get(tx, j.Src)
+	if err != nil {
+		tx.Rollback()
+		return fmt.Errorf("Failed to get the Repo entry from the DB, reason: '%s'", err.Error())
+	}
+	// Rescan the repo
+	if err = r.Rescan(tx); err != nil {
+		tx.Rollback()
+		return fmt.Errorf("Failed to rescan the Repo, reason: '%s'", err.Error())
+	}
+	// Save the transaction
+	if err = tx.Commit(); err != nil {
+		return fmt.Errorf("Failed to remove the Repo from the DB, reason: '%s'", err.Error())
+	}
+	return nil
 }
 
 // TrimPackages removes old package releases and their deltas
 func (m *Manager) TrimPackages(name string, max int) (int, error) {
+	// Validate the arguments
 	if len(name) == 0 {
 		return -1, errors.New("job is missing a source repo")
 	}
 	if max < 1 {
 		return -1, errors.New("max releases must be at least 1")
 	}
+	// Create a new job instance
 	j := &jobs.Job{
 		Type: jobs.TrimPackages,
 		Src:  name,
 		Max:  max,
 	}
+	// Add the job to the DB
 	id, err := m.store.Push(j)
+	// Return the new job ID
 	return int(id), err
 }
 
 // TrimPackagesExecute carries out a TrimPackages job
 func (m *Manager) TrimPackagesExecute(j *jobs.Job) error {
-	// TODO: Implement
-	return errors.New("Function not implemented")
+	// Validate the arguments
+	if len(j.Src) == 0 {
+		return errors.New("job is missing a source repo")
+	}
+	if j.Max < 1 {
+		return errors.New("max releases must be at least 1")
+	}
+	// Begin a DB Transaction
+	tx, err := m.db.Beginx()
+	if err != nil {
+		return fmt.Errorf("Failed to start DB transaction, reason: '%s'", err.Error())
+	}
+	// Get the Repo instance
+	r, err := repo.Get(tx, j.Src)
+	if err != nil {
+		tx.Rollback()
+		return fmt.Errorf("Failed to get the Repo entry from the DB, reason: '%s'", err.Error())
+	}
+	// Trim packages to Max releases in the repo
+	if err = r.TrimPackages(tx, j.Max); err != nil {
+		tx.Rollback()
+		return fmt.Errorf("Failed to trim packages from the Repo, reason: '%s'", err.Error())
+	}
+	// Save the transaction
+	if err = tx.Commit(); err != nil {
+		return fmt.Errorf("Failed to remove the Repo from the DB, reason: '%s'", err.Error())
+	}
+	return nil
 }
 
 // TrimObsoletes removes obsolete packages and their deltas
 func (m *Manager) TrimObsoletes(name string) (int, error) {
+	// Validate the arguments
 	if len(name) == 0 {
 		return -1, errors.New("job is missing a source repo")
 	}
+	// Create a new job instance
 	j := &jobs.Job{
 		Type: jobs.TrimObsoletes,
 		Src:  name,
 	}
+	// Add the job to the DB
 	id, err := m.store.Push(j)
+	// Return the new job ID
 	return int(id), err
 }
 
 // TrimObsoletesExecute carries out the TrimObsoletes job
 func (m *Manager) TrimObsoletesExecute(j *jobs.Job) error {
-	// TODO: Implement
-	return errors.New("Function not implemented")
+	// Validate the arguments
+	if len(j.Src) == 0 {
+		return errors.New("job is missing a source repo")
+	}
+	// Begin a DB Transaction
+	tx, err := m.db.Beginx()
+	if err != nil {
+		return fmt.Errorf("Failed to start DB transaction, reason: '%s'", err.Error())
+	}
+	// Get the Repo instance
+	r, err := repo.Get(tx, j.Src)
+	if err != nil {
+		tx.Rollback()
+		return fmt.Errorf("Failed to get the Repo entry from the DB, reason: '%s'", err.Error())
+	}
+	// Trim Obsolete packages from the repo
+	if err = r.TrimObsolete(tx); err != nil {
+		tx.Rollback()
+		return fmt.Errorf("Failed to trim obsoletes from the Repo, reason: '%s'", err.Error())
+	}
+	// Save the transaction
+	if err = tx.Commit(); err != nil {
+		return fmt.Errorf("Failed to remove the Repo from the DB, reason: '%s'", err.Error())
+	}
+	return nil
 }
