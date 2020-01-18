@@ -8,7 +8,7 @@ require (
 	github.com/DataDrake/waterlog v1.0.5
 	github.com/coreos/go-systemd v0.0.0-20190321100706-95778dfbb74e
 	github.com/fasthttp/router v0.3.3
-	github.com/getsolus/libeopkg v0.0.0-20190512142436-64e02322fda7
+	github.com/getsolus/libeopkg v0.1.0
 	github.com/jmoiron/sqlx v1.2.0
 	github.com/mattn/go-runewidth v0.0.4 // indirect
 	github.com/mattn/go-sqlite3 v1.10.0

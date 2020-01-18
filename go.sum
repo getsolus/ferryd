@@ -15,6 +15,10 @@ github.com/fasthttp/router v0.3.3/go.mod h1:lCf2TfRIzs3lgcFUGQah09Wu5BiEHcBPl3vm
 github.com/fsnotify/fsnotify v1.4.7/go.mod h1:jwhsz4b93w/PPRr/qN1Yymfu8t87LnFCMoQvtojpjFo=
 github.com/getsolus/libeopkg v0.0.0-20190512142436-64e02322fda7 h1:4MUDeIsTeNhGa8JpIflyGcdoWFYa0raczz2VpJwqZq0=
 github.com/getsolus/libeopkg v0.0.0-20190512142436-64e02322fda7/go.mod h1:icOakA4j3f3NmIgRf8+ODZRA8R202hQ+2ZAGhmKEM+0=
+github.com/getsolus/libeopkg v0.0.0-20200118183740-d6770d11b6b0 h1:KMLcCIe9nk1Ny0Jj/9uQyJGH3bdlP7GKxCgH/GvPrFg=
+github.com/getsolus/libeopkg v0.0.0-20200118183740-d6770d11b6b0/go.mod h1:icOakA4j3f3NmIgRf8+ODZRA8R202hQ+2ZAGhmKEM+0=
+github.com/getsolus/libeopkg v0.1.0 h1:dioGos4orWiseugcQJKjX3E4LS2TDtD71BJzI5qLRxw=
+github.com/getsolus/libeopkg v0.1.0/go.mod h1:icOakA4j3f3NmIgRf8+ODZRA8R202hQ+2ZAGhmKEM+0=
 github.com/go-sql-driver/mysql v1.4.0/go.mod h1:zAC/RDZ24gD3HViQzih4MyKcchzm+sOG5ZlKdlhCg5w=
 github.com/golang/lint v0.0.0-20181217174547-8f45f776aaf1 h1:6DVPu65tee05kY0/rciBQ47ue+AnuY8KTayV6VHikIo=
 github.com/golang/lint v0.0.0-20181217174547-8f45f776aaf1/go.mod h1:tluoj9z5200jBnyusfRPU2LqT6J+DAorxEvtC7LHB+E=
