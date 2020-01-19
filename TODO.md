@@ -1,22 +1,29 @@
 # Repos --- In-Progress
 
+## Create
+
+- [ ] Create Repo
+  - [x] Adding a repo to DB
+  - [x] Adding a repo to disk
+  - [ ] Create missing repos directory
+  - [ ] Use Create to add "pool" when missing
+  - [ ] Testing
+
+## Remove
+
+- [x] Remove Repo
+  - [x] Remove a repo from the DB
+  - [x] Remove all package for a repo from the DB
+
 ## Check
 
 - [ ] Check Repo
 
-## Transit Package
+## Import
 
-- [ ] Add Package
-  - [x] Adding Package to the Database
-  - [ ] Adding Package to disk
-- [ ] Single Package Delta
-  - [x] Adding deltas to the DB
-  - [ ] Adding Deltas to disk
-
-## Delta
-
-- [ ] Full Repo Delta
-  - [ ] Single Package Delta
+- [x] Create Repo
+- [ ] Rescan Repo
+- [ ] Index Repo
 
 ## Rescan
 
@@ -24,10 +31,9 @@
   - [ ] Check Repo
   - [ ] Import Missing Packages
 
-## Import
+## Compare
 
-- [x] Create Repo
-- [ ] Rescan Repo
+- [ ] Full Repo Diff
 
 ## Cherry-Pick
 
@@ -37,20 +43,30 @@
   - [ ] Remove a specific package from disk
   - [ ] Link a package between repos
 
-## Clone
-
-- [x] Create Repo
-- [ ] Full Repo Sync
-
-## Compare
-
-- [ ] Full Repo Diff
-
 ## Sync
 
 - [ ] Full Repo Sync
   - [ ] Full Repo Diff
   - [ ] Single Package Sync
+
+## Clone
+
+- [x] Create Repo
+- [ ] Full Repo Sync
+
+## Delta
+
+- [ ] Full Repo Delta
+  - [ ] Single Package Delta
+
+## Transit Package
+
+- [ ] Add Package
+  - [x] Adding Package to the Database
+  - [ ] Adding Package to disk
+- [ ] Single Package Delta
+  - [x] Adding deltas to the DB
+  - [ ] Adding Deltas to disk
 
 ## Trim Obsoletes
 
@@ -65,18 +81,6 @@
   - [ ] Remove Repo on Disk
 
 # Repos --- Done
-
-## Create
-
-- [x] Create Repo
-  - [x] Adding a repo to DB
-  - [x] Adding a repo to disk
-
-## Remove
-
-- [x] Remove Repo
-  - [x] Remove a repo from the DB
-  - [x] Remove all package for a repo from the DB
 
 ## List
 - [x] Summarize Repos
