@@ -40,6 +40,9 @@ func NewManager(store *jobs.Store) *Manager {
 	}
 	// Open the DB
 	manager.db = repo.OpenDB()
+	// Create and start the pool
+	manager.pool = NewPool(manager)
+	manager.pool.Begin()
 	return manager
 }
 

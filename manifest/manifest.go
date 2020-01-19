@@ -164,7 +164,7 @@ func (t *Manifest) Verify() error {
 	for i := range t.File {
 		f := &t.File[i]
 		path := filepath.Join(t.dir, f.Path)
-		sha, err := core.FileSha256sum(path)
+		sha, err := core.FileSHA256Sum(path)
 		if err != nil {
 			return err
 		}

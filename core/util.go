@@ -22,6 +22,8 @@ import (
 	"encoding/hex"
 	"github.com/getsolus/ferryd/util"
 	"github.com/getsolus/libeopkg"
+	"hash"
+	"io"
 	"io/ioutil"
 	"os"
 	"path/filepath"
@@ -66,59 +68,49 @@ func RemovePackageParents(path string) error {
 	return nil
 }
 
-// FileSha1sum is a quick wrapper to grab the sha1sum for the given file
-func FileSha1sum(path string) (string, error) {
-	mfile, err := MapFile(path)
+func hashFile(path string, h hash.Hash) (sum string, err error) {
+	mfile, err := os.Open(path)
 	if err != nil {
-		return "", err
+		return
 	}
 	defer mfile.Close()
-	h := sha1.New()
 	// Pump from memory into hash for zero-copy sha1sum
-	h.Write(mfile.Data)
-	return hex.EncodeToString(h.Sum(nil)), nil
-}
-
-// FileSha256sum is a quick wrapper to grab the sha256sum for the given file
-func FileSha256sum(path string) (string, error) {
-	mfile, err := MapFile(path)
+	_, err = io.Copy(h, mfile)
 	if err != nil {
-		return "", err
+		return
 	}
-	defer mfile.Close()
-	h := sha256.New()
-	// Pump from memory into hash for zero-copy sha1sum
-	h.Write(mfile.Data)
-	return hex.EncodeToString(h.Sum(nil)), nil
+	sum = hex.EncodeToString(h.Sum(nil))
+	return
 }
 
-// WriteSha1sum will take the sha1sum of the input path and then dump it to
+// FileSHA1Sum is a quick wrapper to grab the sha1sum for the given file
+func FileSHA1Sum(path string) (string, error) {
+	return hashFile(path, sha1.New())
+}
+
+// FileSHA256Sum is a quick wrapper to grab the sha256sum for the given file
+func FileSHA256Sum(path string) (string, error) {
+	return hashFile(path, sha256.New())
+}
+
+// WriteSHA1Sum will take the sha1sum of the input path and then dump it to
 // the given output path
-func WriteSha1sum(inpPath, outPath string) error {
-	hash, err := FileSha1sum(inpPath)
+func WriteSHA1Sum(inpPath, outPath string) error {
+	hash, err := FileSHA1Sum(inpPath)
 	if err != nil {
 		return err
 	}
 	return ioutil.WriteFile(outPath, []byte(hash), 00644)
 }
 
-// WriteSha256sum will take the sha256sum of the input path and then dump it to
+// WriteSHA256Sum will take the sha256sum of the input path and then dump it to
 // the given output path
-func WriteSha256sum(inpPath, outPath string) error {
-	hash, err := FileSha256sum(inpPath)
+func WriteSHA256Sum(inpPath, outPath string) error {
+	hash, err := FileSHA256Sum(inpPath)
 	if err != nil {
 		return err
 	}
 	return ioutil.WriteFile(outPath, []byte(hash), 00644)
-}
-
-// PathExists is a trivial helper to figure out if a path exists or not
-func PathExists(path string) bool {
-	_, err := os.Stat(path)
-	if !os.IsNotExist(err) {
-		return true
-	}
-	return false
 }
 
 // ProduceDelta will attempt to batch the delta production between the
@@ -129,7 +121,7 @@ func ProduceDelta(tmpDir, oldPackage, newPackage, targetPath string) error {
 		return err
 	}
 	defer del.Close()
-	path, err := del.Commit()
+	path, err := del.Create()
 	if err != nil {
 		return err
 	}

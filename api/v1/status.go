@@ -107,9 +107,8 @@ func (s StatusResponse) printCompleted(out io.Writer) {
 	})
 	table.SetBorder(false)
 	// Print the 10 most recent completed jobs
-	i := 0
-	for _, j := range s.Completed {
-		if i >= 10 {
+	for i, j := range s.Completed {
+		if i >= 9 {
 			break
 		}
 		i++
@@ -129,7 +128,7 @@ func (s StatusResponse) printCompleted(out io.Writer) {
 func (s StatusResponse) printCurrent(out io.Writer) {
 	// Print the header
 	fmt.Fprintf(out, "Queued jobs: (%d tracked)\n\n", len(s.Current))
-	if len(s.Completed) == 0 {
+	if len(s.Current) == 0 {
 		return
 	}
 	// Sort from newest to oldest
@@ -138,8 +137,8 @@ func (s StatusResponse) printCurrent(out io.Writer) {
 	table := tablewriter.NewWriter(out)
 	table.SetHeader([]string{
 		"Status",
-		"Queued",
-		"Waiting",
+		"Created",
+		"Waiting For",
 		"Description",
 	})
 	table.SetBorder(false)
@@ -150,16 +149,21 @@ func (s StatusResponse) printCurrent(out io.Writer) {
 			break
 		}
 		i++
-		status := "queued"
 		if j.Status == jobs.Running {
-			status = "running"
+			table.Append([]string{
+				"running",
+				j.Created.Time.Format(time.RFC3339),
+				j.QueuedSince().String(),
+				j.Describe(),
+			})
+		} else {
+			table.Append([]string{
+				"queued",
+				j.Created.Time.Format(time.RFC3339),
+				j.QueuedSince().String(),
+				j.Describe(),
+			})
 		}
-		table.Append([]string{
-			status,
-			j.Finished.Time.Format(time.RFC3339),
-			j.QueuedTime().String(),
-			j.Describe(),
-		})
 	}
 	table.Render()
 }
@@ -171,7 +175,9 @@ func (s StatusResponse) Print(out io.Writer) {
 	fmt.Fprintf(out, " - Daemon version: %v\n", s.Version)
 	// Print jobs
 	s.printFailed(out)
+	println()
 	s.printCurrent(out)
+	println()
 	s.printCompleted(out)
 }
 

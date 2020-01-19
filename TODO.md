@@ -1,4 +1,4 @@
-# Repos
+# Repos --- In-Progress
 
 ## Check
 
@@ -18,29 +18,16 @@
 - [ ] Full Repo Delta
   - [ ] Single Package Delta
 
-## Create
-
-- [x] Create Repo
-  - [x] Adding a repo to DB
-  - [x] Adding a repo to disk
-
 ## Rescan
 
 - [ ] Rescan Repo
   - [ ] Check Repo
   - [ ] Import Missing Packages
 
-
 ## Import
 
 - [x] Create Repo
 - [ ] Rescan Repo
-
-## Remove
-
-- [x] Remove Repo
-  - [x] Remove a repo from the DB
-  - [x] Remove all package for a repo from the DB
 
 ## Cherry-Pick
 
@@ -77,7 +64,20 @@
   - [ ] Remove Package on Disk
   - [ ] Remove Repo on Disk
 
-## List
+# Repos --- Done
 
+## Create
+
+- [x] Create Repo
+  - [x] Adding a repo to DB
+  - [x] Adding a repo to disk
+
+## Remove
+
+- [x] Remove Repo
+  - [x] Remove a repo from the DB
+  - [x] Remove all package for a repo from the DB
+
+## List
 - [x] Summarize Repos
   - [x] Summarize Single Repo

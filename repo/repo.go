@@ -36,7 +36,7 @@ func Get(tx *sqlx.Tx, name string) (r *Repo, err error) {
 
 // All retrieves a list of all the repos in the DB
 func All(tx *sqlx.Tx) (rs []*Repo, err error) {
-	err = tx.Get(rs, GetAll)
+	err = tx.Select(&rs, GetAll)
 	return
 }
 

@@ -28,7 +28,7 @@ import (
 // GetJob will request current information about a Job
 func (c *Client) GetJob(id int) (j *jobs.Job, err error) {
 	// Send the request
-	resp, err := c.client.Get(fmt.Sprintf("/api/v1/jobs/%d", id))
+	resp, err := c.client.Get(formURI(fmt.Sprintf("/api/v1/jobs/%d", id)))
 	if err != nil {
 		return
 	}

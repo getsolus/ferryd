@@ -281,7 +281,6 @@ func (m *Manager) Repos() (l repo.FullSummary, err error) {
 		}
 		l = append(l, s)
 	}
-
 CLEANUP:
 	if err != nil {
 		tx.Rollback()

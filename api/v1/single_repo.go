@@ -50,15 +50,20 @@ func (c *Client) Create(id string, instant bool) (j *jobs.Job, err error) {
 		err = readError(resp.Body)
 		return
 	}
-	// Decode the body as a Job
-	err = json.NewDecoder(resp.Body).Decode(j)
+	// Read and decode the Job ID for the newly created job
+	jobID, err := readID(resp)
+	if err != nil {
+		return
+	}
+	// wait for job to complete
+	j, err = c.waitJob(jobID)
 	return
 }
 
 // CreateRepo will handle remote requests for repository creation
 func (l *Listener) CreateRepo(ctx *fasthttp.RequestCtx) {
 	// Get the query parameters
-	id := ctx.UserValue("id").(string)
+	id := ctx.UserValue("left").(string)
 	imp := ctx.QueryArgs().GetBool("import")
 	instant := ctx.QueryArgs().GetBool("instant")
 	// Request the repo creation
@@ -140,7 +145,7 @@ func (c *Client) Remove(id string) (j *jobs.Job, err error) {
 // RemoveRepo will handle remote requests for repository deletion
 func (l *Listener) RemoveRepo(ctx *fasthttp.RequestCtx) {
 	// Get the query parameters
-	id := ctx.UserValue("id").(string)
+	id := ctx.UserValue("left").(string)
 	// Request the repo creation
 	jobID, err := l.manager.Remove(id)
 	if err != nil {

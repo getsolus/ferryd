@@ -39,7 +39,7 @@ WITH ids AS (
     SELECT release_id FROM packages
     WHERE repo_id=?
 )
-SELECT sum(size) FROM releases
+SELECT SUM(size) FROM releases
 INNER JOIN ids ON ids.release_id = releases.id
 `
 

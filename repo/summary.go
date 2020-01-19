@@ -17,6 +17,7 @@
 package repo
 
 import (
+	"database/sql"
 	"fmt"
 	"io"
 )
@@ -24,9 +25,9 @@ import (
 // Summary is a brief description of a single Repo
 type Summary struct {
 	Name     string
-	Packages uint64
-	Deltas   uint64
-	Size     uint64
+	Packages sql.NullInt64
+	Deltas   sql.NullInt64
+	Size     sql.NullInt64
 }
 
 // Print writes out a Summary in a human-readable format
@@ -39,16 +40,28 @@ func (s *Summary) Print(out io.Writer, single bool) {
 	if single {
 		// No indent
 		fmt.Fprintf(out, "Name: %s\n", s.Name)
-		fmt.Fprintf(out, "\tPackages: %d\n", s.Packages)
-		fmt.Fprintf(out, "\t  Deltas: %d\n", s.Deltas)
-		fmt.Fprintf(out, "\t    Size: %d\n", s.Size)
+		if s.Packages.Valid {
+			fmt.Fprintf(out, "\tPackages: %d\n", s.Packages.Int64)
+		}
+		if s.Deltas.Valid {
+			fmt.Fprintf(out, "\t  Deltas: %d\n", s.Deltas.Int64)
+		}
+		if s.Size.Valid {
+			fmt.Fprintf(out, "\t    Size: %d\n", s.Size.Int64)
+		}
 		fmt.Fprintln(out)
 	} else {
 		// One Indent
 		fmt.Fprintf(out, "\tName: %s\n", s.Name)
-		fmt.Fprintf(out, "\t\tPackages: %d\n", s.Packages)
-		fmt.Fprintf(out, "\t\t  Deltas: %d\n", s.Deltas)
-		fmt.Fprintf(out, "\t\t    Size: %d\n", s.Size)
+		if s.Packages.Valid {
+			fmt.Fprintf(out, "\t\tPackages: %d\n", s.Packages.Int64)
+		}
+		if s.Deltas.Valid {
+			fmt.Fprintf(out, "\t\t  Deltas: %d\n", s.Deltas.Int64)
+		}
+		if s.Size.Valid {
+			fmt.Fprintf(out, "\t\t    Size: %d\n", s.Size.Int64)
+		}
 		fmt.Fprintln(out)
 	}
 }
@@ -58,6 +71,7 @@ type FullSummary []Summary
 
 // Print writes out a FullSummary in a human-readable format
 func (f FullSummary) Print(out io.Writer) {
+	fmt.Println("Repositories:")
 	for _, s := range f {
 		s.Print(out, false)
 	}

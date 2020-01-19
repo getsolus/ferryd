@@ -44,5 +44,41 @@ func OpenDB() *sqlx.DB {
 	db.MustExec(Schema)
 	db.MustExec(pkgs.Schema)
 	db.MustExec(releases.Schema)
+	err = defaultRepos(db)
+	if err != nil {
+		panic(err.Error())
+	}
 	return db
+}
+
+func defaultRepos(db *sqlx.DB) error {
+	var r *Repo
+	// start tx
+	tx, err := db.Beginx()
+	if err != nil {
+		return err
+	}
+	// get list of repos
+	rs, err := All(tx)
+	if err != nil {
+		goto CLEANUP
+	}
+	// Look for pool
+	for _, r = range rs {
+		if r.Name == "pool" {
+			goto CLEANUP
+		}
+	}
+	// Add pool repo
+	r = &Repo{
+		Name:           "pool",
+		InstantTransit: true,
+	}
+	err = r.Create(tx)
+CLEANUP:
+	if err != nil {
+		tx.Rollback()
+		return err
+	}
+	return tx.Commit()
 }

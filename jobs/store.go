@@ -75,8 +75,9 @@ func NewStore() (*Store, error) {
 // Close will clean up our private job database
 func (s *Store) Close() error {
 	if s.db != nil {
+		err := s.db.Close()
 		s.db = nil
-		return s.db.Close()
+		return err
 	}
 	return nil
 }
@@ -104,7 +105,8 @@ func (s *Store) Push(j *Job) (id int64, err error) {
 	s.Lock()
 	// Set Job parameters
 	j.Status = New
-	j.Created.Scan(time.Now().UTC())
+	j.Created.Time = time.Now().UTC()
+	j.Created.Valid = true
 	// Start a DB transaction
 	tx, err := s.db.Beginx()
 	if err != nil {
@@ -159,7 +161,8 @@ func (s *Store) Claim() (j *Job, err error) {
 	}
 	// claim the next job
 	s.next.Status = Running
-	s.next.Started.Scan(time.Now().UTC())
+	s.next.Started.Time = time.Now().UTC()
+	s.next.Started.Valid = true
 	// Start a DB transaction
 	tx, err = s.db.Beginx()
 	if err != nil {
@@ -193,7 +196,8 @@ func (s *Store) Retire(j *Job) error {
 		goto UNLOCK
 	}
 	// Mark as finished
-	j.Finished.Scan(time.Now().UTC())
+	j.Finished.Time = time.Now().UTC()
+	j.Finished.Valid = true
 	err = j.Save(tx)
 	if err != nil {
 		tx.Rollback()

@@ -53,7 +53,7 @@ func (c *Client) modifyRepo(id, action string) (j *jobs.Job, err error) {
 // ModifyRepo performs a modification to an existing repo
 func (l *Listener) ModifyRepo(ctx *fasthttp.RequestCtx) {
 	// Get the "left" query parameter as the repo name
-	id := ctx.UserValue("id").(string)
+	id := ctx.UserValue("left").(string)
 	if len(id) == 0 {
 		writeErrorString(ctx, "ID required when modifying repo", http.StatusBadRequest)
 		return

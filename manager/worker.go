@@ -72,6 +72,7 @@ func (w *Worker) Start() {
 		select {
 		case <-w.stop:
 			// Bail now, we've been told to go home
+			w.done <- true
 			return
 
 		case <-w.timer.C:

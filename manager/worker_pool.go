@@ -32,9 +32,10 @@ type Pool struct {
 // NewPool will return a new Pool with the specified number
 // of jobs. Note that "njobs" only refers to the number of *background jobs*,
 // the majority of operations will run sequentially
-func NewPool(manager *Manager, njobs int) *Pool {
+func NewPool(manager *Manager) *Pool {
 	// If we set to -1, we'll automatically set to half of the system core count
 	// because we use xz -T 2 (so twice the number of threads ..)
+	njobs := -1
 	if njobs < 0 {
 		njobs = runtime.NumCPU() / 2
 	}
