@@ -17,7 +17,6 @@
 package v1
 
 import (
-	"encoding/json"
 	"github.com/getsolus/ferryd/jobs"
 	"github.com/getsolus/ferryd/repo"
 	"github.com/valyala/fasthttp"
@@ -170,7 +169,12 @@ func (c *Client) Clone(src, dest string) (s *repo.Summary, j *jobs.Job, err erro
 		err = readError(resp.Body)
 		return
 	}
-	// Decode the body as a Job
-	err = json.NewDecoder(resp.Body).Decode(j)
+	// Read back the Job ID
+	jobID, err := readID(resp)
+	if err != nil {
+		return
+	}
+	// wait for job to complete
+	j, err = c.waitJob(jobID)
 	return
 }

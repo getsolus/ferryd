@@ -17,7 +17,6 @@
 package v1
 
 import (
-	"encoding/json"
 	"github.com/getsolus/ferryd/jobs"
 	"github.com/getsolus/ferryd/repo"
 	"github.com/valyala/fasthttp"
@@ -114,8 +113,13 @@ func (c *Client) Import(id string, instant bool) (r *repo.Summary, j *jobs.Job, 
 		err = readError(resp.Body)
 		return
 	}
-	// Decode the body as a Job
-	err = json.NewDecoder(resp.Body).Decode(j)
+	// Read and decode the Job ID for the newly created job
+	jobID, err := readID(resp)
+	if err != nil {
+		return
+	}
+	// wait for job to complete
+	j, err = c.waitJob(jobID)
 	return
 }
 
@@ -137,8 +141,13 @@ func (c *Client) Remove(id string) (j *jobs.Job, err error) {
 		err = readError(resp.Body)
 		return
 	}
-	// Decode the result as a Job
-	err = json.NewDecoder(resp.Body).Decode(j)
+	// Read and decode the Job ID for the newly created job
+	jobID, err := readID(resp)
+	if err != nil {
+		return
+	}
+	// wait for job to complete
+	j, err = c.waitJob(jobID)
 	return
 }
 
