@@ -43,9 +43,7 @@ func (m *Manager) Check(name string) (int, error) {
 		Src:  name,
 	}
 	// Add the job to the DB
-	id, err := m.store.Push(j)
-	// Return the new Job ID
-	return int(id), err
+	return m.store.Push(j)
 }
 
 // CheckExecute carries out a Check job
@@ -98,9 +96,7 @@ func (m *Manager) Create(name string, instant bool) (int, error) {
 		Max:  max,
 	}
 	// Add it to the DB
-	id, err := m.store.Push(j)
-	// Return the new Job ID
-	return int(id), err
+	return m.store.Push(j)
 }
 
 // CreateExecute carries out a Create job
@@ -110,12 +106,24 @@ func (m *Manager) CreateExecute(j *jobs.Job) error {
 		return errors.New("job is missing a destination repo")
 	}
 	// Create the repo directory
-	repoDir := append(config.Current.RepoPath(), j.Dst)
-	if err := os.Mkdir(filepath.Join(repoDir...), 00755); err != nil {
-		if os.IsExist(err) {
-			return fmt.Errorf("repo directory for '%s' already exists", j.Dst)
+	rp := filepath.Join(append(config.Current.RepoPath(), j.Dst)...)
+	if _, err := os.Stat(rp); err != nil {
+		if !os.IsNotExist(err) {
+			return fmt.Errorf("could not stat repo directory for '%s', reason: %s", j.Dst, err.Error())
 		}
-		return err
+		if err = os.Mkdir(rp, 00755); err != nil {
+			return fmt.Errorf("could not create repo directory for '%s', reason: %s", j.Dst, err.Error())
+		}
+	}
+	// Create the assets directory
+	ap := filepath.Join(append(config.Current.AssetPath(), j.Dst)...)
+	if _, err := os.Stat(ap); err != nil {
+		if !os.IsNotExist(err) {
+			return fmt.Errorf("could not stat assets directory for '%s', reason: %s", j.Dst, err.Error())
+		}
+		if err = os.Mkdir(ap, 00755); err != nil {
+			return fmt.Errorf("could not create assets directory for '%s', reason: %s", j.Dst, err.Error())
+		}
 	}
 	// Create the assets directory
 	assetsDir := filepath.Join(append(config.Current.AssetPath(), j.Dst)...)
@@ -155,9 +163,7 @@ func (m *Manager) Delta(name string) (int, error) {
 		Dst:  name,
 	}
 	// Add the job to the DB
-	id, err := m.store.Push(j)
-	// Return the ID of the new job
-	return int(id), err
+	return m.store.Push(j)
 }
 
 // DeltaExecute carries out a Delta job
@@ -205,9 +211,7 @@ func (m *Manager) DeltaPackage(dst, pkg string) (int, error) {
 		Pkg:  pkg,
 	}
 	// Add the job to the DB
-	id, err := m.store.Push(j)
-	// Return the ID of the new job
-	return int(id), err
+	return m.store.Push(j)
 }
 
 // DeltaPackageExecute carries out a DeltaPackage job
@@ -259,9 +263,7 @@ func (m *Manager) Import(name string, instant bool) (int, error) {
 		Max:  max,
 	}
 	// Insert the new job into the DB
-	id, err := m.store.Push(j)
-	// Return the job ID
-	return int(id), err
+	return m.store.Push(j)
 }
 
 // ImportExecute carries out an Import job
@@ -314,9 +316,7 @@ func (m *Manager) Index(name string) (int, error) {
 		Dst:  name,
 	}
 	// Add job to the DB
-	id, err := m.store.Push(j)
-	// Return the ID of the new job
-	return int(id), err
+	return m.store.Push(j)
 }
 
 // IndexExecute carries out an Index job
@@ -360,9 +360,7 @@ func (m *Manager) Remove(name string) (int, error) {
 		Src:  name,
 	}
 	// Add the job to the DB
-	id, err := m.store.Push(j)
-	// Get the ID of the new job
-	return int(id), err
+	return m.store.Push(j)
 }
 
 // RemoveExecute carries out a Remove job
@@ -406,9 +404,7 @@ func (m *Manager) Rescan(name string) (int, error) {
 		Src:  name,
 	}
 	// Add the job to the DB
-	id, err := m.store.Push(j)
-	// Return the ID of the new job
-	return int(id), err
+	return m.store.Push(j)
 }
 
 // RescanExecute carries out a Rescan job
@@ -456,9 +452,7 @@ func (m *Manager) TrimPackages(name string, max int) (int, error) {
 		Max:  max,
 	}
 	// Add the job to the DB
-	id, err := m.store.Push(j)
-	// Return the new job ID
-	return int(id), err
+	return m.store.Push(j)
 }
 
 // TrimPackagesExecute carries out a TrimPackages job
@@ -505,9 +499,7 @@ func (m *Manager) TrimObsoletes(name string) (int, error) {
 		Src:  name,
 	}
 	// Add the job to the DB
-	id, err := m.store.Push(j)
-	// Return the new job ID
-	return int(id), err
+	return m.store.Push(j)
 }
 
 // TrimObsoletesExecute carries out the TrimObsoletes job

@@ -21,6 +21,7 @@ import (
 	"github.com/getsolus/ferryd/repo/pkgs"
 	"github.com/getsolus/ferryd/repo/releases"
 	"github.com/jmoiron/sqlx"
+	"os"
 	"path/filepath"
 )
 
@@ -44,41 +45,25 @@ func OpenDB() *sqlx.DB {
 	db.MustExec(Schema)
 	db.MustExec(pkgs.Schema)
 	db.MustExec(releases.Schema)
-	err = defaultRepos(db)
-	if err != nil {
-		panic(err.Error())
-	}
-	return db
-}
-
-func defaultRepos(db *sqlx.DB) error {
-	var r *Repo
-	// start tx
-	tx, err := db.Beginx()
-	if err != nil {
-		return err
-	}
-	// get list of repos
-	rs, err := All(tx)
-	if err != nil {
-		goto CLEANUP
-	}
-	// Look for pool
-	for _, r = range rs {
-		if r.Name == "pool" {
-			goto CLEANUP
+	rp := filepath.Join(config.Current.RepoPath()...)
+	// Check that the repos directory exists
+	if _, err = os.Stat(rp); err != nil {
+		if !os.IsNotExist(err) {
+			panic(err.Error())
+		}
+		if err = os.Mkdir(rp, 0755); err != nil {
+			panic(err.Error())
 		}
 	}
-	// Add pool repo
-	r = &Repo{
-		Name:           "pool",
-		InstantTransit: true,
+	ap := filepath.Join(config.Current.AssetPath()...)
+	// Check that the assets directory exists
+	if _, err = os.Stat(ap); err != nil {
+		if !os.IsNotExist(err) {
+			panic(err.Error())
+		}
+		if err = os.Mkdir(ap, 0755); err != nil {
+			panic(err.Error())
+		}
 	}
-	err = r.Create(tx)
-CLEANUP:
-	if err != nil {
-		tx.Rollback()
-		return err
-	}
-	return tx.Commit()
+	return db
 }

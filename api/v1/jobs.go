@@ -21,6 +21,7 @@ import (
 	"fmt"
 	"github.com/getsolus/ferryd/jobs"
 	"github.com/valyala/fasthttp"
+	"io"
 	"net/http"
 	"strconv"
 )
@@ -28,7 +29,7 @@ import (
 // GetJob will request current information about a Job
 func (c *Client) GetJob(id int) (j *jobs.Job, err error) {
 	// Send the request
-	resp, err := c.client.Get(formURI(fmt.Sprintf("/api/v1/jobs/%d", id)))
+	resp, err := c.client.Get(formURI(fmt.Sprintf("api/v1/jobs/%d", id)))
 	if err != nil {
 		return
 	}
@@ -40,7 +41,11 @@ func (c *Client) GetJob(id int) (j *jobs.Job, err error) {
 	}
 	// Decode the body as a job
 	dec := json.NewDecoder(resp.Body)
+	j = &jobs.Job{}
 	err = dec.Decode(j)
+	if err == io.EOF {
+		err = nil
+	}
 	return
 }
 
@@ -60,7 +65,7 @@ func (l *Listener) GetJob(ctx *fasthttp.RequestCtx) {
 		return
 	}
 	// Encode the job as JSON in the HTTP body
-	enc := json.NewEncoder(ctx.Response.BodyWriter())
+	enc := json.NewEncoder(ctx)
 	err = enc.Encode(job)
 	if err != nil {
 		writeError(ctx, err, http.StatusInternalServerError)

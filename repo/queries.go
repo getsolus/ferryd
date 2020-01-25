@@ -20,7 +20,7 @@ package repo
 const Schema = `
 CREATE TABLE IF NOT EXISTS repos (
     id              INTEGER PRIMARY KEY,
-    name            STRING,
+    name            STRING UNIQUE,
     instant_transit BOOLEAN
 )
 `

@@ -1,20 +1,5 @@
 # Repos --- In-Progress
 
-## Create
-
-- [ ] Create Repo
-  - [x] Adding a repo to DB
-  - [x] Adding a repo to disk
-  - [ ] Create missing repos directory
-  - [ ] Use Create to add "pool" when missing
-  - [ ] Testing
-
-## Remove
-
-- [x] Remove Repo
-  - [x] Remove a repo from the DB
-  - [x] Remove all package for a repo from the DB
-
 ## Check
 
 - [ ] Check Repo
@@ -85,3 +70,19 @@
 ## List
 - [x] Summarize Repos
   - [x] Summarize Single Repo
+
+## Create
+
+- [x] Create Repo
+  - [x] Adding a repo to DB
+  - [x] Adding a repo to disk
+  - [x] Create missing repos directory
+  - [x] Use Create to add "pool" when missing
+  - [x] Testing
+
+## Remove
+
+- [x] Remove Repo
+  - [x] Remove a repo from the DB
+  - [x] Remove all package for a repo from the DB
+  - [x] Testing

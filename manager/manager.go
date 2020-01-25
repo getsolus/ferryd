@@ -43,6 +43,8 @@ func NewManager(store *jobs.Store) *Manager {
 	// Create and start the pool
 	manager.pool = NewPool(manager)
 	manager.pool.Begin()
+	// Create pool repo if missing
+	manager.Create("pool", true)
 	return manager
 }
 

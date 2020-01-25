@@ -17,7 +17,6 @@
 package v1
 
 import (
-	"bytes"
 	"encoding/json"
 	"github.com/getsolus/ferryd/repo"
 	"github.com/valyala/fasthttp"
@@ -47,10 +46,8 @@ func (l *Listener) Repos(ctx *fasthttp.RequestCtx) {
 		writeError(ctx, err, http.StatusInternalServerError)
 	}
 	// Encode as JSON in the response
-	buf := bytes.Buffer{}
-	if err := json.NewEncoder(&buf).Encode(&f); err != nil {
+	if err := json.NewEncoder(ctx).Encode(&f); err != nil {
 		writeError(ctx, err, http.StatusInternalServerError)
 		return
 	}
-	ctx.SetBody(buf.Bytes())
 }

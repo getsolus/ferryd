@@ -85,7 +85,7 @@ func (s *Store) Close() error {
 // GetJob retrieves a Job from the DB
 func (s *Store) GetJob(id int) (*Job, error) {
 	var j Job
-	err := s.db.Select(&j, getJob, id)
+	err := s.db.Get(&j, getJob, id)
 	return &j, err
 }
 
@@ -101,7 +101,7 @@ func (s *Store) UnclaimRunning() error {
 }
 
 // Push inserts a new Job into the queue
-func (s *Store) Push(j *Job) (id int64, err error) {
+func (s *Store) Push(j *Job) (id int, err error) {
 	s.Lock()
 	// Set Job parameters
 	j.Status = New
@@ -118,6 +118,7 @@ func (s *Store) Push(j *Job) (id int64, err error) {
 		tx.Rollback()
 		goto UNLOCK
 	}
+	id = j.ID
 	// Complete the transaction
 	err = tx.Commit()
 UNLOCK:
@@ -218,15 +219,13 @@ func (s *Store) Active() (List, error) {
 	// Get all new jobs
 	err := s.db.Select(&list, newJobs)
 	if err != nil {
-		err = fmt.Errorf("Failed to read new jobs, reason: '%s'", err.Error())
-		log.Errorln(err.Error())
+		log.Errorf("Failed to read new jobs, reason: '%s'", err.Error())
 		return nil, err
 	}
 	// Get All running jobs
 	err = s.db.Select(&list2, runningJobs)
 	if err != nil {
-		err = fmt.Errorf("Failed to read active jobs, reason: '%s'", err.Error())
-		log.Errorln(err.Error())
+		log.Errorf("Failed to read active jobs, reason: '%s'", err.Error())
 		return nil, err
 	}
 	// Append them together

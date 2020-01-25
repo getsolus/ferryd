@@ -47,9 +47,7 @@ func (m *Manager) CherryPick(src, dest, pkg string) (int, error) {
 		Pkg:  pkg,
 	}
 	// Add the job to the DB
-	id, err := m.store.Push(j)
-	// Return the id of the new Job
-	return int(id), err
+	return m.store.Push(j)
 }
 
 // CherryPickExecute carries out a CherryPick Job
@@ -115,9 +113,7 @@ func (m *Manager) Clone(src, dst string) (int, error) {
 		Dst:  dst,
 	}
 	// Add the job to the DB
-	id, err := m.store.Push(j)
-	// Return the ID of the new job
-	return int(id), err
+	return m.store.Push(j)
 }
 
 // CloneExecute carries out a clone job
@@ -146,9 +142,7 @@ func (m *Manager) Compare(left, right string) (int, error) {
 		Dst:  right,
 	}
 	// Add the job to the DB
-	id, err := m.store.Push(j)
-	// Return the id of the new Job
-	return int(id), err
+	return m.store.Push(j)
 }
 
 // CompareExecute carries out a Sync Job
@@ -211,9 +205,7 @@ func (m *Manager) Sync(src, dst string) (int, error) {
 		Dst:  dst,
 	}
 	// Add the job to the DB
-	id, err := m.store.Push(j)
-	// Return the id of the new job
-	return int(id), err
+	return m.store.Push(j)
 }
 
 // SyncExecute carries out a Sync job

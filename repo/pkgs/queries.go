@@ -57,9 +57,9 @@ INSERT INTO packages (
 
 const (
 	// Remove deletes a specific package entry with a repo_id and a release_id
-	Remove = "DELETE * FROM packages WHERE repo_id=:repo_id AND release_id=:release_id"
+	Remove = "DELETE FROM packages WHERE repo_id=:repo_id AND release_id=:release_id"
 	// RemoveByRepo all package entries for a given repo
-	RemoveByRepo = "DELETE * FROM packages WHERE repo_id=:repo_id"
+	RemoveByRepo = "DELETE FROM packages WHERE repo_id=:repo_id"
 	// RemoveByRelease all package entries for a fiven release
-	RemoveByRelease = "DELETE * FROM packages WHERE release_id=:release_id"
+	RemoveByRelease = "DELETE FROM packages WHERE release_id=:release_id"
 )

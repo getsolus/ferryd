@@ -40,8 +40,7 @@ func (m *Manager) TransitPackage(pkg string) (int, error) {
 		Pkg:  pkg,
 	}
 	// Add to the DB
-	id, err := m.store.Push(j)
-	return int(id), err
+	return m.store.Push(j)
 }
 
 // TransitPackageExecute carries out a TransitPackage job

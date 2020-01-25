@@ -17,8 +17,11 @@
 package repo
 
 import (
+	"github.com/getsolus/ferryd/config"
 	"github.com/getsolus/ferryd/repo/pkgs"
 	"github.com/jmoiron/sqlx"
+	"os"
+	"path/filepath"
 )
 
 // Repo is an entry in the Repo Table
@@ -30,12 +33,36 @@ type Repo struct {
 
 // Get retrieves a single repo by name
 func Get(tx *sqlx.Tx, name string) (r *Repo, err error) {
+	r = &Repo{}
+	// Get the DB entry
 	err = tx.Get(r, GetSingle, name)
+	if err != nil {
+		return
+	}
+	// Build a filepath
+	rp := filepath.Join(append(config.Current.RepoPath(), name)...)
+	// Create the repo directory if missing
+	if _, err = os.Stat(rp); err != nil {
+		if !os.IsNotExist(err) {
+			return
+		}
+		err = os.Mkdir(rp, 0755)
+	}
+	// Build a filepath
+	ap := filepath.Join(append(config.Current.AssetPath(), name)...)
+	// Create the repo directory if missing
+	if _, err = os.Stat(ap); err != nil {
+		if !os.IsNotExist(err) {
+			return
+		}
+		err = os.Mkdir(rp, 0755)
+	}
 	return
 }
 
 // All retrieves a list of all the repos in the DB
 func All(tx *sqlx.Tx) (rs []*Repo, err error) {
+	rs = make([]*Repo, 0)
 	err = tx.Select(&rs, GetAll)
 	return
 }
@@ -59,7 +86,7 @@ func (r *Repo) Remove(tx *sqlx.Tx) error {
 	// Remove Packages
 	_, err := tx.Exec(pkgs.RemoveByRepo, r.ID)
 	if err != nil {
-		return nil
+		return err
 	}
 	// Remove Repo record
 	_, err = tx.NamedExec(Remove, r)

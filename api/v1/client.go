@@ -62,7 +62,7 @@ func (c *Client) waitJob(id int) (j *jobs.Job, err error) {
 	start := time.Now()
 	for {
 		// wait
-		time.Sleep(5 * time.Second)
+		time.Sleep(time.Second)
 		// request
 		j, err = c.GetJob(id)
 		if err != nil {
