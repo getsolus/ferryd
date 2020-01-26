@@ -91,9 +91,9 @@ func (s *Store) GetJob(id int) (*Job, error) {
 
 // UnclaimRunning will find all claimed jobs and unclaim them again
 func (s *Store) UnclaimRunning() error {
+	var err error
 	s.Lock()
-	_, err := s.db.Exec(clearRunningJobs)
-	if err != nil {
+	if _, err = s.db.Exec(clearRunningJobs); err != nil {
 		err = fmt.Errorf("Failed to unclaim running jobs, reason: '%s'", err.Error())
 	}
 	s.Unlock()
@@ -113,8 +113,7 @@ func (s *Store) Push(j *Job) (id int, err error) {
 		goto UNLOCK
 	}
 	// Insert the New Job
-	err = j.Create(tx)
-	if err != nil {
+	if err = j.Create(tx); err != nil {
 		tx.Rollback()
 		goto UNLOCK
 	}
@@ -129,8 +128,7 @@ UNLOCK:
 func (s *Store) findNewJob() {
 	// get the currently runnign jobs
 	var active []Job
-	err := s.db.Select(&active, runningJobs)
-	if err != nil {
+	if err := s.db.Select(&active, runningJobs); err != nil {
 		return
 	}
 	// Check for serial jobs that are blocking
@@ -141,8 +139,7 @@ func (s *Store) findNewJob() {
 	}
 	// Otherwise, get the next available job
 	var next Job
-	err = s.db.Get(&next, nextJob)
-	if err != nil {
+	if err := s.db.Get(&next, nextJob); err != nil {
 		return
 	}
 	// Check if we are blocked by parallel jobs
@@ -170,14 +167,12 @@ func (s *Store) Claim() (j *Job, err error) {
 		goto UNLOCK
 	}
 	// Save the status change
-	err = s.next.Save(tx)
-	if err != nil {
+	if err = s.next.Save(tx); err != nil {
 		tx.Rollback()
 		goto UNLOCK
 	}
 	// Finish the transaction
-	err = tx.Commit()
-	if err != nil {
+	if err = tx.Commit(); err != nil {
 		goto UNLOCK
 	}
 	// find the next replacement job
@@ -199,8 +194,7 @@ func (s *Store) Retire(j *Job) error {
 	// Mark as finished
 	j.Finished.Time = time.Now().UTC()
 	j.Finished.Valid = true
-	err = j.Save(tx)
-	if err != nil {
+	if err = j.Save(tx); err != nil {
 		tx.Rollback()
 		goto UNLOCK
 	}
@@ -217,27 +211,25 @@ func (s *Store) Active() (List, error) {
 	var list List
 	var list2 List
 	// Get all new jobs
-	err := s.db.Select(&list, newJobs)
-	if err != nil {
+	if err := s.db.Select(&list, newJobs); err != nil {
 		log.Errorf("Failed to read new jobs, reason: '%s'", err.Error())
 		return nil, err
 	}
 	// Get All running jobs
-	err = s.db.Select(&list2, runningJobs)
-	if err != nil {
+	if err := s.db.Select(&list2, runningJobs); err != nil {
 		log.Errorf("Failed to read active jobs, reason: '%s'", err.Error())
 		return nil, err
 	}
 	// Append them together
 	list = append(list, list2...)
-	return list, err
+	return list, nil
 }
 
 // Completed will return all successfully completed jobs still stored
 func (s *Store) Completed() (List, error) {
 	var list List
-	err := s.db.Select(&list, completedJobs)
-	if err != nil {
+	var err error
+	if err = s.db.Select(&list, completedJobs); err != nil {
 		err = fmt.Errorf("Failed to read completed jobs, reason: '%s'", err.Error())
 	}
 	return list, err
@@ -246,8 +238,8 @@ func (s *Store) Completed() (List, error) {
 // Failed will return all failed jobs that are still stored
 func (s *Store) Failed() (List, error) {
 	var list List
-	err := s.db.Select(&list, failedJobs)
-	if err != nil {
+	var err error
+	if err = s.db.Select(&list, failedJobs); err != nil {
 		err = fmt.Errorf("Failed to read failed jobs, reason: '%s'", err.Error())
 	}
 	return list, err
@@ -256,8 +248,8 @@ func (s *Store) Failed() (List, error) {
 // ResetCompleted will remove all completion records from our store and reset the pointer
 func (s *Store) ResetCompleted() error {
 	s.Lock()
-	_, err := s.db.Exec(clearCompletedJobs)
-	if err != nil {
+	var err error
+	if _, err = s.db.Exec(clearCompletedJobs); err != nil {
 		err = fmt.Errorf("Failed to clear completed jobs, reason: '%s'", err.Error())
 	}
 	s.Unlock()
@@ -267,8 +259,8 @@ func (s *Store) ResetCompleted() error {
 // ResetFailed will remove all fail records from our store and reset the pointer
 func (s *Store) ResetFailed() error {
 	s.Lock()
-	_, err := s.db.Exec(clearFailedJobs)
-	if err != nil {
+	var err error
+	if _, err = s.db.Exec(clearFailedJobs); err != nil {
 		err = fmt.Errorf("Failed to clear failed jobs, reason: '%s'", err.Error())
 	}
 	s.Unlock()
@@ -278,8 +270,8 @@ func (s *Store) ResetFailed() error {
 // ResetQueued will remove all unexecuted records from our store and reset the pointer
 func (s *Store) ResetQueued() error {
 	s.Lock()
-	_, err := s.db.Exec(clearQueuedJobs)
-	if err != nil {
+	var err error
+	if _, err = s.db.Exec(clearQueuedJobs); err != nil {
 		err = fmt.Errorf("Failed to clear queued jobs, reason: '%s'", err.Error())
 	}
 	s.Unlock()

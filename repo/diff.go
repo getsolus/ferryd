@@ -96,8 +96,7 @@ func NewDiff(l, r, s []releases.Release) Diff {
 func (d *Diff) MarshalBinary() (data []byte, err error) {
 	buff := bytes.NewBuffer([]byte{})
 	enc := gob.NewEncoder(buff)
-	err = enc.Encode(d)
-	if err == nil {
+	if err = enc.Encode(d); err == nil {
 		data = buff.Bytes()
 	}
 	return

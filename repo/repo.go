@@ -19,8 +19,8 @@ package repo
 import (
 	"github.com/getsolus/ferryd/config"
 	"github.com/getsolus/ferryd/repo/pkgs"
+	"github.com/getsolus/ferryd/util"
 	"github.com/jmoiron/sqlx"
-	"os"
 	"path/filepath"
 )
 
@@ -35,27 +35,18 @@ type Repo struct {
 func Get(tx *sqlx.Tx, name string) (r *Repo, err error) {
 	r = &Repo{}
 	// Get the DB entry
-	err = tx.Get(r, GetSingle, name)
-	if err != nil {
+	if err = tx.Get(r, GetSingle, name); err != nil {
 		return
 	}
-	// Build a filepath
+	// Create the repo directory if missing
 	rp := filepath.Join(append(config.Current.RepoPath(), name)...)
-	// Create the repo directory if missing
-	if _, err = os.Stat(rp); err != nil {
-		if !os.IsNotExist(err) {
-			return
-		}
-		err = os.Mkdir(rp, 0755)
+	if err = util.CreateDir(rp); err != nil {
+		return
 	}
-	// Build a filepath
-	ap := filepath.Join(append(config.Current.AssetPath(), name)...)
 	// Create the repo directory if missing
-	if _, err = os.Stat(ap); err != nil {
-		if !os.IsNotExist(err) {
-			return
-		}
-		err = os.Mkdir(rp, 0755)
+	ap := filepath.Join(append(config.Current.AssetPath(), name)...)
+	if err = util.CreateDir(ap); err != nil {
+		return
 	}
 	return
 }
@@ -84,24 +75,21 @@ func (r *Repo) Create(tx *sqlx.Tx) error {
 // Remove deletes all of the DB records for this repo
 func (r *Repo) Remove(tx *sqlx.Tx) error {
 	// Remove Packages
-	_, err := tx.Exec(pkgs.RemoveByRepo, r.ID)
-	if err != nil {
+	if _, err := tx.Exec(pkgs.RemoveByRepo, r.ID); err != nil {
 		return err
 	}
 	// Remove Repo record
-	_, err = tx.NamedExec(Remove, r)
+	_, err := tx.NamedExec(Remove, r)
 	return err
 }
 
 // Summarize gets a summary for this repo
 func (r *Repo) Summarize(tx *sqlx.Tx) (s Summary, err error) {
 	s.Name = r.Name
-	err = tx.Get(&s.Packages, PackageCount, r.ID)
-	if err != nil {
+	if err = tx.Get(&s.Packages, PackageCount, r.ID); err != nil {
 		return
 	}
-	err = tx.Get(&s.Deltas, DeltaCount, r.ID)
-	if err != nil {
+	if err = tx.Get(&s.Deltas, DeltaCount, r.ID); err != nil {
 		return
 	}
 	err = tx.Get(&s.Size, GetSize, r.ID)

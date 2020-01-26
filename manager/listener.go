@@ -19,6 +19,7 @@ package manager
 import (
 	log "github.com/DataDrake/waterlog"
 	"github.com/getsolus/ferryd/manifest"
+	"github.com/getsolus/ferryd/util"
 	"github.com/radu-munteanu/fsnotify"
 	"os"
 	"path/filepath"
@@ -44,10 +45,8 @@ func NewListener(base []string, mgr *Manager) (tl *Listener, err error) {
 		done:    make(chan bool),
 	}
 	// Make sure the transit dir exists, creating it if missing
-	if _, err = os.Stat(tl.base); os.IsNotExist(err) {
-		if err = os.Mkdir(tl.base, 0755); err != nil {
-			return
-		}
+	if err = util.CreateDir(tl.base); err != nil {
+		return
 	}
 	// Create a watcher
 	tl.watcher, err = fsnotify.NewWatcher()

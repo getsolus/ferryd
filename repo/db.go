@@ -20,8 +20,8 @@ import (
 	"github.com/getsolus/ferryd/config"
 	"github.com/getsolus/ferryd/repo/pkgs"
 	"github.com/getsolus/ferryd/repo/releases"
+	"github.com/getsolus/ferryd/util"
 	"github.com/jmoiron/sqlx"
-	"os"
 	"path/filepath"
 )
 
@@ -45,25 +45,15 @@ func OpenDB() *sqlx.DB {
 	db.MustExec(Schema)
 	db.MustExec(pkgs.Schema)
 	db.MustExec(releases.Schema)
-	rp := filepath.Join(config.Current.RepoPath()...)
 	// Check that the repos directory exists
-	if _, err = os.Stat(rp); err != nil {
-		if !os.IsNotExist(err) {
-			panic(err.Error())
-		}
-		if err = os.Mkdir(rp, 0755); err != nil {
-			panic(err.Error())
-		}
+	rp := filepath.Join(config.Current.RepoPath()...)
+	if err = util.CreateDir(rp); err != nil {
+		panic(err.Error())
 	}
-	ap := filepath.Join(config.Current.AssetPath()...)
 	// Check that the assets directory exists
-	if _, err = os.Stat(ap); err != nil {
-		if !os.IsNotExist(err) {
-			panic(err.Error())
-		}
-		if err = os.Mkdir(ap, 0755); err != nil {
-			panic(err.Error())
-		}
+	ap := filepath.Join(config.Current.AssetPath()...)
+	if err = util.CreateDir(ap); err != nil {
+		panic(err.Error())
 	}
 	return db
 }

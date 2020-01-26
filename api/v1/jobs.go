@@ -42,8 +42,7 @@ func (c *Client) GetJob(id int) (j *jobs.Job, err error) {
 	// Decode the body as a job
 	dec := json.NewDecoder(resp.Body)
 	j = &jobs.Job{}
-	err = dec.Decode(j)
-	if err == io.EOF {
+	if err = dec.Decode(j); err == io.EOF {
 		err = nil
 	}
 	return
@@ -66,8 +65,7 @@ func (l *Listener) GetJob(ctx *fasthttp.RequestCtx) {
 	}
 	// Encode the job as JSON in the HTTP body
 	enc := json.NewEncoder(ctx)
-	err = enc.Encode(job)
-	if err != nil {
+	if err = enc.Encode(job); err != nil {
 		writeError(ctx, err, http.StatusInternalServerError)
 	}
 }

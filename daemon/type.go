@@ -18,8 +18,6 @@ package daemon
 
 import (
 	log "github.com/DataDrake/waterlog"
-	"github.com/DataDrake/waterlog/format"
-	"github.com/DataDrake/waterlog/level"
 	"github.com/coreos/go-systemd/daemon"
 	"github.com/getsolus/ferryd/api/v1"
 	"github.com/getsolus/ferryd/config"
@@ -65,8 +63,7 @@ func (s *Server) killHandler() {
 // Bind will attempt to set up the listener on the unix socket
 // prior to serving.
 func (s *Server) Bind() error {
-	e := s.lockFile.Lock()
-	if e != nil {
+	if e := s.lockFile.Lock(); e != nil {
 		return e
 	}
 	// Set up Job Store
@@ -94,10 +91,6 @@ func (s *Server) Bind() error {
 
 // Serve will continuously serve on the unix socket until dead
 func (s *Server) Serve() error {
-	// Set up waterlog
-	log.SetOutput(os.Stderr)
-	log.SetLevel(level.Debug)
-	log.SetFormat(format.Un)
 	s.running = true
 	s.killHandler()
 	// Serve the job queue

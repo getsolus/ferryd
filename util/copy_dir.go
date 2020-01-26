@@ -25,19 +25,12 @@ import (
 // CopyDir will copy the contents of the files from one directory to another
 func CopyDir(source, dest string, recursive bool) error {
 	var err error
-	var fi os.FileInfo
 	// Get details about the source directory
-	if fi, err = os.Stat(source); err != nil {
-		if !os.IsNotExist(err) {
-			return err
-		}
-		// Create destination directory
-		if err = os.Mkdir(dest, fi.Mode()); err != nil {
-			return err
-		}
+	if _, err = os.Stat(source); err != nil {
+		return err
 	}
-	// Set ownership
-	if err = os.Chown(dest, os.Getuid(), os.Getgid()); err != nil {
+	// Create destination directory
+	if err = CreateDir(dest); err != nil {
 		return err
 	}
 	// Get a list of files in the source directory

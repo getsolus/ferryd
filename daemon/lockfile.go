@@ -68,8 +68,7 @@ func (l *LockFile) Lock() error {
 			}
 			l.fd = w
 			// Read its contents
-			_, err = fmt.Fscanf(l.fd, "%d", &pid)
-			if err != nil {
+			if _, err = fmt.Fscanf(l.fd, "%d", &pid); err != nil {
 				return ErrDeadLockFile
 			}
 			// check if the PID matches the current process

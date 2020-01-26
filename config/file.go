@@ -18,7 +18,7 @@ package config
 
 import (
 	"encoding/json"
-	"log"
+	log "github.com/DataDrake/waterlog"
 	"os"
 	"path/filepath"
 )
@@ -28,8 +28,6 @@ const (
 	AssetSuffix = "assets"
 	// DeltaSuffix for delta creation
 	DeltaSuffix = "deltas"
-	// LogSuffix for log storage
-	LogSuffix = "logs"
 	// RepoSuffix for repo storage
 	RepoSuffix = "repos"
 	// TransitSuffix for incoming packages
@@ -75,31 +73,30 @@ func Load() error {
 	// Parse JSON
 	Current = &File{}
 	dec := json.NewDecoder(cFile)
-	err = dec.Decode(Current)
-	if err != nil {
+	if err = dec.Decode(Current); err != nil {
 		return err
 	}
 	// Validate Base Directory
 	if len(Current.BaseDir) == 0 {
 		Current.BaseDir = DefaultBaseDir
-		log.Printf("No BaseDir specified. Using default: %s\n", DefaultBaseDir)
+		log.Warnf("No BaseDir specified. Using default: %s\n", DefaultBaseDir)
 	}
 	Current.basePath = filepath.SplitList(Current.BaseDir)
 	// Validate Build Directory
 	if len(Current.BuildDir) == 0 {
 		Current.BuildDir = DefaultBuildDir
-		log.Printf("No BuildDir specified. Using default: %s\n", DefaultBuildDir)
+		log.Warnf("No BuildDir specified. Using default: %s\n", DefaultBuildDir)
 	}
 	Current.buildPath = filepath.SplitList(Current.BuildDir)
 	// Validate Lock File
 	if len(Current.LockFile) == 0 {
 		Current.LockFile = DefaultLockFile
-		log.Printf("No Lockfile specified. Using default: %s\n", DefaultLockFile)
+		log.Warnf("No Lockfile specified. Using default: %s\n", DefaultLockFile)
 	}
 	// Validate Socket
 	if len(Current.Socket) == 0 {
 		Current.Socket = DefaultSocket
-		log.Printf("No Socket specified. Using default: %s\n", DefaultSocket)
+		log.Warnf("No Socket specified. Using default: %s\n", DefaultSocket)
 	}
 	return nil
 }
@@ -118,11 +115,6 @@ func (f *File) AssetPath() []string {
 // DeltaPath for delta creation
 func (f *File) DeltaPath() []string {
 	return append(f.buildPath, DeltaSuffix)
-}
-
-// LogPath for log storage
-func (f *File) LogPath() []string {
-	return append(f.basePath, LogSuffix)
 }
 
 // RepoPath for repo storage

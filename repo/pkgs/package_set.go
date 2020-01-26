@@ -41,8 +41,7 @@ func GetSet(tx *sqlx.Tx, pkg, repo string) (ps *PackageSet, err error) {
 	}
 	// Get All Releases
 	var rs []releases.Release
-	err = tx.Get(&rs, PackageReleases, repo, pkg)
-	if err != nil {
+	if err = tx.Get(&rs, PackageReleases, repo, pkg); err != nil {
 		return
 	}
 	// Sort Releases into Release Sets

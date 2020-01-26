@@ -96,7 +96,7 @@ func (w *Worker) Start() {
 
 			// Report failure in retiring the job
 			if err != nil {
-				log.Error("Error in retiring job '%v' of type '%v', reason: '%s'\n", job.ID, job.Type, err.Error())
+				log.Errorf("Error in retiring job '%v' of type '%v', reason: '%s'\n", job.ID, job.Type, err.Error())
 			}
 
 			// We had a job, so we must reset the timeout period

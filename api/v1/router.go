@@ -63,8 +63,7 @@ func NewListener(store *jobs.Store, mgr *manager.Manager) (api *Listener, err er
 	// Set up the API bits
 	// Daemon Management
 	r.GET("/api/v1/status", api.Status)
-	r.PATCH("/api/v1/daemon", api.ModifyDaemon) // restart only, for now
-	r.DELETE("/api/v1/daemon", api.StopDaemon)
+	r.PATCH("/api/v1/daemon", api.ModifyDaemon) // useless for now
 
 	// Repo management
 	r.GET("/api/v1/repos", api.Repos)             // Summaries of all repos

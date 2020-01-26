@@ -107,23 +107,13 @@ func (m *Manager) CreateExecute(j *jobs.Job) error {
 	}
 	// Create the repo directory
 	rp := filepath.Join(append(config.Current.RepoPath(), j.Dst)...)
-	if _, err := os.Stat(rp); err != nil {
-		if !os.IsNotExist(err) {
-			return fmt.Errorf("could not stat repo directory for '%s', reason: %s", j.Dst, err.Error())
-		}
-		if err = os.Mkdir(rp, 00755); err != nil {
-			return fmt.Errorf("could not create repo directory for '%s', reason: %s", j.Dst, err.Error())
-		}
+	if err := util.CreateDir(rp); err != nil {
+		return err
 	}
 	// Create the assets directory
 	ap := filepath.Join(append(config.Current.AssetPath(), j.Dst)...)
-	if _, err := os.Stat(ap); err != nil {
-		if !os.IsNotExist(err) {
-			return fmt.Errorf("could not stat assets directory for '%s', reason: %s", j.Dst, err.Error())
-		}
-		if err = os.Mkdir(ap, 00755); err != nil {
-			return fmt.Errorf("could not create assets directory for '%s', reason: %s", j.Dst, err.Error())
-		}
+	if err := util.CreateDir(ap); err != nil {
+		return err
 	}
 	// Create the assets directory
 	assetsDir := filepath.Join(append(config.Current.AssetPath(), j.Dst)...)

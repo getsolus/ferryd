@@ -14,26 +14,25 @@
 // limitations under the License.
 //
 
-package v1
+package util
 
 import (
 	"fmt"
-	"github.com/valyala/fasthttp"
-	"net/http"
+	"os"
 )
 
-// ModifyDaemon makes a requested change to the daemon
-func (l *Listener) ModifyDaemon(ctx *fasthttp.RequestCtx) {
-	// Get the "action" query argument
-	action := string(ctx.QueryArgs().Peek("action"))
-	if len(action) == 0 {
-		writeErrorString(ctx, "Action not specified when modifying daemon", http.StatusBadRequest)
-		return
+// CreateDir makes a directory if it doesn't exist
+func CreateDir(path string) error {
+	if _, err := os.Stat(path); err != nil {
+		if !os.IsNotExist(err) {
+			return fmt.Errorf("could not stat directory '%s', reason: %s", path, err.Error())
+		}
+		if err = os.Mkdir(path, 0755); err != nil {
+			return fmt.Errorf("could not create directory '%s', reason: %s", path, err.Error())
+		}
 	}
-	// Pivot by action
-	switch action {
-	default:
-		writeErrorString(ctx, fmt.Sprintf("Action '%s' not implemented for the daemon", action), http.StatusBadRequest)
+	if err := os.Chown(path, os.Getuid(), os.Getgid()); err != nil {
+		return fmt.Errorf("failed to set directory ownership, reason: %s", err.Error())
 	}
-	return
+	return nil
 }

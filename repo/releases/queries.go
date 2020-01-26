@@ -26,7 +26,8 @@ CREATE TABLE IF NOT EXISTS releases (
     hash         TEXT,
     release      INTEGER,
     from_release INTEGER,
-    meta         BLOB
+    meta         BLOB,
+	UNIQUE(package,release,from_release)
 )
 `
 

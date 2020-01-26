@@ -1,3 +1,27 @@
+# CLI
+
+- [ ] check
+- [ ] cherry-pick
+- [ ] clone
+- [ ] compare
+- [x] create-repo
+- [x] daemon
+- [ ] delta
+- [x] help
+- [ ] import
+- [ ] index
+- [x] list-repo
+- [x] remove-repo
+- [ ] rescan
+- [x] reset-completed
+- [x] reset-failed
+- [x] reset-queued
+- [x] status
+- [ ] sync
+- [ ] trim-obsoletes
+- [ ] trim-packages
+- [x] version
+
 # Repos --- In-Progress
 
 ## Check
@@ -86,3 +110,4 @@
   - [x] Remove a repo from the DB
   - [x] Remove all package for a repo from the DB
   - [x] Testing
+

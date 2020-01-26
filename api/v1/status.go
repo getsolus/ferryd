@@ -172,7 +172,7 @@ func (s StatusResponse) printCurrent(out io.Writer) {
 func (s StatusResponse) Print(out io.Writer) {
 	// Print daemon statistics
 	fmt.Fprintf(out, " - Daemon uptime: %v\n", s.Uptime())
-	fmt.Fprintf(out, " - Daemon version: %v\n", s.Version)
+	fmt.Fprintf(out, " - Daemon version: %v\n\n", s.Version)
 	// Print jobs
 	s.printFailed(out)
 	println()

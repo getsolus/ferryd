@@ -44,7 +44,20 @@ func NewManager(store *jobs.Store) *Manager {
 	manager.pool = NewPool(manager)
 	manager.pool.Begin()
 	// Create pool repo if missing
-	manager.Create("pool", true)
+	f, err := manager.Repos()
+	if err != nil {
+		panic(err.Error())
+	}
+	found := false
+	for _, s := range f {
+		if s.Name == "pool" {
+			found = true
+			break
+		}
+	}
+	if !found {
+		manager.Create("pool", true)
+	}
 	return manager
 }
 

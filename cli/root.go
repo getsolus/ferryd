@@ -42,8 +42,6 @@ func init() {
 	Root.RegisterCMD(Status)
 	// Daemon
 	Root.RegisterCMD(Daemon)
-	Root.RegisterCMD(Stop)
-	Root.RegisterCMD(Restart)
 	// Job Management
 	Root.RegisterCMD(ResetCompleted)
 	Root.RegisterCMD(ResetFailed)
