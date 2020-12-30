@@ -58,15 +58,29 @@ func (c *Client) Close() {
 	c.client.Transport.(*http.Transport).CloseIdleConnections()
 }
 
-// waitJob retries periodically to read back a job.
-func (c *Client) waitJob(id int) (j *jobs.Job, err error) {
+// runJob creates a job and then retries periodically to read back a job.
+func (c *Client) runJob(req *http.Request) (j *jobs.Job, err error) {
+	resp, err := c.client.Do(req)
+	if err != nil {
+		return
+	}
+	defer resp.Body.Close()
+	// Check for failure
+	if resp.StatusCode != http.StatusOK {
+		err = readError(resp.Body)
+		return
+	}
+	// Read back the Job ID
+	id, err := readID(resp)
+	if err != nil {
+		return
+	}
 	start := time.Now()
 	for {
 		// wait
 		time.Sleep(time.Second)
 		// request
-		j, err = c.GetJob(id)
-		if err != nil {
+		if j, err = c.GetJob(id); err != nil {
 			return
 		}
 		// Stop if job is finished
@@ -77,10 +91,9 @@ func (c *Client) waitJob(id int) (j *jobs.Job, err error) {
 	}
 }
 
-// waitDiff retries periodically to read back a job with a diff as the result
-func (c *Client) waitDiff(id int) (d *repo.Diff, j *jobs.Job, err error) {
-	j, err = c.waitJob(id)
-	if err != nil {
+// runDiff creates and retries periodically to read back a job with a diff as the result
+func (c *Client) runDiff(req *http.Request) (d *repo.Diff, j *jobs.Job, err error) {
+	if j, err = c.runJob(req); err != nil {
 		return
 	}
 	if err = d.UnmarshalBinary(j.Results); err != nil {

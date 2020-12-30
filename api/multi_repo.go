@@ -34,19 +34,8 @@ func (c *Client) CherryPick(left, right, pkg string) (d *repo.Diff, j *jobs.Job,
 	q := req.URL.Query()
 	q.Add("package", pkg)
 	req.URL.RawQuery = q.Encode()
-	// Send the request
-	resp, err := c.client.Do(req)
-	if err != nil {
-		return
-	}
-	defer resp.Body.Close()
-	// Read back the Job ID
-	jobID, err := readID(resp)
-	if err != nil {
-		return
-	}
 	// wait for job to complete
-	d, j, err = c.waitDiff(jobID)
+	d, j, err = c.runDiff(req)
 	return
 }
 
@@ -78,19 +67,8 @@ func (c *Client) Compare(left, right string) (d *repo.Diff, j *jobs.Job, err err
 	if err != nil {
 		return
 	}
-	// Send the request
-	resp, err := c.client.Do(req)
-	if err != nil {
-		return
-	}
-	defer resp.Body.Close()
-	// Read back the job ID
-	jobID, err := readID(resp)
-	if err != nil {
-		return
-	}
 	// wait for job to complete
-	d, j, err = c.waitDiff(jobID)
+	d, j, err = c.runDiff(req)
 	return
 }
 
@@ -116,19 +94,8 @@ func (c *Client) Sync(src, dst string) (d *repo.Diff, j *jobs.Job, err error) {
 	if err != nil {
 		return
 	}
-	// Send the request
-	resp, err := c.client.Do(req)
-	if err != nil {
-		return
-	}
-	defer resp.Body.Close()
-	// Read back the Job ID
-	jobID, err := readID(resp)
-	if err != nil {
-		return
-	}
 	// wait for job to complete
-	d, j, err = c.waitDiff(jobID)
+	d, j, err = c.runDiff(req)
 	return
 }
 
@@ -158,23 +125,7 @@ func (c *Client) Clone(src, dest string) (s *repo.Summary, j *jobs.Job, err erro
 	q := req.URL.Query()
 	q.Add("clone", src)
 	req.URL.RawQuery = q.Encode()
-	// Send the request
-	resp, err := c.client.Do(req)
-	if err != nil {
-		return
-	}
-	defer resp.Body.Close()
-	// Check for failure
-	if resp.StatusCode != http.StatusOK {
-		err = readError(resp.Body)
-		return
-	}
-	// Read back the Job ID
-	jobID, err := readID(resp)
-	if err != nil {
-		return
-	}
 	// wait for job to complete
-	j, err = c.waitJob(jobID)
+	j, err = c.runJob(req)
 	return
 }

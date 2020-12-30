@@ -35,19 +35,8 @@ func (c *Client) modifyRepo(id, action string) (j *jobs.Job, err error) {
 	q := req.URL.Query()
 	q.Add("action", action)
 	req.URL.RawQuery = q.Encode()
-	// execute request
-	resp, err := c.client.Do(req)
-	if err != nil {
-		return
-	}
-	defer resp.Body.Close()
-	// Read and decode the Job ID for the newly created job
-	jobID, err := readID(resp)
-	if err != nil {
-		return
-	}
 	// wait for job to complete
-	j, err = c.waitJob(jobID)
+	j, err = c.runJob(req)
 	return
 }
 
@@ -152,18 +141,7 @@ func (c *Client) TrimPackages(id string, maxKeep int) (d *repo.Diff, j *jobs.Job
 	q.Add("action", "trim-packages")
 	q.Add("max", strconv.Itoa(maxKeep))
 	req.URL.RawQuery = q.Encode()
-	// execute request
-	resp, err := c.client.Do(req)
-	if err != nil {
-		return
-	}
-	defer resp.Body.Close()
-	// Read and decode the Job ID for the newly created job
-	jobID, err := readID(resp)
-	if err != nil {
-		return
-	}
 	// wait for job to complete
-	d, j, err = c.waitDiff(jobID)
+	d, j, err = c.runDiff(req)
 	return
 }

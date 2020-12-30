@@ -58,8 +58,8 @@ func (l *Listener) GetJob(ctx *fasthttp.RequestCtx) {
 		return
 	}
 	// Retrieve the Job from the database
-	var job *jobs.Job
-	if job, err = l.store.GetJob(id); err != nil {
+	job, err := l.store.GetJob(id)
+	if err != nil {
 		writeError(ctx, err, http.StatusNotFound)
 		return
 	}

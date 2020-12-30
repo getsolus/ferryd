@@ -38,24 +38,8 @@ func (c *Client) Create(id string, instant bool) (j *jobs.Job, err error) {
 	q := req.URL.Query()
 	q.Add("instant", i)
 	req.URL.RawQuery = q.Encode()
-	// Send the request
-	resp, err := c.client.Do(req)
-	if err != nil {
-		return
-	}
-	defer resp.Body.Close()
-	// Check for failure
-	if resp.StatusCode != http.StatusOK {
-		err = readError(resp.Body)
-		return
-	}
-	// Read and decode the Job ID for the newly created job
-	jobID, err := readID(resp)
-	if err != nil {
-		return
-	}
 	// wait for job to complete
-	j, err = c.waitJob(jobID)
+	j, err = c.runJob(req)
 	return
 }
 
@@ -102,24 +86,8 @@ func (c *Client) Import(id string, instant bool) (r *repo.Summary, j *jobs.Job, 
 	q.Add("import", "true")
 	q.Add("instant", i)
 	req.URL.RawQuery = q.Encode()
-	// Send the request
-	resp, err := c.client.Do(req)
-	if err != nil {
-		return
-	}
-	defer resp.Body.Close()
-	// Check for failure
-	if resp.StatusCode != http.StatusOK {
-		err = readError(resp.Body)
-		return
-	}
-	// Read and decode the Job ID for the newly created job
-	jobID, err := readID(resp)
-	if err != nil {
-		return
-	}
 	// wait for job to complete
-	j, err = c.waitJob(jobID)
+	j, err = c.runJob(req)
 	return
 }
 
@@ -130,24 +98,8 @@ func (c *Client) Remove(id string) (j *jobs.Job, err error) {
 	if err != nil {
 		return
 	}
-	// Send the request
-	resp, err := c.client.Do(req)
-	if err != nil {
-		return
-	}
-	defer resp.Body.Close()
-	// Check for failure
-	if resp.StatusCode != http.StatusOK {
-		err = readError(resp.Body)
-		return
-	}
-	// Read and decode the Job ID for the newly created job
-	jobID, err := readID(resp)
-	if err != nil {
-		return
-	}
 	// wait for job to complete
-	j, err = c.waitJob(jobID)
+	j, err = c.runJob(req)
 	return
 }
 

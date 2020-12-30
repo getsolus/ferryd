@@ -69,12 +69,10 @@ func (s StatusResponse) printFailed(out io.Writer) {
 	})
 	table.SetBorder(false)
 	// Print the 10 most recent failures
-	i := 0
-	for _, j := range s.Failed {
+	for i, j := range s.Failed {
 		if i >= 10 {
 			break
 		}
-		i++
 		table.Append([]string{
 			"failed",
 			j.Finished.Time.Format(time.RFC3339),
@@ -111,7 +109,6 @@ func (s StatusResponse) printCompleted(out io.Writer) {
 		if i >= 9 {
 			break
 		}
-		i++
 		table.Append([]string{
 			"completed",
 			j.Finished.Time.Format(time.RFC3339),
@@ -143,12 +140,10 @@ func (s StatusResponse) printCurrent(out io.Writer) {
 	})
 	table.SetBorder(false)
 	// Print the 10 most recently queued jobs
-	i := 0
-	for _, j := range s.Current {
+	for i, j := range s.Current {
 		if i >= 10 {
 			break
 		}
-		i++
 		if j.Status == jobs.Running {
 			table.Append([]string{
 				"running",
@@ -204,12 +199,12 @@ func (l *Listener) Status(ctx *fasthttp.RequestCtx) {
 		Version:     Version,
 	}
 	// Add the active jobs
-	jo, err := l.store.Active()
+	aj, err := l.store.Active()
 	if err != nil {
 		writeError(ctx, err, http.StatusInternalServerError)
 		return
 	}
-	ret.Current = jo
+	ret.Current = aj
 	// Add the failed jobs
 	fj, err := l.store.Failed()
 	if err != nil {
