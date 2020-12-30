@@ -18,7 +18,6 @@ package core
 
 import (
 	"crypto/sha1"
-	"crypto/sha256"
 	"encoding/hex"
 	"github.com/getsolus/ferryd/util"
 	"github.com/getsolus/libeopkg/archive"
@@ -28,19 +27,6 @@ import (
 	"os"
 	"path/filepath"
 )
-
-// LinkOrCopyFile is a helper which will initially try to hard link,
-// however if we hit an error (because we tried a cross-filesystem hardlink)
-// we'll try to copy instead.
-func LinkOrCopyFile(source, dest string, forceCopy bool) error {
-	if forceCopy {
-		return util.CopyFile(source, dest)
-	}
-	if os.Link(source, dest) == nil {
-		return nil
-	}
-	return util.CopyFile(source, dest)
-}
 
 // RemovePackageParents will try to remove the leading components of
 // a package file, only if they are empty.
@@ -68,6 +54,11 @@ func RemovePackageParents(path string) error {
 	return nil
 }
 
+// FileSHA1Sum is a quick wrapper to grab the sha1sum for the given file
+func FileSHA1Sum(path string) (string, error) {
+	return hashFile(path, sha1.New())
+}
+
 func hashFile(path string, h hash.Hash) (sum string, err error) {
 	mfile, err := os.Open(path)
 	if err != nil {
@@ -83,36 +74,6 @@ func hashFile(path string, h hash.Hash) (sum string, err error) {
 	return
 }
 
-// FileSHA1Sum is a quick wrapper to grab the sha1sum for the given file
-func FileSHA1Sum(path string) (string, error) {
-	return hashFile(path, sha1.New())
-}
-
-// FileSHA256Sum is a quick wrapper to grab the sha256sum for the given file
-func FileSHA256Sum(path string) (string, error) {
-	return hashFile(path, sha256.New())
-}
-
-// WriteSHA1Sum will take the sha1sum of the input path and then dump it to
-// the given output path
-func WriteSHA1Sum(inpPath, outPath string) error {
-	hash, err := FileSHA1Sum(inpPath)
-	if err != nil {
-		return err
-	}
-	return ioutil.WriteFile(outPath, []byte(hash), 00644)
-}
-
-// WriteSHA256Sum will take the sha256sum of the input path and then dump it to
-// the given output path
-func WriteSHA256Sum(inpPath, outPath string) error {
-	hash, err := FileSHA256Sum(inpPath)
-	if err != nil {
-		return err
-	}
-	return ioutil.WriteFile(outPath, []byte(hash), 00644)
-}
-
 // ProduceDelta will attempt to batch the delta production between the
 // two listed file paths and then copy it into the final targetPath
 func ProduceDelta(tmpDir, oldPackage, newPackage, targetPath string) error {
@@ -125,9 +86,20 @@ func ProduceDelta(tmpDir, oldPackage, newPackage, targetPath string) error {
 	if err != nil {
 		return err
 	}
-
 	// Always nuke the tmpfile
 	defer os.Remove(path)
-
 	return LinkOrCopyFile(path, targetPath, false)
+}
+
+// LinkOrCopyFile is a helper which will initially try to hard link,
+// however if we hit an error (because we tried a cross-filesystem hardlink)
+// we'll try to copy instead.
+func LinkOrCopyFile(source, dest string, forceCopy bool) error {
+	if forceCopy {
+		return util.CopyFile(source, dest)
+	}
+	if os.Link(source, dest) == nil {
+		return nil
+	}
+	return util.CopyFile(source, dest)
 }
