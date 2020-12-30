@@ -24,13 +24,12 @@ import (
 
 // CopyDir will copy the contents of the files from one directory to another
 func CopyDir(source, dest string, recursive bool) error {
-	var err error
 	// Get details about the source directory
-	if _, err = os.Stat(source); err != nil {
+	if _, err := os.Stat(source); err != nil {
 		return err
 	}
 	// Create destination directory
-	if err = CreateDir(dest); err != nil {
+	if err := CreateDir(dest); err != nil {
 		return err
 	}
 	// Get a list of files in the source directory

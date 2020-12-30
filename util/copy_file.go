@@ -21,23 +21,22 @@ import (
 	"os"
 )
 
-func actualCopyFile(source, dest string, st os.FileInfo) error {
-	var err error
+func actualCopyFile(source, dest string, st os.FileInfo) (err error) {
 	var src *os.File
 	var dst *os.File
 	// Open the source file for reading
 	if src, err = os.Open(source); err != nil {
-		return err
+		return
 	}
 	defer src.Close()
 	// Open the destination file for writing
 	if dst, err = os.OpenFile(dest, os.O_TRUNC|os.O_CREATE|os.O_WRONLY, st.Mode()); err != nil {
-		return err
+		return
 	}
 	// Copy the file contents
 	if _, err = io.Copy(dst, src); err != nil {
 		dst.Close()
-		return err
+		return
 	}
 	// Set the user and group ownership
 	dst.Chown(os.Getuid(), os.Getgid())
@@ -50,12 +49,10 @@ func actualCopyFile(source, dest string, st os.FileInfo) error {
 
 // CopyFile will copy the file and permissions to the new target
 func CopyFile(source, dest string) error {
-	var err error
 	var st os.FileInfo
-
 	// Get the details for the source file
 	if st, err = os.Stat(source); err != nil {
-		return nil
+		return err
 	}
 	return actualCopyFile(source, dest, st)
 }
