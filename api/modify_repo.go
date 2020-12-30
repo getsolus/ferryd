@@ -19,6 +19,7 @@ package v1
 import (
 	"fmt"
 	"github.com/getsolus/ferryd/jobs"
+	"github.com/getsolus/ferryd/repo"
 	"github.com/valyala/fasthttp"
 	"net/http"
 	"strconv"
@@ -47,6 +48,16 @@ func (c *Client) modifyRepo(id, action string) (j *jobs.Job, err error) {
 	}
 	// wait for job to complete
 	j, err = c.waitJob(jobID)
+	return
+}
+
+func (c *Client) modifyDiff(id, action string) (d *repo.Diff, j *jobs.Job, err error) {
+	if j, err = c.modifyRepo(id, action); err != nil {
+		return
+	}
+	if err = d.UnmarshalBinary(j.Results); err != nil {
+		err = fmt.Errorf("error while decoding diff: %v", err)
+	}
 	return
 }
 
@@ -105,13 +116,13 @@ func (l *Listener) ModifyRepo(ctx *fasthttp.RequestCtx) {
 }
 
 // Check will compare a repo on disk with the DB
-func (c *Client) Check(id string) (*jobs.Job, error) {
-	return c.modifyRepo(id, "check")
+func (c *Client) Check(id string) (d *repo.Diff, j *jobs.Job, err error) {
+	return c.modifyDiff(id, "check")
 }
 
 // Delta will generate missing metas in a given repo
-func (c *Client) Delta(id string) (j *jobs.Job, err error) {
-	return c.modifyRepo(id, "delta")
+func (c *Client) Delta(id string) (d *repo.Diff, j *jobs.Job, err error) {
+	return c.modifyDiff(id, "delta")
 }
 
 // Index will attempt to index a repository in the daemon
@@ -120,12 +131,17 @@ func (c *Client) Index(id string) (j *jobs.Job, err error) {
 }
 
 // Rescan will ask ferryd to re-import a repository from disk
-func (c *Client) Rescan(id string) (j *jobs.Job, err error) {
-	return c.modifyRepo(id, "rescan")
+func (c *Client) Rescan(id string) (d *repo.Diff, j *jobs.Job, err error) {
+	return c.modifyDiff(id, "rescan")
+}
+
+// TrimObsoletes will request that all packages marked obsolete are removed
+func (c *Client) TrimObsoletes(id string) (d *repo.Diff, j *jobs.Job, err error) {
+	return c.modifyDiff(id, "trim-obsoletes")
 }
 
 // TrimPackages will request that packages in the repo are trimmed to maxKeep
-func (c *Client) TrimPackages(id string, maxKeep int) (j *jobs.Job, err error) {
+func (c *Client) TrimPackages(id string, maxKeep int) (d *repo.Diff, j *jobs.Job, err error) {
 	// Create a new request
 	req, err := http.NewRequest("PATCH", formURI("api/v1/repos/"+id), nil)
 	if err != nil {
@@ -148,11 +164,6 @@ func (c *Client) TrimPackages(id string, maxKeep int) (j *jobs.Job, err error) {
 		return
 	}
 	// wait for job to complete
-	j, err = c.waitJob(jobID)
+	d, j, err = c.waitDiff(jobID)
 	return
-}
-
-// TrimObsoletes will request that all packages marked obsolete are removed
-func (c *Client) TrimObsoletes(id string) (j *jobs.Job, err error) {
-	return c.modifyRepo(id, "trim-obsoletes")
 }

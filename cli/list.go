@@ -20,7 +20,6 @@ import (
 	"fmt"
 	"github.com/DataDrake/cli-ng/cmd"
 	"github.com/getsolus/ferryd/api"
-	"github.com/getsolus/ferryd/repo"
 	"os"
 )
 
@@ -45,9 +44,8 @@ func ListRun(r *cmd.RootCMD, c *cmd.CMD) {
 	client := v1.NewClient(flags.Socket)
 	defer client.Close()
 	// Request a summary
-	var f repo.FullSummary
-	var err error
-	if f, err = client.Repos(); err != nil {
+	f, err := client.Repos()
+	if err != nil {
 		fmt.Fprintf(os.Stderr, "Error while listing repos: %v\n", err)
 		os.Exit(1)
 	}

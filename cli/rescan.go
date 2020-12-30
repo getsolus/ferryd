@@ -20,7 +20,6 @@ import (
 	"fmt"
 	"github.com/DataDrake/cli-ng/cmd"
 	"github.com/getsolus/ferryd/api"
-	"github.com/getsolus/ferryd/repo"
 	"os"
 )
 
@@ -47,19 +46,13 @@ func RescanRun(r *cmd.RootCMD, c *cmd.CMD) {
 	client := v1.NewClient(flags.Socket)
 	defer client.Close()
 	// Run the job
-	j, err := client.Rescan(args.Repo)
+	d, j, err := client.Rescan(args.Repo)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Error while rescanning repo: %v\n", err)
 		os.Exit(1)
 	}
 	// print the job summary
 	j.Print()
-	// Decode the Diff
-	var d *repo.Diff
-	if err = d.UnmarshalBinary(j.Results); err != nil {
-		fmt.Fprintf(os.Stderr, "Error while decoding diff: %v\n", err)
-		os.Exit(1)
-	}
 	// Print the diff
 	d.Print(os.Stdout, false, !flags.NoColor)
 }

@@ -20,7 +20,6 @@ import (
 	"fmt"
 	"github.com/DataDrake/cli-ng/cmd"
 	"github.com/getsolus/ferryd/api"
-	"github.com/getsolus/ferryd/jobs"
 	"os"
 )
 
@@ -47,9 +46,8 @@ func RemoveRun(r *cmd.RootCMD, c *cmd.CMD) {
 	client := v1.NewClient(flags.Socket)
 	defer client.Close()
 	// Run the job
-	var j *jobs.Job
-	var err error
-	if j, err = client.Remove(args.Repo); err != nil {
+	j, err := client.Remove(args.Repo)
+	if err != nil {
 		fmt.Fprintf(os.Stderr, "Error while removing repo: %v\n", err)
 		os.Exit(1)
 	}

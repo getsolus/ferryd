@@ -20,6 +20,7 @@ import (
 	"context"
 	"fmt"
 	"github.com/getsolus/ferryd/jobs"
+	"github.com/getsolus/ferryd/repo"
 	"net"
 	"net/http"
 	"time"
@@ -74,4 +75,16 @@ func (c *Client) waitJob(id int) (j *jobs.Job, err error) {
 		}
 		fmt.Printf("Elapsed Time: %s\n", time.Now().Sub(start).String())
 	}
+}
+
+// waitDiff retries periodically to read back a job with a diff as the result
+func (c *Client) waitDiff(id int) (d *repo.Diff, j *jobs.Job, err error) {
+	j, err = c.waitJob(id)
+	if err != nil {
+		return
+	}
+	if err = d.UnmarshalBinary(j.Results); err != nil {
+		err = fmt.Errorf("error while decoding diff: %v", err)
+	}
+	return
 }
