@@ -44,9 +44,7 @@ func Get(tx *sqlx.Tx, name string) (r *Repo, err error) {
 	}
 	// Create the repo directory if missing
 	ap := filepath.Join(config.Current.AssetPath(), name)
-	if err = util.CreateDir(ap); err != nil {
-		return
-	}
+	err = util.CreateDir(ap)
 	return
 }
 

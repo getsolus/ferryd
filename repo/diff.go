@@ -57,39 +57,29 @@ func (rps ReleasePairs) Swap(i, j int) {
 }
 
 // NewDiff creates a Diff from the results of a Compare operation
-func NewDiff(l, r, s []releases.Release) Diff {
-	d := Diff{
+func NewDiff(l, r, s []releases.Release) *Diff {
+	d := &Diff{
 		Lines: make(map[ReleasePair]string),
 	}
 	// Process all of the releases the need to be added
-	for _, e := range l {
-		rp := ReleasePair{
-			To:   e.Release,
-			From: e.From,
-		}
-		d.keys = append(d.keys, rp)
-		d.Lines[rp] = fmt.Sprintf("+ %s", e.URI)
-	}
+	d.appendReleases(l, "+ %s")
 	// Process all of the releases that need to be removed
-	for _, e := range r {
-		rp := ReleasePair{
-			To:   e.Release,
-			From: e.From,
-		}
-		d.keys = append(d.keys, rp)
-		d.Lines[rp] = fmt.Sprintf("- %s", e.URI)
-	}
+	d.appendReleases(r, "- %s")
 	// Process all of the releases that will not be changed
-	for _, e := range s {
-		rp := ReleasePair{
-			To:   e.Release,
-			From: e.From,
-		}
-		d.keys = append(d.keys, rp)
-		d.Lines[rp] = fmt.Sprintf("  %s", e.URI)
-	}
+	d.appendReleases(s, "  %s")
 	sort.Sort(d.keys)
 	return d
+}
+
+func (d *Diff) appendReleases(rs []releases.Release, format string) {
+	for _, r := range rs {
+		rp := ReleasePair{
+			To:   r.Release,
+			From: r.From,
+		}
+		d.keys = append(d.keys, rp)
+		d.Lines[rp] = fmt.Sprintf("  %s", r.URI)
+	}
 }
 
 // MarshalBinary converts a Diff to its Gob encoded form

@@ -48,7 +48,7 @@ func (r *Release) IsValid() bool {
 }
 
 // Save or create a release entry with the current values
-func (r *Release) Save(tx *sqlx.Tx) error {
+func (r *Release) Save(tx *sqlx.Tx) (err error) {
 	if r.ID == 0 {
 		//Create
 		res, err := tx.NamedExec(Insert, r)
@@ -62,8 +62,7 @@ func (r *Release) Save(tx *sqlx.Tx) error {
 		r.ID = int(id)
 	} else {
 		// Update
-		_, err := tx.NamedExec(Update, r)
-		return err
+		_, err = tx.NamedExec(Update, r)
 	}
-	return nil
+	return
 }
