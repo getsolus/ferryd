@@ -21,7 +21,7 @@ import (
 	"crypto/sha256"
 	"encoding/hex"
 	"github.com/getsolus/ferryd/util"
-	"github.com/getsolus/libeopkg"
+	"github.com/getsolus/libeopkg/archive"
 	"hash"
 	"io"
 	"io/ioutil"
@@ -116,7 +116,7 @@ func WriteSHA256Sum(inpPath, outPath string) error {
 // ProduceDelta will attempt to batch the delta production between the
 // two listed file paths and then copy it into the final targetPath
 func ProduceDelta(tmpDir, oldPackage, newPackage, targetPath string) error {
-	del, err := libeopkg.NewDeltaProducer(tmpDir, oldPackage, newPackage)
+	del, err := archive.NewDeltaProducer(tmpDir, oldPackage, newPackage)
 	if err != nil {
 		return err
 	}

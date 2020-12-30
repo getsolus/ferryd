@@ -19,7 +19,7 @@ package daemon
 import (
 	log "github.com/DataDrake/waterlog"
 	"github.com/coreos/go-systemd/daemon"
-	"github.com/getsolus/ferryd/api/v1"
+	"github.com/getsolus/ferryd/api"
 	"github.com/getsolus/ferryd/config"
 	"github.com/getsolus/ferryd/jobs"
 	"github.com/getsolus/ferryd/manager"

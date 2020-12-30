@@ -19,7 +19,7 @@ package cli
 import (
 	"fmt"
 	"github.com/DataDrake/cli-ng/cmd"
-	"github.com/getsolus/ferryd/api/v1"
+	"github.com/getsolus/ferryd/api"
 	"github.com/getsolus/ferryd/repo"
 	"os"
 )
