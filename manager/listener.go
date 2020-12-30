@@ -36,10 +36,10 @@ type Listener struct {
 }
 
 // NewListener creates and sets up a new TransitListener
-func NewListener(base []string, mgr *Manager) (tl *Listener, err error) {
+func NewListener(baseDir string, mgr *Manager) (tl *Listener, err error) {
 	// Create a new listener
 	tl = &Listener{
-		base:    filepath.Join(base...),
+		base:    baseDir,
 		manager: mgr,
 		stop:    make(chan bool),
 		done:    make(chan bool),

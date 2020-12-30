@@ -46,13 +46,11 @@ func OpenDB() *sqlx.DB {
 	db.MustExec(pkgs.Schema)
 	db.MustExec(releases.Schema)
 	// Check that the repos directory exists
-	rp := filepath.Join(config.Current.RepoPath()...)
-	if err = util.CreateDir(rp); err != nil {
+	if err = util.CreateDir(config.Current.RepoPath()); err != nil {
 		panic(err.Error())
 	}
 	// Check that the assets directory exists
-	ap := filepath.Join(config.Current.AssetPath()...)
-	if err = util.CreateDir(ap); err != nil {
+	if err = util.CreateDir(config.Current.AssetPath()); err != nil {
 		panic(err.Error())
 	}
 	return db

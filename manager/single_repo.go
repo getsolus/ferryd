@@ -137,18 +137,18 @@ func (m *Manager) CreateExecute(j *jobs.Job) error {
 		return errors.New("job is missing a destination repo")
 	}
 	// Create the repo directory
-	rp := filepath.Join(append(config.Current.RepoPath(), j.Dst)...)
+	rp := filepath.Join(config.Current.RepoPath(), j.Dst)
 	if err := util.CreateDir(rp); err != nil {
 		return err
 	}
 	// Create the assets directory
-	ap := filepath.Join(append(config.Current.AssetPath(), j.Dst)...)
+	ap := filepath.Join(config.Current.AssetPath(), j.Dst)
 	if err := util.CreateDir(ap); err != nil {
 		return err
 	}
 	// Create the assets directory
-	assetsDir := filepath.Join(append(config.Current.AssetPath(), j.Dst)...)
-	poolAssets := filepath.Join(append(config.Current.AssetPath(), "pool")...)
+	assetsDir := filepath.Join(config.Current.AssetPath(), j.Dst)
+	poolAssets := filepath.Join(config.Current.AssetPath(), "pool")
 	if err := util.CopyDir(poolAssets, assetsDir, false); err != nil {
 		return fmt.Errorf("Failed to create assets dir, reason: '%s'", err.Error())
 	}
@@ -247,8 +247,8 @@ func (m *Manager) ImportExecute(j *jobs.Job) error {
 		return errors.New("job is missing a destination repo")
 	}
 	// Create the repo directory
-	repoDir := append(config.Current.RepoPath(), j.Dst)
-	if _, err := os.Stat(filepath.Join(repoDir...)); err != nil {
+	repoDir := filepath.Join(config.Current.RepoPath(), j.Dst)
+	if _, err := os.Stat(repoDir); err != nil {
 		if os.IsNotExist(err) {
 			return fmt.Errorf("repo directory for '%s' does not exist", j.Dst)
 		}

@@ -50,9 +50,7 @@ type File struct {
 	// BaseDir for all persistent data
 	BaseDir string
 	// BuildDir for all temporary artifacts
-	BuildDir  string
-	basePath  []string
-	buildPath []string
+	BuildDir string
 	// LockFile for the Daemon
 	LockFile string
 	// Socket for the Daemon
@@ -81,13 +79,11 @@ func Load() error {
 		Current.BaseDir = DefaultBaseDir
 		log.Warnf("No BaseDir specified. Using default: %s\n", DefaultBaseDir)
 	}
-	Current.basePath = filepath.SplitList(Current.BaseDir)
 	// Validate Build Directory
 	if len(Current.BuildDir) == 0 {
 		Current.BuildDir = DefaultBuildDir
 		log.Warnf("No BuildDir specified. Using default: %s\n", DefaultBuildDir)
 	}
-	Current.buildPath = filepath.SplitList(Current.BuildDir)
 	// Validate Lock File
 	if len(Current.LockFile) == 0 {
 		Current.LockFile = DefaultLockFile
@@ -108,21 +104,21 @@ func init() {
 }
 
 // AssetPath for index generation and obsoletion
-func (f *File) AssetPath() []string {
-	return append(f.basePath, AssetSuffix)
+func (f *File) AssetPath() string {
+	return filepath.Join(f.BaseDir, AssetSuffix)
 }
 
 // DeltaPath for delta creation
-func (f *File) DeltaPath() []string {
-	return append(f.buildPath, DeltaSuffix)
+func (f *File) DeltaPath() string {
+	return filepath.Join(f.BuildDir, DeltaSuffix)
 }
 
 // RepoPath for repo storage
-func (f *File) RepoPath() []string {
-	return append(f.basePath, RepoSuffix)
+func (f *File) RepoPath() string {
+	return filepath.Join(f.BaseDir, RepoSuffix)
 }
 
 // TransitPath for incoming packages
-func (f *File) TransitPath() []string {
-	return append(f.basePath, TransitSuffix)
+func (f *File) TransitPath() string {
+	return filepath.Join(f.BaseDir, TransitSuffix)
 }

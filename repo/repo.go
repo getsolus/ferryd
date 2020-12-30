@@ -38,12 +38,12 @@ func Get(tx *sqlx.Tx, name string) (r *Repo, err error) {
 		return
 	}
 	// Create the repo directory if missing
-	rp := filepath.Join(append(config.Current.RepoPath(), name)...)
+	rp := filepath.Join(config.Current.RepoPath(), name)
 	if err = util.CreateDir(rp); err != nil {
 		return
 	}
 	// Create the repo directory if missing
-	ap := filepath.Join(append(config.Current.AssetPath(), name)...)
+	ap := filepath.Join(config.Current.AssetPath(), name)
 	if err = util.CreateDir(ap); err != nil {
 		return
 	}
