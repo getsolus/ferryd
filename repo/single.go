@@ -18,7 +18,9 @@ package repo
 
 import (
 	"errors"
+	"github.com/getsolus/ferryd/jobs"
 	"github.com/getsolus/ferryd/manifest"
+	"github.com/getsolus/ferryd/repo/pkgs"
 	"github.com/getsolus/ferryd/repo/releases"
 	"github.com/jmoiron/sqlx"
 )
@@ -30,19 +32,19 @@ func (r *Repo) Check(tx *sqlx.Tx) (d *Diff, err error) {
 }
 
 // Delta generates missing deltas and removes unneeded ones
-func (r *Repo) Delta(tx *sqlx.Tx) error {
+func Delta(r *Repo, j *jobs.Job, tx *sqlx.Tx) error {
 	// TODO: Implement
 	return errors.New("Function not implemented")
 }
 
 // DeltaPackage generates missing deltas and removes unneeded ones for a single package
-func (r *Repo) DeltaPackage(tx *sqlx.Tx, name string) error {
+func DeltaPackage(r *Repo, j *jobs.Job, tx *sqlx.Tx) error {
 	// TODO: Implement
 	return errors.New("Function not implemented")
 }
 
 // Index regenerates the index for a repo
-func (r *Repo) Index(tx *sqlx.Tx) error {
+func Index(r *Repo, j *jobs.Job, tx *sqlx.Tx) error {
 	// TODO: Implement
 	return errors.New("Function not implemented")
 }
@@ -59,8 +61,19 @@ func (r *Repo) Link(tx *sqlx.Tx, add, del []*releases.Release) error {
 	return errors.New("Function not implemented")
 }
 
+// Remove deletes all of the DB records for this repo
+func Remove(r *Repo, j *jobs.Job, tx *sqlx.Tx) error {
+	// Remove Packages
+	if _, err := tx.Exec(pkgs.RemoveByRepo, r.ID); err != nil {
+		return err
+	}
+	// Remove Repo record
+	_, err := tx.NamedExec(RemoveRepo, r)
+	return err
+}
+
 // Rescan checks for differences between the DB and disk and updated the DB
-func (r *Repo) Rescan(tx *sqlx.Tx) error {
+func Rescan(r *Repo, j *jobs.Job, tx *sqlx.Tx) error {
 	// TODO: Implement
 	return errors.New("Function not implemented")
 }
@@ -73,13 +86,13 @@ func (r *Repo) Transit(tx *sqlx.Tx, m *manifest.Manifest) (add, del []*releases.
 }
 
 // TrimObsolete removes obsolete packages for a repo
-func (r *Repo) TrimObsolete(tx *sqlx.Tx) error {
+func TrimObsolete(r *Repo, j *jobs.Job, tx *sqlx.Tx) error {
 	// TODO: Implement
 	return errors.New("Function not implemented")
 }
 
 // TrimPackages removes packages which are older than "max" releases from the latest
-func (r *Repo) TrimPackages(tx *sqlx.Tx, max int) error {
+func TrimPackages(r *Repo, j *jobs.Job, tx *sqlx.Tx) error {
 	// TODO: Implement
 	return errors.New("Function not implemented")
 }

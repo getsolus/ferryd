@@ -39,14 +39,11 @@ func NewPool(manager *Manager) *Pool {
 	if njobs < 0 {
 		njobs = runtime.NumCPU() / 2
 	}
-
 	log.Infof("Set runtime job limit: %d\n", njobs)
-
 	ret := &Pool{
 		closed: false,
 		njobs:  njobs,
 	}
-
 	// Construct worker pool
 	for i := 0; i < njobs; i++ {
 		ret.workers = append(ret.workers, NewWorker(manager))
@@ -59,12 +56,11 @@ func (j *Pool) Close() {
 	if j.closed {
 		return
 	}
-	j.closed = true
-
 	// Close all of our workers
 	for _, j := range j.workers {
 		j.Stop()
 	}
+	j.closed = true
 }
 
 // Begin will start the main job pool in parallel

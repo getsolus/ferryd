@@ -76,7 +76,7 @@ INSERT INTO repos (
 
 // Queries for removing a repo
 const (
-	Remove = "DELETE FROM repos WHERE id=:id"
+	RemoveRepo = "DELETE FROM repos WHERE id=:id"
 )
 
 const reposPackages = `

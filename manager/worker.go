@@ -74,11 +74,9 @@ func (w *Worker) Start() {
 			// Bail now, we've been told to go home
 			w.done <- true
 			return
-
 		case <-w.timer.C:
 			// Try to grab a job
 			job, err := w.manager.store.Claim()
-
 			// Report the error
 			if err != nil {
 				if err != jobs.ErrNoJobReady {
@@ -87,18 +85,14 @@ func (w *Worker) Start() {
 				w.setTime()
 				continue
 			}
-
 			// Got a job, now process it
 			w.processJob(job)
-
 			// Mark the job as dealt with
 			err = w.manager.store.Retire(job)
-
 			// Report failure in retiring the job
 			if err != nil {
 				log.Errorf("Error in retiring job '%v' of type '%v', reason: '%s'\n", job.ID, job.Type, err.Error())
 			}
-
 			// We had a job, so we must reset the timeout period
 			w.setTime()
 		}
@@ -120,7 +114,6 @@ func (w *Worker) setTime() {
 func (w *Worker) processJob(j *jobs.Job) {
 	// Safely have a handler now
 	j.Message.String = j.Describe()
-
 	// Try to execute it, report the error
 	if err := w.executeJob(j); err != nil {
 		j.Status = jobs.Failed
@@ -130,7 +123,6 @@ func (w *Worker) processJob(j *jobs.Job) {
 		return
 	}
 	j.Status = jobs.Completed
-
 	// Succeeded
 	log.Infof("Job '%d' completed successfully\n", j.ID)
 }

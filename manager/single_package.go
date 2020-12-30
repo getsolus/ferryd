@@ -107,7 +107,7 @@ func (m *Manager) TransitPackageExecute(j *jobs.Job) error {
 			return fmt.Errorf("Failed to link new packages, reason: '%s'", err.Error())
 		}
 		// Re-Index
-		if err = r.Index(tx); err != nil {
+		if err = repo.Index(r, j, tx); err != nil {
 			tx.Rollback()
 			return fmt.Errorf("Failed to reindex the repo '%s', reason: '%s'", r.Name, err.Error())
 		}

@@ -49,8 +49,7 @@ func NewListener(base []string, mgr *Manager) (tl *Listener, err error) {
 		return
 	}
 	// Create a watcher
-	tl.watcher, err = fsnotify.NewWatcher()
-	if err != nil {
+	if tl.watcher, err = fsnotify.NewWatcher(); err != nil {
 		return
 	}
 	// Monitor the incoming dir

@@ -18,23 +18,24 @@ package repo
 
 import (
 	"errors"
+	"github.com/getsolus/ferryd/jobs"
 	"github.com/jmoiron/sqlx"
 )
 
 // CherryPick syncs a single package from this repo to another
-func (r *Repo) CherryPick(tx *sqlx.Tx, r2 *Repo, pkg string) (d *Diff, err error) {
+func CherryPick(left, right *Repo, j *jobs.Job, tx *sqlx.Tx) (d *Diff, err error) {
 	// TODO: Implement
 	return nil, errors.New("Function not implemented")
 }
 
 // Compare the contents of this repo to another
-func (r *Repo) Compare(tx *sqlx.Tx, r2 *Repo) (d *Diff, err error) {
+func Compare(left, right *Repo, j *jobs.Job, tx *sqlx.Tx) (d *Diff, err error) {
 	// TODO: Implement
 	return nil, errors.New("Function not implemented")
 }
 
 // Sync all packages from this repo to another
-func (r *Repo) Sync(tx *sqlx.Tx, r2 *Repo) (d *Diff, err error) {
+func Sync(left, right *Repo, j *jobs.Job, tx *sqlx.Tx) (d *Diff, err error) {
 	// TODO: Implement
 	return nil, errors.New("Function not implemented")
 }

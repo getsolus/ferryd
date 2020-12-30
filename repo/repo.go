@@ -18,7 +18,6 @@ package repo
 
 import (
 	"github.com/getsolus/ferryd/config"
-	"github.com/getsolus/ferryd/repo/pkgs"
 	"github.com/getsolus/ferryd/util"
 	"github.com/jmoiron/sqlx"
 	"path/filepath"
@@ -70,17 +69,6 @@ func (r *Repo) Create(tx *sqlx.Tx) error {
 	}
 	r.ID = int(id)
 	return nil
-}
-
-// Remove deletes all of the DB records for this repo
-func (r *Repo) Remove(tx *sqlx.Tx) error {
-	// Remove Packages
-	if _, err := tx.Exec(pkgs.RemoveByRepo, r.ID); err != nil {
-		return err
-	}
-	// Remove Repo record
-	_, err := tx.NamedExec(Remove, r)
-	return err
 }
 
 // Summarize gets a summary for this repo
