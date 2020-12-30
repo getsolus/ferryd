@@ -50,7 +50,7 @@ type Store struct {
 }
 
 // NewStore creates a fully initialized Store and sets up Bolt Buckets as needed
-func NewStore() (*Store, error) {
+func NewStore() (s *Store, err error) {
 	// Open the database if we can
 	db, err := sqlx.Open("sqlite3", filepath.Join(config.Current.BaseDir, DB)+SQLiteOpts)
 	if err != nil {
@@ -58,18 +58,17 @@ func NewStore() (*Store, error) {
 	}
 	// See: https://github.com/mattn/go-sqlite3/issues/209
 	db.SetMaxOpenConns(1)
-
 	// Create "jobs" table if missing
 	db.MustExec(JobSchema)
-
-	s := &Store{
+	s = &Store{
 		db:   db,
 		next: nil,
 		stop: make(chan bool),
 		done: make(chan bool),
 	}
 	// reset running jobs and return
-	return s, s.UnclaimRunning()
+	err = s.UnclaimRunning()
+	return
 }
 
 // Close will clean up our private job database
@@ -83,21 +82,20 @@ func (s *Store) Close() error {
 }
 
 // GetJob retrieves a Job from the DB
-func (s *Store) GetJob(id int) (*Job, error) {
-	var j Job
-	err := s.db.Get(&j, getJob, id)
-	return &j, err
+func (s *Store) GetJob(id int) (j *Job, err error) {
+	j = &Job{}
+	err = s.db.Get(&j, getJob, id)
+	return
 }
 
 // UnclaimRunning will find all claimed jobs and unclaim them again
-func (s *Store) UnclaimRunning() error {
-	var err error
+func (s *Store) UnclaimRunning() (err error) {
 	s.Lock()
 	if _, err = s.db.Exec(clearRunningJobs); err != nil {
 		err = fmt.Errorf("Failed to unclaim running jobs, reason: '%s'", err.Error())
 	}
 	s.Unlock()
-	return err
+	return
 }
 
 // Push inserts a new Job into the queue
@@ -207,73 +205,65 @@ UNLOCK:
 
 // Active will attempt to return a list of active jobs within
 // the scheduler suitable for consumption by the CLI client
-func (s *Store) Active() (List, error) {
-	var list List
+func (s *Store) Active() (list List, err error) {
 	var list2 List
 	// Get all new jobs
-	if err := s.db.Select(&list, newJobs); err != nil {
+	if err = s.db.Select(&list, newJobs); err != nil {
 		log.Errorf("Failed to read new jobs, reason: '%s'", err.Error())
-		return nil, err
+		return
 	}
 	// Get All running jobs
-	if err := s.db.Select(&list2, runningJobs); err != nil {
+	if err = s.db.Select(&list2, runningJobs); err != nil {
 		log.Errorf("Failed to read active jobs, reason: '%s'", err.Error())
-		return nil, err
+		return
 	}
 	// Append them together
 	list = append(list, list2...)
-	return list, nil
+	return
 }
 
 // Completed will return all successfully completed jobs still stored
-func (s *Store) Completed() (List, error) {
-	var list List
-	var err error
+func (s *Store) Completed() (list List, err error) {
 	if err = s.db.Select(&list, completedJobs); err != nil {
 		err = fmt.Errorf("Failed to read completed jobs, reason: '%s'", err.Error())
 	}
-	return list, err
+	return
 }
 
 // Failed will return all failed jobs that are still stored
-func (s *Store) Failed() (List, error) {
-	var list List
-	var err error
+func (s *Store) Failed() (list List, err error) {
 	if err = s.db.Select(&list, failedJobs); err != nil {
 		err = fmt.Errorf("Failed to read failed jobs, reason: '%s'", err.Error())
 	}
-	return list, err
+	return
 }
 
 // ResetCompleted will remove all completion records from our store and reset the pointer
-func (s *Store) ResetCompleted() error {
+func (s *Store) ResetCompleted() (err error) {
 	s.Lock()
-	var err error
 	if _, err = s.db.Exec(clearCompletedJobs); err != nil {
 		err = fmt.Errorf("Failed to clear completed jobs, reason: '%s'", err.Error())
 	}
 	s.Unlock()
-	return err
+	return
 }
 
 // ResetFailed will remove all fail records from our store and reset the pointer
-func (s *Store) ResetFailed() error {
+func (s *Store) ResetFailed() (err error) {
 	s.Lock()
-	var err error
 	if _, err = s.db.Exec(clearFailedJobs); err != nil {
 		err = fmt.Errorf("Failed to clear failed jobs, reason: '%s'", err.Error())
 	}
 	s.Unlock()
-	return err
+	return
 }
 
 // ResetQueued will remove all unexecuted records from our store and reset the pointer
-func (s *Store) ResetQueued() error {
+func (s *Store) ResetQueued() (err error) {
 	s.Lock()
-	var err error
 	if _, err = s.db.Exec(clearQueuedJobs); err != nil {
 		err = fmt.Errorf("Failed to clear queued jobs, reason: '%s'", err.Error())
 	}
 	s.Unlock()
-	return err
+	return
 }

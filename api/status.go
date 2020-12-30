@@ -76,7 +76,7 @@ func (s StatusResponse) printFailed(out io.Writer) {
 		table.Append([]string{
 			"failed",
 			j.Finished.Time.Format(time.RFC3339),
-			j.ExecutionTime().String(),
+			j.RunTime().String(),
 			j.Describe(),
 			j.Message.String,
 		})
@@ -112,7 +112,7 @@ func (s StatusResponse) printCompleted(out io.Writer) {
 		table.Append([]string{
 			"completed",
 			j.Finished.Time.Format(time.RFC3339),
-			j.ExecutionTime().String(),
+			j.RunTime().String(),
 			j.TotalTime().String(),
 			j.Describe(),
 			j.Message.String,
@@ -134,8 +134,8 @@ func (s StatusResponse) printCurrent(out io.Writer) {
 	table := tablewriter.NewWriter(out)
 	table.SetHeader([]string{
 		"Status",
-		"Created",
-		"Waiting For",
+		"Queue Time",
+		"Run Time",
 		"Description",
 	})
 	table.SetBorder(false)
@@ -147,15 +147,15 @@ func (s StatusResponse) printCurrent(out io.Writer) {
 		if j.Status == jobs.Running {
 			table.Append([]string{
 				"running",
-				j.Created.Time.Format(time.RFC3339),
-				j.QueuedSince().String(),
+				j.QueuedTime().String(),
+				j.RunTime().String(),
 				j.Describe(),
 			})
 		} else {
 			table.Append([]string{
 				"queued",
-				j.Created.Time.Format(time.RFC3339),
 				j.QueuedSince().String(),
+				"",
 				j.Describe(),
 			})
 		}

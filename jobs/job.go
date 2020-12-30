@@ -41,19 +41,19 @@ type Job struct {
 	Results  []byte         `db:"results"`
 }
 
+// RunningSince will return the job has been running
+func (j *Job) RunningSince() time.Duration {
+	return time.Now().UTC().Sub(j.Started.Time)
+}
+
+// RunTime will return the time it took to execute a job (used when a job fails)
+func (j *Job) RunTime() time.Duration {
+	return j.Finished.Time.Sub(j.Started.Time)
+}
+
 // QueuedSince will let us know how long this task has been queued
 func (j *Job) QueuedSince() time.Duration {
 	return time.Now().UTC().Sub(j.Created.Time)
-}
-
-// Executed will work out how long ago it stopped executing
-func (j *Job) Executed() time.Duration {
-	return time.Now().UTC().Sub(j.Finished.Time)
-}
-
-// ExecutionTime will return the time it took to execute a job
-func (j *Job) ExecutionTime() time.Duration {
-	return j.Finished.Time.Sub(j.Started.Time)
 }
 
 // QueuedTime will return the total time that the job was queued for
@@ -63,7 +63,7 @@ func (j *Job) QueuedTime() time.Duration {
 
 // TotalTime will return the total time a job took to complete from queuing
 func (j *Job) TotalTime() time.Duration {
-	return j.QueuedTime() + j.ExecutionTime()
+	return j.Finished.Time.Sub(j.Created.Time)
 }
 
 // Describe generates a short description of what a package does
@@ -139,7 +139,7 @@ func (j *Job) Print() {
 	}
 	if j.Finished.Valid && !j.Finished.Time.IsZero() {
 		fmt.Printf("\tFinished: %s\n", j.Finished.Time.Format(time.RFC3339))
-		fmt.Printf("\t\tExecuted: %s\n", j.ExecutionTime().String())
+		fmt.Printf("\t\tRuntime: %s\n", j.RunTime().String())
 	}
 	if j.Status > Running {
 		fmt.Printf("\tTotal:      %s\n", j.TotalTime().String())
