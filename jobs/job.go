@@ -17,7 +17,6 @@
 package jobs
 
 import (
-	"database/sql"
 	"fmt"
 	"github.com/jmoiron/sqlx"
 	"time"
@@ -25,20 +24,20 @@ import (
 
 // Job is an entry in the Job Table
 type Job struct {
-	ID   int     `db:"id"`
-	Type JobType `db:"type"`
+	ID   int     `db:"id" json:"id"`
+	Type JobType `db:"type" json:"type"`
 	// Job-specific arguments
-	Src string `db:"src"`
-	Dst string `db:"dst"`
-	Pkg string `db:"pkg"`
-	Max int    `db:"max"`
+	Src string `db:"src" json:"src"`
+	Dst string `db:"dst" json:"dst"`
+	Pkg string `db:"pkg" json:"pkg"`
+	Max int    `db:"max" json:"max"`
 	// Job tracking
-	Created  sql.NullTime   `db:"created"`
-	Started  sql.NullTime   `db:"started"`
-	Finished sql.NullTime   `db:"finished"`
-	Status   JobStatus      `db:"status"`
-	Message  sql.NullString `db:"message"`
-	Results  []byte         `db:"results"`
+	Created  NullTime   `db:"created" json:"created"`
+	Started  NullTime   `db:"started" json:"started"`
+	Finished NullTime   `db:"finished" json:"finished"`
+	Status   JobStatus  `db:"status" json:"status"`
+	Message  NullString `db:"message" json:"message"`
+	Results  []byte     `db:"results" json:"results"`
 }
 
 // RunningSince will return the job has been running

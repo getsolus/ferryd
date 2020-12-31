@@ -60,6 +60,22 @@ func (l *Listener) CherryPickRepo(ctx *fasthttp.RequestCtx) {
 	writeID(ctx, jobID)
 }
 
+// Clone will ask the backend to clone an existing repository into a new repository
+func (c *Client) Clone(src, dest string) (s *repo.Summary, j *jobs.Job, err error) {
+	// Create a new request
+	req, err := http.NewRequest("POST", formURI("api/v1/repos/"+src), nil)
+	if err != nil {
+		return
+	}
+	// Set the query parameters
+	q := req.URL.Query()
+	q.Add("clone", src)
+	req.URL.RawQuery = q.Encode()
+	// wait for job to complete
+	j, err = c.runJob(req)
+	return
+}
+
 // Compare will ask the backend to compare one repo to another
 func (c *Client) Compare(left, right string) (d *repo.Diff, j *jobs.Job, err error) {
 	// Create a new request
@@ -112,20 +128,4 @@ func (l *Listener) SyncRepo(ctx *fasthttp.RequestCtx) {
 	}
 	// write Job ID to the request
 	writeID(ctx, jobID)
-}
-
-// Clone will ask the backend to clone an existing repository into a new repository
-func (c *Client) Clone(src, dest string) (s *repo.Summary, j *jobs.Job, err error) {
-	// Create a new request
-	req, err := http.NewRequest("POST", formURI("api/v1/repos/"+src), nil)
-	if err != nil {
-		return
-	}
-	// Set the query parameters
-	q := req.URL.Query()
-	q.Add("clone", src)
-	req.URL.RawQuery = q.Encode()
-	// wait for job to complete
-	j, err = c.runJob(req)
-	return
 }

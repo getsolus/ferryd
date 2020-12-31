@@ -22,6 +22,15 @@
 - [ ] trim-packages
 - [x] version
 
+# API
+
+- [x] Document the API endpoints
+- [x] Document the API datatypes
+
+# jobs.Job
+
+- [x] Implement custom JSON marshal/unmarshal because of SQL Null types
+
 # Repos --- In-Progress
 
 ## Check
@@ -110,4 +119,3 @@
   - [x] Remove a repo from the DB
   - [x] Remove all package for a repo from the DB
   - [x] Testing
-

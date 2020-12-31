@@ -30,7 +30,7 @@ import (
 // GenericResponse is a catchall for API responses
 type GenericResponse struct {
 	// Errors is a list of errors encountered in this transaction
-	Errors []string
+	Errors []string `json:"errors"`
 }
 
 // Print prints out a list of errors, one by one

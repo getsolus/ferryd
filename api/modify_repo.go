@@ -76,6 +76,8 @@ func (l *Listener) ModifyRepo(ctx *fasthttp.RequestCtx) {
 		jobID, err = l.manager.Index(id)
 	case "rescan":
 		jobID, err = l.manager.Rescan(id)
+	case "trim-obsoletes":
+		jobID, err = l.manager.TrimObsoletes(id)
 	case "trim-packages":
 		// Get the "max" query parameter
 		max := string(ctx.QueryArgs().Peek("max"))
@@ -89,8 +91,6 @@ func (l *Listener) ModifyRepo(ctx *fasthttp.RequestCtx) {
 			return
 		}
 		jobID, err = l.manager.TrimPackages(id, m)
-	case "trim-obsoletes":
-		jobID, err = l.manager.TrimObsoletes(id)
 	default:
 		writeErrorString(ctx, fmt.Sprintf("Invalid action '%s' when modifying repo", action), http.StatusBadRequest)
 		return

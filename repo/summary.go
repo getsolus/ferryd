@@ -24,10 +24,10 @@ import (
 
 // Summary is a brief description of a single Repo
 type Summary struct {
-	Name     string
-	Packages sql.NullInt64
-	Deltas   sql.NullInt64
-	Size     sql.NullInt64
+	Name     string        `json:"name"`
+	Packages sql.NullInt64 `json:"packages"`
+	Deltas   sql.NullInt64 `json:"deltas"`
+	Size     sql.NullInt64 `json:"size"`
 }
 
 // Print writes out a Summary in a human-readable format

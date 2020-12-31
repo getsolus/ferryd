@@ -49,6 +49,7 @@ func actualCopyFile(source, dest string, st os.FileInfo) (err error) {
 
 // CopyFile will copy the file and permissions to the new target
 func CopyFile(source, dest string) error {
+	var err error
 	var st os.FileInfo
 	// Get the details for the source file
 	if st, err = os.Stat(source); err != nil {

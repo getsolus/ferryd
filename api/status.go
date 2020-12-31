@@ -33,15 +33,15 @@ import (
 type StatusResponse struct {
 	GenericResponse
 	// TimeStarted is the time when the daemon was last started
-	TimeStarted time.Time
+	TimeStarted time.Time `json:"time_started"`
 	// Version is the version of the daemon
-	Version string
+	Version string `json:"version"`
 	// CurrentJobs is a list of running and queued jobs
-	Current jobs.List
+	Current jobs.List `json:"current"`
 	// FailedJobs is a list of failed jobs
-	Failed jobs.List
+	Failed jobs.List `json:"failed"`
 	// CompletedJobs is a list of completed jobs
-	Completed jobs.List
+	Completed jobs.List `json:"completed"`
 }
 
 // Uptime will determine the uptime of the daemon
