@@ -21,6 +21,7 @@ import (
 	"github.com/getsolus/ferryd/util"
 	"github.com/jmoiron/sqlx"
 	"path/filepath"
+	"syscall"
 )
 
 // Repo is an entry in the Repo Table
@@ -78,6 +79,21 @@ func (r *Repo) Summarize(tx *sqlx.Tx) (s Summary, err error) {
 	if err = tx.Get(&s.Deltas, DeltaCount, r.ID); err != nil {
 		return
 	}
-	err = tx.Get(&s.Size, GetSize, r.ID)
+	if err = tx.Get(&s.ArchiveSize, GetSize, r.ID); err != nil {
+		return
+	}
+	s.Used, s.Free, err = r.Size()
+	return
+}
+
+// Size returns the used and free space in a Repo's filesystem
+func (r *Repo) Size() (used, free uint64, err error) {
+	rp := filepath.Join(config.Current.RepoPath(), r.Name)
+	var st syscall.Statfs_t
+	if err = syscall.Statfs(rp, &st); err != nil {
+		return
+	}
+	free = uint64(st.Bsize) * st.Bavail
+	used = uint64(st.Bsize)*st.Blocks - free
 	return
 }

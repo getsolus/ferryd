@@ -49,13 +49,17 @@ On success, GET will return a list of all of the available repos:
 		"name"     : "pool",
 		"packages" : 2398409,
 		"deltas"   : 240823049,
-		"size"     : 20394029340294
+		"size"     : 20394029340294,
+		"used"     : 20398029340294,
+		"free"     : 8234098098223
 	},
 	{
 		"name"     : "unstable",
 		"packages" : 2398409,
 		"deltas"   : 240823049,
-		"size"     : 20394029340294
+		"size"     : 2024789392438,
+		"used"     : 20398029340294,
+		"free"     : 8234098098223
 	}
 ]
 ```

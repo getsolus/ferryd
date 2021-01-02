@@ -14,11 +14,11 @@
 // limitations under the License.
 //
 
-package releases
+package archive
 
 // Schema is the SQLite3 schema for the Releases table
 const Schema = `
-CREATE TABLE IF NOT EXISTS releases (
+CREATE TABLE IF NOT EXISTS archives (
     id           INTEGER PRIMARY KEY,
     package      STRING,
     uri          STRING,
@@ -31,24 +31,24 @@ CREATE TABLE IF NOT EXISTS releases (
 )
 `
 
-// Queries for retrieving Releases
-const packageReleases = "SELECT * FROM releases WHERE name=:name"
+// Queries for retrieving Archives
+const packageArchives = "SELECT * FROM archives WHERE name=:name"
 
-// Insert Query for creating a new Release
+// Insert Query for creating a new Archive
 const Insert = `
-INSERT INTO releases (
+INSERT INTO archives (
     id, package, uri, size, hash, release, from_release, meta
 ) VALUES (
     NULL, :package, :uri, :size, :hash, :release, :from_release, :meta
 )
 `
 
-// Update Query for updating a Release
-const Update = "UPDATE releases SET size=:size, hash=:hash, meta=:meta WHERE id=:id"
+// Update Query for updating an Archive record
+const Update = "UPDATE archives SET size=:size, hash=:hash, meta=:meta WHERE id=:id"
 
-// Queries for removing Releases
+// Queries for removing Archives
 const (
-	trimPackages  = "DELETE FROM releases WHERE name=:name AND release < :release"
-	trimObsoletes = "DELETE FROM releases WHERE name=:name"
-	removePackage = "DELETE FROM releases WHERE id=:id"
+	trimPackages  = "DELETE FROM archives WHERE name=:name AND release < :release"
+	trimObsoletes = "DELETE FROM archives WHERE name=:name"
+	removeArchive = "DELETE FROM archives WHERE id=:id"
 )

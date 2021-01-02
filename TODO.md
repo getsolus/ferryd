@@ -1,7 +1,7 @@
 # CLI
 
 - [ ] check
-- [ ] cherry-pick
+- [ ] cherry-pick: all archives for a pkg from src -> dest
 - [ ] clone
 - [ ] compare
 - [x] create-repo
@@ -17,7 +17,7 @@
 - [x] reset-failed
 - [x] reset-queued
 - [x] status
-- [ ] sync
+- [ ] sync: all archives for a repo from src -> dest
 - [ ] trim-obsoletes
 - [ ] trim-packages
 - [x] version
@@ -30,6 +30,14 @@
 # jobs.Job
 
 - [x] Implement custom JSON marshal/unmarshal because of SQL Null types
+
+# repo.Repo
+
+- [x] Implement Size() function to calculate available space on repo filesystem
+
+# repo.Summary
+
+- [x] Add filesystem sizes to the printed summaries
 
 # Repos --- In-Progress
 

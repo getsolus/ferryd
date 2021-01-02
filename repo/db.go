@@ -18,8 +18,8 @@ package repo
 
 import (
 	"github.com/getsolus/ferryd/config"
+	"github.com/getsolus/ferryd/repo/archive"
 	"github.com/getsolus/ferryd/repo/pkgs"
-	"github.com/getsolus/ferryd/repo/releases"
 	"github.com/getsolus/ferryd/util"
 	"github.com/jmoiron/sqlx"
 	"path/filepath"
@@ -44,7 +44,7 @@ func OpenDB() *sqlx.DB {
 	// Create repo tables if missing
 	db.MustExec(Schema)
 	db.MustExec(pkgs.Schema)
-	db.MustExec(releases.Schema)
+	db.MustExec(archive.Schema)
 	// Check that the repos directory exists
 	if err = util.CreateDir(config.Current.RepoPath()); err != nil {
 		panic(err.Error())

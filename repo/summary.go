@@ -24,10 +24,12 @@ import (
 
 // Summary is a brief description of a single Repo
 type Summary struct {
-	Name     string        `json:"name"`
-	Packages sql.NullInt64 `json:"packages"`
-	Deltas   sql.NullInt64 `json:"deltas"`
-	Size     sql.NullInt64 `json:"size"`
+	Name        string        `json:"name"`
+	Packages    sql.NullInt64 `json:"packages"`
+	Deltas      sql.NullInt64 `json:"deltas"`
+	ArchiveSize sql.NullInt64 `json:"size"`
+	Used        uint64        `json:"used"`
+	Free        uint64        `json:"free"`
 }
 
 // Print writes out a Summary in a human-readable format
@@ -46,9 +48,12 @@ func (s *Summary) Print(out io.Writer, single bool) {
 		if s.Deltas.Valid {
 			fmt.Fprintf(out, "\t  Deltas: %d\n", s.Deltas.Int64)
 		}
-		if s.Size.Valid {
-			fmt.Fprintf(out, "\t    Size: %d\n", s.Size.Int64)
+		if s.ArchiveSize.Valid {
+			fmt.Fprintf(out, "\t    Size: %d\n", s.ArchiveSize.Int64)
 		}
+		fmt.Fprintln(out, "\tFilesystem:")
+		fmt.Fprintf(out, "\t      Used: %d\n", s.Used)
+		fmt.Fprintf(out, "\t      Free: %d\n", s.Free)
 		fmt.Fprintln(out)
 	} else {
 		// One Indent
@@ -59,9 +64,12 @@ func (s *Summary) Print(out io.Writer, single bool) {
 		if s.Deltas.Valid {
 			fmt.Fprintf(out, "\t\t  Deltas: %d\n", s.Deltas.Int64)
 		}
-		if s.Size.Valid {
-			fmt.Fprintf(out, "\t\t    Size: %d\n", s.Size.Int64)
+		if s.ArchiveSize.Valid {
+			fmt.Fprintf(out, "\t\t    Size: %d\n", s.ArchiveSize.Int64)
 		}
+		fmt.Fprintln(out, "\t\tFilesystem:")
+		fmt.Fprintf(out, "\t\t      Used: %d\n", s.Used)
+		fmt.Fprintf(out, "\t\t      Free: %d\n", s.Free)
 		fmt.Fprintln(out)
 	}
 }

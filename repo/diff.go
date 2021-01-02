@@ -19,68 +19,12 @@ package repo
 import (
 	"bytes"
 	"encoding/gob"
-	"fmt"
-	"github.com/getsolus/ferryd/repo/releases"
+	"github.com/getsolus/ferryd/repo/archive"
 	"io"
-	"sort"
 )
 
 // Diff is a list of changes made to a repo
-type Diff struct {
-	Package string
-	keys    ReleasePairs
-	Lines   map[ReleasePair]string
-}
-
-// ReleasePair is used for sorting releases
-type ReleasePair struct {
-	From int
-	To   int
-}
-
-// ReleasePairs is a sortable list of ReleasePair
-type ReleasePairs []ReleasePair
-
-// Len returns the length of a ReleasePairs for sorting
-func (rps ReleasePairs) Len() int {
-	return len(rps)
-}
-
-// Less compares two ReleasePair instances for sorting
-func (rps ReleasePairs) Less(i, j int) bool {
-	return (rps[i].To < rps[j].To) || ((rps[i].To == rps[j].To) && (rps[i].From < rps[j].From))
-}
-
-// Swap carries out swapping for sorting
-func (rps ReleasePairs) Swap(i, j int) {
-	rps[i], rps[j] = rps[j], rps[i]
-}
-
-// NewDiff creates a Diff from the results of a Compare operation
-func NewDiff(l, r, s []releases.Release) *Diff {
-	d := &Diff{
-		Lines: make(map[ReleasePair]string),
-	}
-	// Process all of the releases the need to be added
-	d.appendReleases(l, "+ %s")
-	// Process all of the releases that need to be removed
-	d.appendReleases(r, "- %s")
-	// Process all of the releases that will not be changed
-	d.appendReleases(s, "  %s")
-	sort.Sort(d.keys)
-	return d
-}
-
-func (d *Diff) appendReleases(rs []releases.Release, format string) {
-	for _, r := range rs {
-		rp := ReleasePair{
-			To:   r.Release,
-			From: r.From,
-		}
-		d.keys = append(d.keys, rp)
-		d.Lines[rp] = fmt.Sprintf("  %s", r.URI)
-	}
-}
+type Diff archive.Archives
 
 // MarshalBinary converts a Diff to its Gob encoded form
 func (d *Diff) MarshalBinary() (data []byte, err error) {
@@ -101,26 +45,19 @@ func (d *Diff) UnmarshalBinary(data []byte) error {
 
 // Print writes out a Diff in a human-readable format
 func (d Diff) Print(out io.Writer, full, color bool) {
-	plusFmt := "%s\n"
-	minusFmt := "%s\n"
+	plus := "+%s\n"
+	minus := "-%s\n"
+	mod := "!%s\n"
+	same := " %s\n"
 	// Override the format strings if printing with color
 	if color {
-		plusFmt = "\033[49;38;5;208%s\033[0m\n"
-		minusFmt = "\033[49;38;5;040%s\033[0m\n"
+		plus = "\033[49;38;5;040m+%s\033[0m\n"
+		minus = "\033[49;38;5;208m-%s\033[0m\n"
+		mod = "\033[49;38;5;220m!%s\033[0m\n"
+		same = "\033[49;39m %s\033[0m\n"
 	}
 	// Print each line
-	for _, k := range d.keys {
-		line := d.Lines[k]
-		rs := []rune(line)
-		switch rs[0] {
-		case '+':
-			fmt.Fprintf(out, plusFmt, line)
-		case '-':
-			fmt.Fprintf(out, minusFmt, line)
-		default:
-			if full {
-				fmt.Fprintln(out, line)
-			}
-		}
+	for _, a := range d {
+		a.PrintDiff(out, plus, minus, mod, same)
 	}
 }

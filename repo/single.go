@@ -21,7 +21,6 @@ import (
 	"github.com/getsolus/ferryd/jobs"
 	"github.com/getsolus/ferryd/manifest"
 	"github.com/getsolus/ferryd/repo/pkgs"
-	"github.com/getsolus/ferryd/repo/releases"
 	"github.com/jmoiron/sqlx"
 )
 
@@ -56,7 +55,7 @@ func (r *Repo) Import(tx *sqlx.Tx) error {
 }
 
 // Link updates the links for a package that has already been updated in the pool and DB
-func (r *Repo) Link(tx *sqlx.Tx, add, del []*releases.Release) error {
+func (r *Repo) Link(tx *sqlx.Tx, diff *Diff) error {
 	// TODO: Implement
 	return errors.New("Function not implemented")
 }
@@ -79,7 +78,7 @@ func Rescan(r *Repo, j *jobs.Job, tx *sqlx.Tx) error {
 }
 
 // Transit copies new packages into a repo, creates missing deltas, removes old deltas, and add releases to the DB
-func (r *Repo) Transit(tx *sqlx.Tx, m *manifest.Manifest) (add, del []*releases.Release, err error) {
+func (r *Repo) Transit(tx *sqlx.Tx, m *manifest.Manifest) (diff *Diff, err error) {
 	// TODO: Implement
 	err = errors.New("Function not implemented")
 	return

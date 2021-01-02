@@ -36,33 +36,33 @@ const (
 // GetSize gives a total size in bytes of the repo
 const GetSize = `
 WITH ids AS (
-    SELECT release_id FROM packages
+    SELECT archive_id FROM packages
     WHERE repo_id=?
 )
-SELECT SUM(size) FROM releases
-INNER JOIN ids ON ids.release_id = releases.id
+SELECT SUM(size) FROM archives
+INNER JOIN ids ON ids.archive_id = archives.id
 `
 
 // PackageCount gets the number of packages in a repo
 const PackageCount = `
 WITH ids AS (
-    SELECT release_id FROM packages
+    SELECT archive_id FROM packages
     WHERE repo_id=?
 )
-SELECT count(*) FROM releases
-INNER JOIN ids ON ids.release_id = releases.id
-WHERE from_release IS NULL
+SELECT count(*) FROM archives
+INNER JOIN ids ON ids.archive_id = archives.id
+WHERE to_release IS NULL
 `
 
 // DeltaCount gets the number of deltas in a repo
 const DeltaCount = `
 WITH ids AS (
-    SELECT release_id FROM packages
+    SELECT archive_id FROM packages
     WHERE repo_id=?
 )
-SELECT count(*) FROM releases
-INNER JOIN ids ON ids.release_id = releases.id
-WHERE from_release IS NOT NULL
+SELECT count(*) FROM archives
+INNER JOIN ids ON ids.archive_id = archives.id
+WHERE to_release IS NOT NULL
 `
 
 // Insert is a Query for creating a new Repo
@@ -86,9 +86,9 @@ WITH ids AS (
     ON repos.id = repo_packages.repo_id
     WHERE repos.name = :name
 )
-SELECT id, name, uri, size, hash, release, meta FROM packages
+SELECT id, name, uri, size, hash, release, meta FROM archives
 INNER JOIN ids
-ON packages.id = ids.package_id
+ON package.id = ids.archive_id
 `
 
 const sharedPackages = `

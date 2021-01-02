@@ -82,7 +82,7 @@ func (m *Manager) TransitPackageExecute(j *jobs.Job) error {
 		return errors.New("Could not find a DB entry for the pool")
 	}
 	// Copy the package files into the pool, create deltas, and add releases to the DB
-	add, del, err := pool.Transit(tx, manifest)
+	diff, err := pool.Transit(tx, manifest)
 	if err != nil {
 		tx.Rollback()
 		return fmt.Errorf("Failed to transit into the pool, reason: '%s'", err.Error())
@@ -103,7 +103,7 @@ func (m *Manager) TransitPackageExecute(j *jobs.Job) error {
 			return fmt.Errorf("Failed to create transaction, reason: '%s'", err.Error())
 		}
 		// Copy in the new packages
-		if err = r.Link(tx, add, del); err != nil {
+		if err = r.Link(tx, diff); err != nil {
 			return fmt.Errorf("Failed to link new packages, reason: '%s'", err.Error())
 		}
 		// Re-Index
