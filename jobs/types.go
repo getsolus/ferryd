@@ -34,24 +34,22 @@ const (
 	Create = 5
 	// Delta generates missing Delta Packages for an entire repo
 	Delta = 6
-	// DeltaPackage generates Deltas for a single package
-	DeltaPackage = 7
 	// Import adds a new repo to the DB from an existing filepath
-	Import = 8
+	Import = 7
 	// Index regenerates the index for a repo
-	Index = 9
+	Index = 8
 	// Remove removes a repo from the DB but not its contents on disk
-	Remove = 10
+	Remove = 9
 	// Rescan updates the DB with the contents of a repo on disk
-	Rescan = 11
+	Rescan = 10
 	// Sync replicates the contents of one repo into another
-	Sync = 12
+	Sync = 11
 	// TransitPackage adds a new package to the Pool and any auto-transit repos
-	TransitPackage = 13
+	TransitPackage = 12
 	// TrimObsoletes removes obsoleted packages from the repo
-	TrimObsoletes = 14
+	TrimObsoletes = 13
 	// TrimPackages removes old release of packages from the repo
-	TrimPackages = 15
+	TrimPackages = 14
 )
 
 var typeMap = map[JobType]string{
@@ -62,7 +60,6 @@ var typeMap = map[JobType]string{
 	Compare:        "Compare",
 	Create:         "Create",
 	Delta:          "Delta",
-	DeltaPackage:   "Delta Package",
 	Import:         "Import",
 	Index:          "Index",
 	Remove:         "Remove",
@@ -71,11 +68,4 @@ var typeMap = map[JobType]string{
 	TrimObsoletes:  "Trim Obsoletes",
 	TrimPackages:   "Trim Packages",
 	TransitPackage: "Transit Package",
-}
-
-// IsParallel tells us if a particular JobType can be done in parallel
-var IsParallel = map[JobType]bool{
-	Check:        true,
-	Compare:      true,
-	DeltaPackage: true,
 }

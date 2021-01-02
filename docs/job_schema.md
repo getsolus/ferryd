@@ -8,10 +8,6 @@
 
     Compares the contents of a repo on Disk with the DB
 
-#### Type:
-
-- Parallel
-
 #### Parameters:
 
 - src
@@ -20,9 +16,8 @@
 
 - Diff
 
-#### Created By:
+#### Used By:
 
-- API Call
 - Rescan Job
 
 #### Followed By:
@@ -37,10 +32,6 @@
 
     Syncs a single package from one repo to another
 
-#### Type:
-
-- Serial
-
 #### Parameters:
 
 - src
@@ -50,10 +41,6 @@
 #### Results:
 
 - Diff
-
-#### Created By:
-
-- API Call
 
 #### Followed By:
 
@@ -66,10 +53,6 @@
 #### Description:
     Clone one repository into another
 
-#### Type:
-
-- Serial
-
 #### Parameters:
 
 - src
@@ -78,10 +61,6 @@
 #### Results:
 
 - Diff
-
-#### Created By:
-
-- API Call
 
 #### Followed By:
 
@@ -95,10 +74,6 @@
 
     Creates a diff of the contents of two repos
 
-#### Type:
-
-- Parallel
-
 #### Parameters:
 
 - src
@@ -107,10 +82,6 @@
 #### Results:
 
 - Diff
-
-#### Created By:
-
-- API Call
 
 #### Followed By:
 
@@ -123,10 +94,6 @@
 #### Description:
     Create a new repository by name
 
-#### Type:
-
-- Serial
-
 #### Parameters:
 
 - dst
@@ -135,9 +102,8 @@
 
 - N/A
 
-#### Created By:
+#### Used By:
 
-- API Call
 - Clone (dst)
 
 #### Followed By:
@@ -152,10 +118,6 @@
 
     Generates missing Delta Packages for an entire repo
 
-#### Type:
-
-- Serial
-
 #### Parameters:
 
 - dst
@@ -163,40 +125,6 @@
 #### Results:
 
 - N/A
-
-#### Created By:
-
-- API Call
-
-#### Followed By:
-
-- DeltaPackage (dst, all pkgs)
-- Index (dst)
-
----
-
-### DeltaPackage
-
-#### Description:
-
-    Create delta packages for a single package in a repo
-
-#### Type:
-
-- Parallel
-
-#### Parameters:
-
-- dst
-- pkg
-
-#### Results:
-
-- N/A
-
-#### Created By:
-
-- Delta
 
 #### Followed By:
 
@@ -210,10 +138,6 @@
 
     Adds a new repo to the DB from an existing filepath
 
-#### Type:
-
-- Serial
-
 #### Parameters:
 
 - dst
@@ -221,10 +145,6 @@
 #### Results:
 
 - Diff
-
-#### Created By:
-
-- API Call
 
 #### Followed By:
 
@@ -238,10 +158,6 @@
 
     Update the index for a specific repo
 
-#### Type:
-
-- Serial
-
 #### Parameters:
 
 - dst
@@ -250,9 +166,8 @@
 
 - N/A
 
-#### Created By:
+#### Used By:
 
-- API Call
 - Clone (dst)
 - Create (dst)
 - Delta (dst)
@@ -275,10 +190,6 @@
 
     Remove removes a repo from the DB but not its contents on disk
 
-#### Type:
-
-- Serial
-
 #### Parameters:
 
 - src
@@ -286,10 +197,6 @@
 #### Results:
 
 - N/A
-
-#### Created By:
-
-- API Call
 
 #### Followed By:
 
@@ -303,10 +210,6 @@
 
     Updates the DB with the contents of a repo on disk
 
-#### Type:
-
-- Serial
-
 #### Parameters:
 
 - dst
@@ -315,9 +218,8 @@
 
 - Diff
 
-#### Created By:
+#### Used By:
 
-- API Call
 - Import (dst)
 
 #### Followed By:
@@ -332,10 +234,6 @@
 
     Replicates the exact contents of one repo into another
 
-#### Type:
-
-- Serial
-
 #### Parameters:
 
 - src
@@ -345,9 +243,8 @@
 
 - Diff
 
-#### Created By:
+#### Used By:
 
-- API Call
 - Clone (src,dst)
 
 #### Followed By:
@@ -361,10 +258,6 @@
 #### Description:
 
     Adds a new package to the Pool and all auto-transit repos
-
-#### Type:
-
-- Serial
 
 #### Parameters:
 
@@ -390,10 +283,6 @@
 
     Remove obsoleted packages from the repo
 
-#### Type:
-
-- Serial
-
 #### Parameters:
 
 - dst
@@ -401,9 +290,6 @@
 #### Results:
 
 - Diff
-
-#### Created By:
-- API Call
 
 #### Followed By:
 
@@ -417,10 +303,6 @@
 
     Remove old releases for packages in a repo
 
-#### Type:
-
-- Serial
-
 #### Parameters:
 
 - dst
@@ -430,11 +312,8 @@
 
 - Diff
 
-#### Created By:
-
-- API Call
-
 #### Followed By:
+
 - Index (dst)
 
 

@@ -80,8 +80,6 @@ func (j *Job) Describe() string {
 		return fmt.Sprintf("Creating new repo '%s'", j.Dst)
 	case Delta:
 		return fmt.Sprintf("Generating Deltas for repo '%s'", j.Dst)
-	case DeltaPackage:
-		return fmt.Sprintf("Generating Deltas for '%s' in repo '%s'", j.Pkg, j.Dst)
 	case Import:
 		return fmt.Sprintf("Importing existing repo '%s'", j.Src)
 	case Index:

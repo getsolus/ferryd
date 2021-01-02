@@ -1,3 +1,13 @@
+# Pool Cleanup
+
+- [ ] Cherry Pick (removals)
+- [ ] Delta (removals)
+- [ ] Remove Repo
+- [ ] Rescan (removals)
+- [ ] Sync (removals)
+- [ ] Trim Packages
+- [ ] Trim Obsoletes
+
 # CLI
 
 - [ ] check

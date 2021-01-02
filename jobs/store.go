@@ -124,24 +124,8 @@ UNLOCK:
 }
 
 func (s *Store) findNewJob() {
-	// get the currently runnign jobs
-	var active []Job
-	if err := s.db.Select(&active, runningJobs); err != nil {
-		return
-	}
-	// Check for serial jobs that are blocking
-	for _, j := range active {
-		if !IsParallel[j.Type] {
-			return
-		}
-	}
-	// Otherwise, get the next available job
 	var next Job
 	if err := s.db.Get(&next, nextJob); err != nil {
-		return
-	}
-	// Check if we are blocked by parallel jobs
-	if !IsParallel[next.Type] && len(active) > 0 {
 		return
 	}
 	s.next = &next

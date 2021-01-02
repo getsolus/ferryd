@@ -141,8 +141,6 @@ func (w *Worker) executeJob(j *jobs.Job) error {
 		return w.manager.CreateExecute(j)
 	case jobs.Delta:
 		return w.manager.DeltaExecute(j)
-	case jobs.DeltaPackage:
-		return w.manager.DeltaPackageExecute(j)
 	case jobs.Import:
 		return w.manager.ImportExecute(j)
 	case jobs.Index:

@@ -114,11 +114,8 @@ func (api *Listener) Bind() error {
 			return e
 		}
 		listener = l
-	}
-
-	uid := os.Getuid()
-	gid := os.Getgid()
-	if !api.SystemdEnabled {
+		uid := os.Getuid()
+		gid := os.Getgid()
 		// Avoid umask issues
 		if e := os.Chown(config.Current.Socket, uid, gid); e != nil {
 			return e

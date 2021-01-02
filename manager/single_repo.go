@@ -136,6 +136,10 @@ func (m *Manager) CreateExecute(j *jobs.Job) error {
 	if len(j.Dst) == 0 {
 		return errors.New("job is missing a destination repo")
 	}
+	// protect the 'pool' repo
+	if j.Dst == "pool" {
+		return errors.New("'pool' is a reserved name and cannot be used for a new repo")
+	}
 	// Create the repo directory
 	rp := filepath.Join(config.Current.RepoPath(), j.Dst)
 	if err := util.CreateDir(rp); err != nil {
@@ -190,34 +194,6 @@ func (m *Manager) Delta(name string) (int, error) {
 // DeltaExecute carries out a Delta job
 func (m *Manager) DeltaExecute(j *jobs.Job) error {
 	return m.singleRepoExecute(repo.Delta, j)
-}
-
-// DeltaPackage generates missing package deltas for a single package
-func (m *Manager) DeltaPackage(src, pkg string) (int, error) {
-	// Validate the arguments
-	if len(src) == 0 {
-		return -1, errors.New("job is missing a source repo")
-	}
-	if len(pkg) == 0 {
-		return -1, errors.New("job is missing a package name")
-	}
-	// Create a new job instance
-	j := &jobs.Job{
-		Type: jobs.DeltaPackage,
-		Src:  src,
-		Pkg:  pkg,
-	}
-	// Add the job to the DB
-	return m.store.Push(j)
-}
-
-// DeltaPackageExecute carries out a DeltaPackage job
-func (m *Manager) DeltaPackageExecute(j *jobs.Job) error {
-	// Validate the arguments
-	if len(j.Pkg) == 0 {
-		return errors.New("job is missing a package name")
-	}
-	return m.singleRepoExecute(repo.DeltaPackage, j)
 }
 
 // Import adds an existing repo to the database

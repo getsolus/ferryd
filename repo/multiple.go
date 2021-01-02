@@ -24,13 +24,16 @@ import (
 
 // CherryPick syncs a single package from this repo to another
 func CherryPick(left, right *Repo, j *jobs.Job, tx *sqlx.Tx) (d *Diff, err error) {
+	if d, err = Compare(left, right, j, tx); err != nil {
+		return
+	}
 	// TODO: Implement
 	return nil, errors.New("Function not implemented")
 }
 
 // Compare the contents of this repo to another
 func Compare(left, right *Repo, j *jobs.Job, tx *sqlx.Tx) (d *Diff, err error) {
-	// TODO: Implement
+	// TODO: Implement, checking for j.Pkg to be set to limit the size of the comparison
 	return nil, errors.New("Function not implemented")
 }
 

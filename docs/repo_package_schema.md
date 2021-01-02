@@ -7,7 +7,7 @@
 | Column Name   | id      | name   | instant_transit |
 | Column Type   | INTEGER | STRING | BOOLEAN         |
 
-## RepoArchives Table
+## Link Table
 
 | Column Number | 1        | 2           |
 | ------------- | -------- | ----------- |
