@@ -18,14 +18,14 @@ package core
 
 import (
 	"encoding/xml"
+	"fmt"
+	log "github.com/sirupsen/logrus"
 	"libdb"
 	"libeopkg"
 	"os"
 	"path/filepath"
 	"sort"
 	"strings"
-
-	log "github.com/sirupsen/logrus"
 )
 
 // initDistribution will look for the distribution.xml file which will define
@@ -120,6 +120,49 @@ func (r *Repository) emitGroups(encoder *xml.Encoder) error {
 	return nil
 }
 
+// pushDeltaPackages will insert all applicable (usable) delta packages from
+// our repository into the emitted index
+func (r *Repository) pushDeltaPackages(db libdb.Database, pool *Pool, entry *PoolEntry) error {
+	// Get our local entry
+	repoEntry, err := r.GetEntry(db, entry.Meta.Name)
+	if err != nil {
+		return err
+	}
+
+	var deltas []libeopkg.Delta
+
+	// Find all delta IDs
+	for _, id := range repoEntry.Deltas {
+		poolEnt, err := pool.GetEntry(db, id)
+		if err != nil {
+			return err
+		}
+		if poolEnt.Delta == nil {
+			return fmt.Errorf("invalid delta record, corruption: %s", id)
+		}
+
+		// Basically the ToRelease must be for this release
+		if poolEnt.Delta.ToRelease != entry.Meta.GetRelease() {
+			continue
+		}
+
+		// Insert delta and clone the pool entry meta for it
+		deltas = append(deltas, libeopkg.Delta{
+			ReleaseFrom: poolEnt.Delta.FromRelease,
+			PackageURI:  poolEnt.Meta.PackageURI,
+			PackageSize: poolEnt.Meta.PackageSize,
+			PackageHash: poolEnt.Meta.PackageHash,
+		})
+	}
+
+	// Deltas implicitly sorted by sort.Strings on their IDs
+	if deltas != nil && len(deltas) > 0 {
+		entry.Meta.DeltaPackages = &deltas
+	}
+
+	return nil
+}
+
 func (r *Repository) emitIndexPackage(db libdb.Database, pool *Pool, pkg string, encoder *xml.Encoder, entry *PoolEntry) error {
 	// Wrap every output item as Package
 	elem := xml.StartElement{
@@ -158,6 +201,11 @@ func (r *Repository) emitIndexPackage(db libdb.Database, pool *Pool, pkg string,
 				}).Warning("Encountered uninstallable package depending on obsolete package. Please address")
 			}
 		}
+	}
+
+	// Shove in the delta packages now
+	if err := r.pushDeltaPackages(db, pool, entry); err != nil {
+		return err
 	}
 
 	return encoder.EncodeElement(entry.Meta, elem)

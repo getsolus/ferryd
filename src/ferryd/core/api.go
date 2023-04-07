@@ -221,6 +221,58 @@ func (m *Manager) GetPackages(repoID, pkgName string) ([]*libeopkg.MetaPackage, 
 	return repo.GetPackages(m.db, m.pool, pkgName)
 }
 
+// CreateDelta will attempt to create a new delta package between the old and new IDs
+func (m *Manager) CreateDelta(repoID string, oldPkg, newPkg *libeopkg.MetaPackage) (string, error) {
+	repo, err := m.GetRepo(repoID)
+	if err != nil {
+		return "", err
+	}
+
+	return repo.CreateDelta(m.db, oldPkg, newPkg)
+}
+
+// HasDelta will query the repository to determine if it already has the
+// given delta
+func (m *Manager) HasDelta(repoID, pkgID, deltaPath string) (bool, error) {
+	repo, err := m.GetRepo(repoID)
+	if err != nil {
+		return false, err
+	}
+	return repo.HasDelta(m.db, pkgID, deltaPath)
+}
+
+// AddDelta will attempt to include the delta package specified by deltaPath into
+// the target repository
+func (m *Manager) AddDelta(repoID, deltaPath string, mapping *DeltaInformation) error {
+	repo, err := m.GetRepo(repoID)
+	if err != nil {
+		return err
+	}
+
+	return repo.AddDelta(m.db, m.pool, deltaPath, mapping)
+}
+
+// RefDelta will dupe an existing delta into the target repository
+func (m *Manager) RefDelta(repoID, deltaID string) error {
+	repo, err := m.GetRepo(repoID)
+	if err != nil {
+		return err
+	}
+	return repo.RefDelta(m.db, m.pool, deltaID)
+}
+
+// MarkDeltaFailed will permanently record the delta package as failing so we do
+// not attempt to recreate it (expensive)
+func (m *Manager) MarkDeltaFailed(deltaID string, delta *DeltaInformation) error {
+	return m.pool.MarkDeltaFailed(m.db, deltaID, delta)
+}
+
+// GetDeltaFailed will determine via the pool transaction whether a delta has
+// previously failed.
+func (m *Manager) GetDeltaFailed(deltaID string) bool {
+	return m.pool.GetDeltaFailed(m.db, deltaID)
+}
+
 // GetPoolEntry will return the metadata for a pool entry with the given pkg ID
 func (m *Manager) GetPoolEntry(pkgID string) (*libeopkg.MetaPackage, error) {
 	entry, err := m.pool.GetEntry(m.db, filepath.Base(pkgID))

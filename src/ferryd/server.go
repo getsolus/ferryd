@@ -20,6 +20,11 @@ import (
 	"errors"
 	"ferryd/core"
 	"ferryd/jobs"
+	"github.com/coreos/go-systemd/activation"
+	"github.com/coreos/go-systemd/daemon"
+	"github.com/julienschmidt/httprouter"
+	"github.com/radu-munteanu/fsnotify"
+	log "github.com/sirupsen/logrus"
 	"net"
 	"net/http"
 	"os"
@@ -28,12 +33,6 @@ import (
 	"sync"
 	"syscall"
 	"time"
-
-	"github.com/coreos/go-systemd/activation"
-	"github.com/coreos/go-systemd/daemon"
-	"github.com/julienschmidt/httprouter"
-	"github.com/radu-munteanu/fsnotify"
-	log "github.com/sirupsen/logrus"
 )
 
 // Server sits on a unix socket accepting connections from authenticated
@@ -93,6 +92,7 @@ func NewServer() (*Server, error) {
 	// Repo management
 	router.GET("/api/v1/create/repo/:id", s.CreateRepo)
 	router.GET("/api/v1/remove/repo/:id", s.DeleteRepo)
+	router.GET("/api/v1/delta/repo/:id", s.DeltaRepo)
 	router.GET("/api/v1/index/repo/:id", s.IndexRepo)
 
 	// Client sends us data

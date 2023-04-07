@@ -20,12 +20,11 @@ import (
 	"bytes"
 	"encoding/json"
 	"ferryd/jobs"
+	"github.com/julienschmidt/httprouter"
+	log "github.com/sirupsen/logrus"
 	"libferry"
 	"net/http"
 	"runtime"
-
-	"github.com/julienschmidt/httprouter"
-	log "github.com/sirupsen/logrus"
 )
 
 // getMethodOrigin helps us determine the caller so that we can print
@@ -155,6 +154,15 @@ func (s *Server) DeleteRepo(w http.ResponseWriter, r *http.Request, p httprouter
 		"id": id,
 	}).Info("Repository deletion requested")
 	s.jproc.PushJob(jobs.NewDeleteRepoJob(id))
+}
+
+// DeltaRepo will handle remote requests for repository deltaing
+func (s *Server) DeltaRepo(w http.ResponseWriter, r *http.Request, p httprouter.Params) {
+	id := p.ByName("id")
+	log.WithFields(log.Fields{
+		"id": id,
+	}).Info("Repository delta requested")
+	s.jproc.PushJob(jobs.NewDeltaRepoJob(id))
 }
 
 // IndexRepo will handle remote requests for repository indexing

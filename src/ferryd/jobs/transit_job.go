@@ -19,9 +19,9 @@ package jobs
 import (
 	"ferryd/core"
 	"fmt"
-	"os"
-
 	log "github.com/sirupsen/logrus"
+	"os"
+	"path/filepath"
 )
 
 // TransitJobHandler is responsible for accepting new upload payloads in the repository
@@ -93,6 +93,19 @@ func (j *TransitJobHandler) Execute(jproc *Processor, manager *core.Manager) err
 				"error": err,
 			}).Error("Failed to remove manifest file upload")
 		}
+	}
+
+	// At this point we should actually have valid pool entries so
+	// we'll grab their names, and schedule that they be re-deltad.
+	// It might be the case no delta is possible, but we'll let the
+	// DeltaJobHandler decide on that.
+	for _, pkg := range pkgs {
+		pkgID := filepath.Base(pkg)
+		p, ent := manager.GetPoolEntry(pkgID)
+		if ent != nil {
+			return err
+		}
+		jproc.PushJob(NewDeltaIndexJob(repo, p.Name))
 	}
 
 	return nil

@@ -45,6 +45,18 @@ const (
 	// DeleteRepo is a sequential job which will attempt to delete a repository
 	DeleteRepo = "DeleteRepo"
 
+	// Delta is a parallel job which will attempt the construction of deltas for
+	// a given package name + repo
+	Delta = "Delta"
+
+	// DeltaIndex is created in response to transit manifest events, and will
+	// cause the repository to be reindexed after each delta job continues
+	DeltaIndex = "Delta+Index"
+
+	// DeltaRepo is a sequential job which creates Delta jobs for every package in
+	// a repo
+	DeltaRepo = "DeltaRepo"
+
 	// IndexRepo is a sequential job that requests the repository be re-indexed
 	IndexRepo = "IndexRepo"
 
@@ -133,6 +145,12 @@ func NewJobHandler(j *JobEntry) (JobHandler, error) {
 		return NewCreateRepoJobHandler(j)
 	case DeleteRepo:
 		return NewDeleteRepoJobHandler(j)
+	case Delta:
+		return NewDeltaJobHandler(j, false)
+	case DeltaRepo:
+		return NewDeltaRepoJobHandler(j)
+	case DeltaIndex:
+		return NewDeltaJobHandler(j, true)
 	case IndexRepo:
 		return NewIndexRepoJobHandler(j)
 	case RemoveSource:
