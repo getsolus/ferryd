@@ -19,7 +19,12 @@ package jobs
 import (
 	"ferryd/core"
 	"fmt"
+
 	log "github.com/sirupsen/logrus"
+)
+
+var (
+	deltasEnabled = false
 )
 
 // IndexRepoJobHandler is responsible for indexing repositories and should only

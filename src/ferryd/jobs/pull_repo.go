@@ -19,6 +19,7 @@ package jobs
 import (
 	"ferryd/core"
 	"fmt"
+
 	log "github.com/sirupsen/logrus"
 )
 
@@ -64,6 +65,10 @@ func (j *PullRepoJobHandler) Execute(jproc *Processor, manager *core.Manager) er
 		"source": j.sourceID,
 		"target": j.targetID,
 	}).Info("Pulled repository")
+
+	if !deltasEnabled {
+		return nil
+	}
 
 	// Create delta job in this repository on the changed names
 	// Don't cause indexing because it causes noise

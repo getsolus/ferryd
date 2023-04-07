@@ -19,10 +19,11 @@ package main
 import (
 	"ferryd/core"
 	"fmt"
-	log "github.com/sirupsen/logrus"
-	"github.com/spf13/pflag"
 	"os"
 	"path/filepath"
+
+	log "github.com/sirupsen/logrus"
+	"github.com/spf13/pflag"
 )
 
 var (

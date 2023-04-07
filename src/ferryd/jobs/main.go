@@ -145,12 +145,8 @@ func NewJobHandler(j *JobEntry) (JobHandler, error) {
 		return NewCreateRepoJobHandler(j)
 	case DeleteRepo:
 		return NewDeleteRepoJobHandler(j)
-	case Delta:
-		return NewDeltaJobHandler(j, false)
 	case DeltaRepo:
 		return NewDeltaRepoJobHandler(j)
-	case DeltaIndex:
-		return NewDeltaJobHandler(j, true)
 	case IndexRepo:
 		return NewIndexRepoJobHandler(j)
 	case RemoveSource:

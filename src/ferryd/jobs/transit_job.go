@@ -19,9 +19,10 @@ package jobs
 import (
 	"ferryd/core"
 	"fmt"
-	log "github.com/sirupsen/logrus"
 	"os"
 	"path/filepath"
+
+	log "github.com/sirupsen/logrus"
 )
 
 // TransitJobHandler is responsible for accepting new upload payloads in the repository
@@ -93,6 +94,10 @@ func (j *TransitJobHandler) Execute(jproc *Processor, manager *core.Manager) err
 				"error": err,
 			}).Error("Failed to remove manifest file upload")
 		}
+	}
+
+	if !deltasEnabled {
+		return nil
 	}
 
 	// At this point we should actually have valid pool entries so
