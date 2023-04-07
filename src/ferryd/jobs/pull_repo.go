@@ -19,6 +19,7 @@ package jobs
 import (
 	"ferryd/core"
 	"fmt"
+
 	log "github.com/sirupsen/logrus"
 )
 
@@ -50,7 +51,7 @@ func NewPullRepoJobHandler(j *JobEntry) (*PullRepoJobHandler, error) {
 
 // Execute will attempt to pull the repos
 func (j *PullRepoJobHandler) Execute(jproc *Processor, manager *core.Manager) error {
-	changedNames, err := manager.PullRepo(j.sourceID, j.targetID)
+	_, err := manager.PullRepo(j.sourceID, j.targetID)
 	if err != nil {
 		log.WithFields(log.Fields{
 			"source": j.sourceID,
@@ -64,12 +65,6 @@ func (j *PullRepoJobHandler) Execute(jproc *Processor, manager *core.Manager) er
 		"source": j.sourceID,
 		"target": j.targetID,
 	}).Info("Pulled repository")
-
-	// Create delta job in this repository on the changed names
-	// Don't cause indexing because it causes noise
-	for _, pkg := range changedNames {
-		jproc.PushJob(NewDeltaIndexJob(j.targetID, pkg))
-	}
 
 	return nil
 }

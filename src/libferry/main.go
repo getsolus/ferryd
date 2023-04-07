@@ -154,12 +154,6 @@ func (c *Client) DeleteRepo(id string) error {
 	return c.getBasicResponse(uri, &Response{})
 }
 
-// DeltaRepo will attempt to reproduce deltas in the given repo
-func (c *Client) DeltaRepo(id string) error {
-	uri := c.formURI("/api/v1/delta/repo/" + id)
-	return c.getBasicResponse(uri, &Response{})
-}
-
 // IndexRepo will attempt to index a repository in the daemon
 func (c *Client) IndexRepo(id string) error {
 	uri := c.formURI("/api/v1/index/repo/" + id)

@@ -19,7 +19,6 @@ package core
 import (
 	"errors"
 	"fmt"
-	log "github.com/sirupsen/logrus"
 	"libdb"
 	"libeopkg"
 	"os"
@@ -27,6 +26,8 @@ import (
 	"sort"
 	"strings"
 	"sync"
+
+	log "github.com/sirupsen/logrus"
 )
 
 const (
@@ -35,12 +36,6 @@ const (
 
 	// AssetPathComponent is where we'll find extra files like distribution.xml
 	AssetPathComponent = "assets"
-
-	// DeltaPathComponent is a temporary tree for creating delta packages
-	DeltaPathComponent = "deltaBuilds"
-
-	// DeltaStagePathComponent is where we put temporary deltas until merged
-	DeltaStagePathComponent = "deltaStaging"
 
 	// DatabaseBucketRepo is the name for the main repo toplevel bucket
 	DatabaseBucketRepo = "repo"
@@ -55,10 +50,8 @@ const (
 // The RepositoryManager maintains all repos within ferryd which are in
 // turn linked to the main pool
 type RepositoryManager struct {
-	repoBase       string
-	assetBase      string
-	deltaBase      string
-	deltaStageBase string
+	repoBase  string
+	assetBase string
 
 	repoLock *sync.Mutex
 
@@ -68,12 +61,10 @@ type RepositoryManager struct {
 // A Repository is a simplistic representation of a exported repository
 // within ferryd
 type Repository struct {
-	ID             string                 // Name of this repository (unique)
-	path           string                 // Where this is on disk
-	assetPath      string                 // Where our assets are stored on disk
-	deltaPath      string                 // Where we'll produce deltas
-	deltaStagePath string                 // Where we'll stage final deltas
-	dist           *libeopkg.Distribution // Distribution
+	ID        string                 // Name of this repository (unique)
+	path      string                 // Where this is on disk
+	assetPath string                 // Where our assets are stored on disk
+	dist      *libeopkg.Distribution // Distribution
 
 	insertMut *sync.Mutex // Prevent parallel inserts
 	indexMut  *sync.Mutex // Indexing requires a special, separate lock
@@ -86,22 +77,18 @@ type RepoEntry struct {
 	Name          string   // Base package name
 	Available     []string // The available packages for this package name (eopkg IDs)
 	Published     string   // The "tip" version of this package (eopkg ID)
-	Deltas        []string // Delta packages known for this package.
 }
 
 // Init will create our initial working paths and DB bucket
 func (r *RepositoryManager) Init(ctx *Context, db libdb.Database) error {
 	r.repoBase = filepath.Join(ctx.BaseDir, RepoPathComponent)
 	r.assetBase = filepath.Join(ctx.BaseDir, AssetPathComponent)
-	r.deltaBase = filepath.Join(ctx.BaseDir, DeltaPathComponent)
-	r.deltaStageBase = filepath.Join(ctx.BaseDir, DeltaStagePathComponent)
 	r.repoLock = &sync.Mutex{}
 	r.repos = make(map[string]*Repository)
 
 	paths := []string{
 		r.repoBase,
 		r.assetBase,
-		r.deltaBase,
 	}
 	// Ensure we have all paths
 	for _, p := range paths {
@@ -122,20 +109,16 @@ func (r *RepositoryManager) Close() {}
 // we actually have all support paths too.
 func (r *RepositoryManager) bakeRepo(id string) (*Repository, error) {
 	repository := &Repository{
-		ID:             id,
-		path:           filepath.Join(r.repoBase, id),
-		assetPath:      filepath.Join(r.assetBase, id),
-		deltaPath:      filepath.Join(r.deltaBase, id),
-		deltaStagePath: filepath.Join(r.deltaStageBase, id),
-		indexMut:       &sync.Mutex{},
-		insertMut:      &sync.Mutex{},
+		ID:        id,
+		path:      filepath.Join(r.repoBase, id),
+		assetPath: filepath.Join(r.assetBase, id),
+		indexMut:  &sync.Mutex{},
+		insertMut: &sync.Mutex{},
 	}
 
 	paths := []string{
 		repository.path,
 		repository.assetPath,
-		repository.deltaPath,
-		repository.deltaStagePath,
 	}
 
 	// Create all required paths
@@ -264,13 +247,6 @@ func (r *RepositoryManager) DeleteRepo(db libdb.Database, pool *Pool, id string)
 				}
 			}
 
-			// Next up, find all the deltas to unref
-			for _, id := range entry.Deltas {
-				if err := repo.removeDeltaInternal(db, pool, id); err != nil {
-					return err
-				}
-			}
-
 			// Remove all IDs for this package, now we must remove this entry
 			// Note this isn't applied within the foreach.
 			return rootBucket.DeleteObject([]byte(entry.Name))
@@ -289,8 +265,6 @@ func (r *RepositoryManager) DeleteRepo(db libdb.Database, pool *Pool, id string)
 	deletionPaths := []string{
 		repo.path,
 		repo.assetPath,
-		repo.deltaPath,
-		repo.deltaStagePath,
 	}
 
 	// Clean up the repo paths.
@@ -325,126 +299,6 @@ func (r *Repository) GetEntry(db libdb.Database, id string) (*RepoEntry, error) 
 func (r *Repository) putEntry(db libdb.Database, entry *RepoEntry) error {
 	rootBucket := db.Bucket([]byte(DatabaseBucketRepo)).Bucket([]byte(r.ID)).Bucket([]byte(DatabaseBucketPackage))
 	return rootBucket.PutObject([]byte(entry.Name), entry)
-}
-
-// RefDelta will take the existing delta from the pool and insert it into our own repository
-func (r *Repository) RefDelta(db libdb.Database, pool *Pool, deltaID string) error {
-	r.insertMut.Lock()
-	defer r.insertMut.Unlock()
-
-	// Ensure we REALLY have the delta.
-	poolEntry, err := pool.GetEntry(db, deltaID)
-	if err != nil {
-		return err
-	}
-
-	// Now make sure we actually have the local entry
-	entry, err := r.GetEntry(db, poolEntry.Meta.Name)
-	if err != nil {
-		return err
-	}
-
-	// Extract our relevant paths
-	localPath := pool.GetMetaPoolPath(deltaID, poolEntry.Meta)
-	targetDir := filepath.Join(r.path, poolEntry.Meta.GetPathComponent())
-	targetPath := filepath.Join(targetDir, deltaID)
-
-	// Check we don't know about this delta already
-	for _, id := range entry.Deltas {
-		if id == deltaID {
-			log.WithFields(log.Fields{
-				"id":   id,
-				"repo": r.ID,
-			}).Info("Skipping already included delta")
-			return nil
-		}
-	}
-
-	// Insert this deltas ID to this package map
-	entry.Deltas = append(entry.Deltas, deltaID)
-	sort.Strings(entry.Deltas)
-
-	// Construct root dirs
-	if err := os.MkdirAll(targetDir, 00755); err != nil {
-		return err
-	}
-
-	// Grab the pool reference for this package
-	if err := pool.RefEntry(db, deltaID); err != nil {
-		return err
-	}
-
-	// Ensure the eopkg file is linked inside our own tree
-	if err := LinkOrCopyFile(localPath, targetPath, false); err != nil {
-		return err
-	}
-
-	return r.putEntry(db, entry)
-}
-
-// AddDelta will first open and read the .delta.eopkg, before passing it back off to AddLocalDelta
-func (r *Repository) AddDelta(db libdb.Database, pool *Pool, filename string, mapping *DeltaInformation) error {
-	pkg, err := libeopkg.Open(filename)
-	if err != nil {
-		return err
-	}
-
-	defer pkg.Close()
-	if err = pkg.ReadMetadata(); err != nil {
-		return err
-	}
-
-	return r.AddLocalDelta(db, pool, pkg, mapping)
-}
-
-// AddLocalDelta will attempt to add the delta to this repository, if possible
-// All ref'd deltas are retained, but not necessarily emitted unless they're
-// valid for the from-to relationship.
-func (r *Repository) AddLocalDelta(db libdb.Database, pool *Pool, pkg *libeopkg.Package, mapping *DeltaInformation) error {
-	r.insertMut.Lock()
-	defer r.insertMut.Unlock()
-
-	// Find our local package entry for the delta package first
-	entry, err := r.GetEntry(db, pkg.Meta.Package.Name)
-	if err != nil {
-		return err
-	}
-
-	pkgDir := filepath.Join(r.path, pkg.Meta.Package.GetPathComponent())
-	pkgTarget := filepath.Join(pkgDir, pkg.ID)
-
-	// Check we don't know about this delta already
-	for _, id := range entry.Deltas {
-		if id == pkg.ID {
-			log.WithFields(log.Fields{
-				"id":   id,
-				"repo": r.ID,
-			}).Info("Skipping already included delta")
-			return nil
-		}
-	}
-
-	// Insert this deltas ID to this package map
-	entry.Deltas = append(entry.Deltas, pkg.ID)
-	sort.Strings(entry.Deltas)
-
-	// Construct root dirs
-	if err := os.MkdirAll(pkgDir, 00755); err != nil {
-		return err
-	}
-
-	// Grab the pool reference for this package
-	if _, err = pool.AddDelta(db, pkg, mapping, false); err != nil {
-		return err
-	}
-
-	// Ensure the eopkg file is linked inside our own tree
-	source := pool.GetPackagePoolPath(pkg)
-	if err = LinkOrCopyFile(source, pkgTarget, false); err != nil {
-		return err
-	}
-
-	return r.putEntry(db, entry)
 }
 
 // Internal helper to remove packages
@@ -482,17 +336,8 @@ func (r *Repository) removePackageInternal(db libdb.Database, pool *Pool, id str
 	return pool.UnrefEntry(db, id)
 }
 
-// removeDeltaInternal has the same job as removePackageInternal, but in future should
-// be extended to remove the skip records
-func (r *Repository) removeDeltaInternal(db libdb.Database, pool *Pool, id string) error {
-	return r.removePackageInternal(db, pool, id)
-}
-
 // UnrefPackage will remove a package from our storage, and potentially remove the
 // entire RepoEntry for the package if none are left.
-//
-// Additionally, we'll locate stray deltas which lead either TO or FROM the given
-// package as they'll now be useless to anyone.
 func (r *Repository) UnrefPackage(db libdb.Database, pool *Pool, pkgID string) error {
 	newHighest := 0
 	var newHighestID string
@@ -513,30 +358,6 @@ func (r *Repository) UnrefPackage(db libdb.Database, pool *Pool, pkgID string) e
 	if err := r.removePackageInternal(db, pool, pkgID); err != nil {
 		return err
 	}
-
-	// Deltas remaining after removals
-	var remainDeltas []string
-
-	// Check out all the deltas
-	for _, deltaID := range entry.Deltas {
-		pkgDelta, err := pool.GetEntry(db, deltaID)
-		if err != nil {
-			return err
-		}
-
-		// We found a delta that is referencing us, we must garbage collect it now
-		if pkgDelta.Delta.FromID == pkgID || pkgDelta.Delta.ToID == pkgID {
-			if err := r.removeDeltaInternal(db, pool, pkgDelta.Name); err != nil {
-				return err
-			}
-		} else {
-			remainDeltas = append(remainDeltas, pkgDelta.Name)
-		}
-	}
-
-	// These are the deltas left
-	entry.Deltas = remainDeltas
-	sort.Strings(entry.Deltas)
 
 	// Filter our ID from the available set
 	var remainAvailable []string
@@ -788,53 +609,6 @@ func (r *Repository) GetPackages(db libdb.Database, pool *Pool, pkgName string) 
 	return pkgs, nil
 }
 
-// CreateDelta is responsible for trying to create a new delta package between
-// oldPkg and newPkg, with newPkg being the delta *to*.
-//
-// This function may fail to produce a delta because they're incompatible packages,
-// or because a delta between the two packages would be pointless (i.e. they're
-// either identical or 100% the same.)
-//
-// Lastly, this function will move the delta out of the build area into the
-// staging area if it successfully produces a delta. This does not mark a delta
-// attempt as "pointless", nor does it actually *include* the delta package
-// within the repository.
-func (r *Repository) CreateDelta(db libdb.Database, oldPkg, newPkg *libeopkg.MetaPackage) (string, error) {
-	if !libeopkg.IsDeltaPossible(oldPkg, newPkg) {
-		return "", libeopkg.ErrMismatchedDelta
-	}
-	fileName := libeopkg.ComputeDeltaName(oldPkg, newPkg)
-	fullPath := filepath.Join(r.deltaStagePath, fileName)
-
-	// This guy exists, no point in trying to rebuild it
-	if PathExists(fullPath) {
-		return fullPath, nil
-	}
-
-	oldPath := filepath.Join(r.path, oldPkg.PackageURI)
-	newPath := filepath.Join(r.path, newPkg.PackageURI)
-
-	if err := ProduceDelta(r.deltaPath, oldPath, newPath, fullPath); err != nil {
-		return "", err
-	}
-
-	return fullPath, nil
-}
-
-// HasDelta will work out if we actually have a delta already
-func (r *Repository) HasDelta(db libdb.Database, pkgName, deltaPath string) (bool, error) {
-	entry, err := r.GetEntry(db, pkgName)
-	if err != nil {
-		return false, err
-	}
-	for _, pkgDelta := range entry.Deltas {
-		if deltaPath == pkgDelta {
-			return true, nil
-		}
-	}
-	return false, nil
-}
-
 // pullAssets will pull the various asset files in prior to indexing
 func (r *Repository) pullAssets(sourceRepo *Repository) error {
 	copyPaths := []string{
@@ -871,7 +645,6 @@ func (r *Repository) CloneFrom(db libdb.Database, pool *Pool, sourceRepo *Reposi
 	defer sourceRepo.insertMut.Unlock()
 
 	var copyIDs []string
-	var deltaIDs []string
 
 	rootBucket := db.Bucket([]byte(DatabaseBucketRepo)).Bucket([]byte(sourceRepo.ID)).Bucket([]byte(DatabaseBucketPackage))
 
@@ -889,7 +662,6 @@ func (r *Repository) CloneFrom(db libdb.Database, pool *Pool, sourceRepo *Reposi
 
 		if fullClone {
 			copyIDs = append(copyIDs, entry.Available...)
-			deltaIDs = append(deltaIDs, entry.Deltas...)
 		} else {
 			copyIDs = append(copyIDs, entry.Published)
 		}
@@ -906,13 +678,6 @@ func (r *Repository) CloneFrom(db libdb.Database, pool *Pool, sourceRepo *Reposi
 	// depending on tip or ALL
 	for _, id := range copyIDs {
 		if err := r.RefPackage(db, pool, id); err != nil {
-			return err
-		}
-	}
-
-	// We can only copy deltas across on full clones.
-	for _, id := range deltaIDs {
-		if err := r.RefDelta(db, pool, id); err != nil {
 			return err
 		}
 	}

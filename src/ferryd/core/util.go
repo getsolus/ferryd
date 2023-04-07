@@ -22,7 +22,6 @@ import (
 	"encoding/hex"
 	"io"
 	"io/ioutil"
-	"libeopkg"
 	"os"
 	"path/filepath"
 )
@@ -151,23 +150,4 @@ func PathExists(path string) bool {
 		return true
 	}
 	return false
-}
-
-// ProduceDelta will attempt to batch the delta production between the
-// two listed file paths and then copy it into the final targetPath
-func ProduceDelta(tmpDir, oldPackage, newPackage, targetPath string) error {
-	del, err := libeopkg.NewDeltaProducer(tmpDir, oldPackage, newPackage)
-	if err != nil {
-		return err
-	}
-	defer del.Close()
-	path, err := del.Commit()
-	if err != nil {
-		return err
-	}
-
-	// Always nuke the tmpfile
-	defer os.Remove(path)
-
-	return LinkOrCopyFile(path, targetPath, false)
 }
