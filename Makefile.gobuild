@@ -2,7 +2,7 @@ CUR_DIR = $(shell pwd)
 
 # ".build" references will cause that package under src/ to be built
 %.build:
-	GOPATH=$(CUR_DIR) go install -v $(subst .build,,$@)
+	CGO_ENABLED=0 GOPATH=$(CUR_DIR) go install -v $(subst .build,,$@)
 
 clean:
 	test ! -d $(CUR_DIR)/pkg || rm -rvf $(CUR_DIR)/pkg; \
