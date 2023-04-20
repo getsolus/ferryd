@@ -51,6 +51,6 @@ Add packages:
 License
 -------
 
-Copyright © 2016-2017 Solus Project, ferryd Developers (See AUTHORS file)
+Copyright Solus Project
 
 `ferryd` is available under the terms of the Apache-2.0 license
