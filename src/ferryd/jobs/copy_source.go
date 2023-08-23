@@ -17,10 +17,12 @@
 package jobs
 
 import (
-	"ferryd/core"
 	"fmt"
-	log "github.com/sirupsen/logrus"
 	"strconv"
+
+	log "github.com/sirupsen/logrus"
+
+	"github.com/getsolus/ferryd/src/ferryd/core"
 )
 
 // CopySourceJobHandler is responsible for removing packages by identifiers

@@ -1,8 +1,11 @@
+export CGO_ENABLED=0
+
 CUR_DIR = $(shell pwd)
 
 # ".build" references will cause that package under src/ to be built
 %.build:
-	CGO_ENABLED=0 GOPATH=$(CUR_DIR) go install -v $(subst .build,,$@)
+	@mkdir -p $(CUR_DIR)/bin
+	go build -o $(CUR_DIR)/bin/ -v $(CUR_DIR)/src/$(subst .build,,$@)
 
 clean:
 	test ! -d $(CUR_DIR)/pkg || rm -rvf $(CUR_DIR)/pkg; \

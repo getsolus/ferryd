@@ -20,9 +20,10 @@ import (
 	"bytes"
 	"encoding/binary"
 	"encoding/gob"
-	"ferryd/core"
 	"fmt"
-	"libferry"
+
+	"github.com/getsolus/ferryd/src/ferryd/core"
+	"github.com/getsolus/ferryd/src/libferry"
 )
 
 // JobType is a numerical representation of a kind of job

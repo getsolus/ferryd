@@ -18,11 +18,13 @@ package core
 
 import (
 	"fmt"
-	log "github.com/sirupsen/logrus"
-	"libdb"
-	"libeopkg"
 	"os"
 	"path/filepath"
+
+	log "github.com/sirupsen/logrus"
+
+	"github.com/getsolus/ferryd/src/libdb"
+	"github.com/getsolus/ferryd/src/libeopkg"
 )
 
 const (

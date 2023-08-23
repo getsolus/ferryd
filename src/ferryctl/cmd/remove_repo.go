@@ -18,9 +18,11 @@ package cmd
 
 import (
 	"fmt"
-	"github.com/spf13/cobra"
-	"libferry"
 	"os"
+
+	"github.com/spf13/cobra"
+
+	"github.com/getsolus/ferryd/src/libferry"
 )
 
 var removeRepoCmd = &cobra.Command{

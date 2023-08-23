@@ -17,12 +17,14 @@
 package jobs
 
 import (
-	"ferryd/core"
 	"fmt"
-	log "github.com/sirupsen/logrus"
-	"libeopkg"
 	"os"
 	"sort"
+
+	log "github.com/sirupsen/logrus"
+
+	"github.com/getsolus/ferryd/src/ferryd/core"
+	"github.com/getsolus/ferryd/src/libeopkg"
 )
 
 // DeltaJobHandler is responsible for indexing repositories and should only

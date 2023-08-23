@@ -17,9 +17,10 @@
 package core
 
 import (
-	"libdb"
 	"os"
 	"path/filepath"
+
+	"github.com/getsolus/ferryd/src/libdb"
 )
 
 // A Manager is the the singleton responsible for slip management

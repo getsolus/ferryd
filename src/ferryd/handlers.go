@@ -19,12 +19,14 @@ package main
 import (
 	"bytes"
 	"encoding/json"
-	"ferryd/jobs"
-	"github.com/julienschmidt/httprouter"
-	log "github.com/sirupsen/logrus"
-	"libferry"
 	"net/http"
 	"runtime"
+
+	"github.com/julienschmidt/httprouter"
+	log "github.com/sirupsen/logrus"
+
+	"github.com/getsolus/ferryd/src/ferryd/jobs"
+	"github.com/getsolus/ferryd/src/libferry"
 )
 
 // getMethodOrigin helps us determine the caller so that we can print

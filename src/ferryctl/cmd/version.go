@@ -18,8 +18,10 @@ package cmd
 
 import (
 	"fmt"
+
 	"github.com/spf13/cobra"
-	"libferry"
+
+	"github.com/getsolus/ferryd/src/libferry"
 )
 
 var versionCmd = &cobra.Command{

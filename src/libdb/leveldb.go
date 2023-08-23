@@ -20,9 +20,10 @@ import (
 	"bytes"
 	"encoding/binary"
 	"fmt"
+	"sync"
+
 	"github.com/syndtr/goleveldb/leveldb"
 	"github.com/syndtr/goleveldb/leveldb/util"
-	"sync"
 )
 
 var (

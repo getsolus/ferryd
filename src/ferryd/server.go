@@ -18,13 +18,6 @@ package main
 
 import (
 	"errors"
-	"ferryd/core"
-	"ferryd/jobs"
-	"github.com/coreos/go-systemd/activation"
-	"github.com/coreos/go-systemd/daemon"
-	"github.com/julienschmidt/httprouter"
-	"github.com/radu-munteanu/fsnotify"
-	log "github.com/sirupsen/logrus"
 	"net"
 	"net/http"
 	"os"
@@ -33,6 +26,15 @@ import (
 	"sync"
 	"syscall"
 	"time"
+
+	"github.com/coreos/go-systemd/activation"
+	"github.com/coreos/go-systemd/daemon"
+	"github.com/julienschmidt/httprouter"
+	"github.com/radu-munteanu/fsnotify"
+	log "github.com/sirupsen/logrus"
+
+	"github.com/getsolus/ferryd/src/ferryd/core"
+	"github.com/getsolus/ferryd/src/ferryd/jobs"
 )
 
 // Server sits on a unix socket accepting connections from authenticated

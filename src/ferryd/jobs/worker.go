@@ -17,11 +17,13 @@
 package jobs
 
 import (
-	"ferryd/core"
-	log "github.com/sirupsen/logrus"
 	"math/rand"
 	"sync"
 	"time"
+
+	log "github.com/sirupsen/logrus"
+
+	"github.com/getsolus/ferryd/src/ferryd/core"
 )
 
 // JobFetcher will be provided by either the Async or Sequential claim functions

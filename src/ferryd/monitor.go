@@ -17,13 +17,15 @@
 package main
 
 import (
-	"ferryd/core"
-	"ferryd/jobs"
-	"github.com/radu-munteanu/fsnotify"
-	log "github.com/sirupsen/logrus"
 	"os"
 	"path/filepath"
 	"strings"
+
+	"github.com/radu-munteanu/fsnotify"
+	log "github.com/sirupsen/logrus"
+
+	"github.com/getsolus/ferryd/src/ferryd/core"
+	"github.com/getsolus/ferryd/src/ferryd/jobs"
 )
 
 // InitWatcher will set up the watcher for the first time

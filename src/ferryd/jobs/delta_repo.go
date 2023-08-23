@@ -17,9 +17,11 @@
 package jobs
 
 import (
-	"ferryd/core"
 	"fmt"
+
 	log "github.com/sirupsen/logrus"
+
+	"github.com/getsolus/ferryd/src/ferryd/core"
 )
 
 // DeltaRepoJobHandler is responsible for delta'ing repositories and should only
