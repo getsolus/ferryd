@@ -17,10 +17,12 @@
 package jobs
 
 import (
-	"ferryd/core"
-	log "github.com/sirupsen/logrus"
 	"runtime"
 	"sync"
+
+	log "github.com/sirupsen/logrus"
+
+	"github.com/getsolus/ferryd/src/ferryd/core"
 )
 
 // A Processor is responsible for the main dispatch and bulking of jobs

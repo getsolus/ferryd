@@ -19,13 +19,15 @@ package core
 import (
 	"encoding/xml"
 	"fmt"
-	log "github.com/sirupsen/logrus"
-	"libdb"
-	"libeopkg"
 	"os"
 	"path/filepath"
 	"sort"
 	"strings"
+
+	log "github.com/sirupsen/logrus"
+
+	"github.com/getsolus/ferryd/src/libdb"
+	"github.com/getsolus/ferryd/src/libeopkg"
 )
 
 // initDistribution will look for the distribution.xml file which will define

@@ -17,12 +17,13 @@
 package jobs
 
 import (
-	"ferryd/core"
 	"fmt"
 	"os"
 	"path/filepath"
 
 	log "github.com/sirupsen/logrus"
+
+	"github.com/getsolus/ferryd/src/ferryd/core"
 )
 
 // TransitJobHandler is responsible for accepting new upload payloads in the repository

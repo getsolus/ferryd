@@ -19,11 +19,12 @@ package jobs
 import (
 	"encoding/binary"
 	"errors"
-	"ferryd/core"
-	"libdb"
-	"libferry"
 	"sync"
 	"time"
+
+	"github.com/getsolus/ferryd/src/ferryd/core"
+	"github.com/getsolus/ferryd/src/libdb"
+	"github.com/getsolus/ferryd/src/libferry"
 )
 
 var (

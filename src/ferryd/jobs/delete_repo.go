@@ -17,9 +17,11 @@
 package jobs
 
 import (
-	"ferryd/core"
 	"fmt"
+
 	log "github.com/sirupsen/logrus"
+
+	"github.com/getsolus/ferryd/src/ferryd/core"
 )
 
 // DeleteRepoJobHandler is responsible for creating new repositories and should only

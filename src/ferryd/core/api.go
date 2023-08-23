@@ -17,8 +17,9 @@
 package core
 
 import (
-	"libeopkg"
 	"path/filepath"
+
+	"github.com/getsolus/ferryd/src/libeopkg"
 )
 
 // This file provides the public API functions which are used by ferryd

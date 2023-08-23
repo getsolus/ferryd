@@ -18,11 +18,13 @@ package cmd
 
 import (
 	"fmt"
-	"github.com/spf13/cobra"
-	"libferry"
 	"os"
 	"path/filepath"
 	"strings"
+
+	"github.com/spf13/cobra"
+
+	"github.com/getsolus/ferryd/src/libferry"
 )
 
 var importCmd = &cobra.Command{

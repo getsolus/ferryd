@@ -17,13 +17,14 @@
 package main
 
 import (
-	"ferryd/core"
 	"fmt"
 	"os"
 	"path/filepath"
 
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/pflag"
+
+	"github.com/getsolus/ferryd/src/ferryd/core"
 )
 
 var (

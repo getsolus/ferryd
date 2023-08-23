@@ -18,12 +18,13 @@ package main
 
 import (
 	"errors"
-	"ferryd/core"
 	"fmt"
 	"os"
 	"path/filepath"
 	"sync"
 	"syscall"
+
+	"github.com/getsolus/ferryd/src/ferryd/core"
 )
 
 var (

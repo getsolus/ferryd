@@ -17,9 +17,11 @@
 package main
 
 import (
-	"ferryctl/cmd"
-	log "github.com/sirupsen/logrus"
 	"os"
+
+	log "github.com/sirupsen/logrus"
+
+	"github.com/getsolus/ferryd/src/ferryctl/cmd"
 )
 
 // Set up the main logger formatting used in USpin

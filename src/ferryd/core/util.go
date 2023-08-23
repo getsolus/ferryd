@@ -22,9 +22,10 @@ import (
 	"encoding/hex"
 	"io"
 	"io/ioutil"
-	"libeopkg"
 	"os"
 	"path/filepath"
+
+	"github.com/getsolus/ferryd/src/libeopkg"
 )
 
 // CopyFile will copy the file and permissions to the new target

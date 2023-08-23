@@ -19,10 +19,11 @@ package core
 import (
 	"errors"
 	"fmt"
-	"github.com/BurntSushi/toml"
 	"io/ioutil"
 	"path/filepath"
 	"strings"
+
+	"github.com/BurntSushi/toml"
 )
 
 const (
