@@ -3,7 +3,7 @@ module github.com/getsolus/ferryd
 go 1.21
 
 require (
-	github.com/BurntSushi/toml v0.3.1
+	github.com/BurntSushi/toml v0.4.1
 	github.com/coreos/go-systemd v0.0.0-20190321100706-95778dfbb74e
 	github.com/julienschmidt/httprouter v1.3.0
 	github.com/olekukonko/tablewriter v0.0.5
