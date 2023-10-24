@@ -7,7 +7,7 @@ require (
 	github.com/coreos/go-systemd v0.0.0-20190321100706-95778dfbb74e
 	github.com/julienschmidt/httprouter v1.3.0
 	github.com/olekukonko/tablewriter v0.0.5
-	github.com/radu-munteanu/fsnotify v1.4.8-0.20190225091322-6b752d1de779
+	github.com/radu-munteanu/fsnotify v1.2020.0
 	github.com/sirupsen/logrus v1.2.0
 	github.com/spf13/cobra v0.0.7
 	github.com/spf13/pflag v1.0.5
