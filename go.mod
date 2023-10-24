@@ -5,6 +5,7 @@ go 1.21
 require (
 	github.com/BurntSushi/toml v0.3.1
 	github.com/coreos/go-systemd v0.0.0-20190321100706-95778dfbb74e
+	github.com/coreos/go-systemd/v22 v22.5.0
 	github.com/julienschmidt/httprouter v1.3.0
 	github.com/olekukonko/tablewriter v0.0.5
 	github.com/radu-munteanu/fsnotify v1.2020.0
