@@ -407,5 +407,10 @@ func (r *Repository) Index(db libdb.Database, pool *Pool) error {
 		}
 	}
 
+	errAbort = purgeCloudflare(r.ID)
+	if errAbort != nil {
+		return errAbort
+	}
+
 	return nil
 }

@@ -67,7 +67,7 @@ type RepositoryManager struct {
 	repos map[string]*Repository // Cache all repositories.
 }
 
-// A Repository is a simplistic representation of a exported repository
+// A Repository is a simplistic representation of an exported repository
 // within ferryd
 type Repository struct {
 	ID             string                 // Name of this repository (unique)
