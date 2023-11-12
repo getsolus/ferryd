@@ -57,7 +57,7 @@ func XzFile(inputPath string, keepOriginal bool) error {
 	cmd := []string{
 		"xz",
 		"-6",
-		"-T", "2",
+		"-T", "8",
 		inputPath,
 	}
 	if keepOriginal {
@@ -73,7 +73,42 @@ func XzFile(inputPath string, keepOriginal bool) error {
 func UnxzFile(inputPath string, keepOriginal bool) error {
 	cmd := []string{
 		"unxz",
-		"-T", "2",
+		"-T", "8",
+		inputPath,
+	}
+	if keepOriginal {
+		cmd = append(cmd, "-k")
+	}
+	c := exec.Command(cmd[0], cmd[1:]...)
+	c.Stderr = os.Stderr
+	return c.Run()
+}
+
+// ZstdFile is a simple wrapper around the zstd utility to compress the input
+// file. This will be performed in place and leave a ".zst" suffixed file in
+// place
+// Keep original determines whether we'll keep the original file
+func ZstdFile(inputPath string, keepOriginal bool) error {
+	cmd := []string{
+		"zstd",
+		"-3",
+		"-T", "8",
+		inputPath,
+	}
+	if keepOriginal {
+		cmd = append(cmd, "-k")
+	}
+	c := exec.Command(cmd[0], cmd[1:]...)
+	c.Stderr = os.Stderr
+	return c.Run()
+}
+
+// UnzstdFile will decompress the input zstd file and leave a new file in place
+// without the .zst suffix
+func UnzstdFile(inputPath string, keepOriginal bool) error {
+	cmd := []string{
+		"unzstd",
+		"-T", "8",
 		inputPath,
 	}
 	if keepOriginal {

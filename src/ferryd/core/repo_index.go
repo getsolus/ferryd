@@ -334,6 +334,15 @@ func (r *Repository) Index(db libdb.Database, pool *Pool) error {
 		return errAbort
 	}
 
+	// Create a sha256sum file as well
+	indexPathSha256 := filepath.Join(r.path, "eopkg-index.xml.sha256sum.new")
+	indexPathSha256Final := filepath.Join(r.path, "eopkg-index.xml.sha256sum")
+	mapping[indexPathSha256] = indexPathSha256Final
+
+	if errAbort = WriteSha256sum(indexPath, indexPathSha256); err != nil {
+		return errAbort
+	}
+
 	// Write our XZ index out
 	indexPathXz := filepath.Join(r.path, "eopkg-index.xml.new.xz")
 	indexPathXzFinal := filepath.Join(r.path, "eopkg-index.xml.xz")
@@ -350,6 +359,45 @@ func (r *Repository) Index(db libdb.Database, pool *Pool) error {
 
 	// xz sha1
 	if errAbort = WriteSha1sum(indexPathXz, indexPathXzSha); err != nil {
+		return errAbort
+	}
+
+	// Write sha256sum for our xz file
+	indexPathXzSha256 := filepath.Join(r.path, "eopkg-index.xml.xz.sha256sum.new")
+	indexPathXzSha256Final := filepath.Join(r.path, "eopkg-index.xml.xz.sha256sum")
+	mapping[indexPathXzSha256] = indexPathXzSha256Final
+
+	// xz sha256
+	if errAbort = WriteSha256sum(indexPathXz, indexPathXzSha256); err != nil {
+		return errAbort
+	}
+
+	// Write our zstd index out
+	indexPathZst := filepath.Join(r.path, "eopkg-index.xml.new.zst")
+	indexPathZstFinal := filepath.Join(r.path, "eopkg-index.xml.zst")
+	mapping[indexPathZst] = indexPathZstFinal
+
+	if errAbort = libeopkg.ZstdFile(indexPath, true); errAbort != nil {
+		return errAbort
+	}
+
+	// Write sha1sum for our xz file
+	indexPathZstSha := filepath.Join(r.path, "eopkg-index.xml.zst.sha1sum.new")
+	indexPathZstShaFinal := filepath.Join(r.path, "eopkg-index.xml.zst.sha1sum")
+	mapping[indexPathZstSha] = indexPathZstShaFinal
+
+	// Zst sha1
+	if errAbort = WriteSha1sum(indexPathZst, indexPathZstSha); err != nil {
+		return errAbort
+	}
+
+	// Write sha1sum for our xz file
+	indexPathZstSha256 := filepath.Join(r.path, "eopkg-index.xml.zst.sha256sum.new")
+	indexPathZstSha256Final := filepath.Join(r.path, "eopkg-index.xml.zst.sha256sum")
+	mapping[indexPathZstSha256] = indexPathZstSha256Final
+
+	// Zst sha256
+	if errAbort = WriteSha256sum(indexPathZst, indexPathZstSha256); err != nil {
 		return errAbort
 	}
 

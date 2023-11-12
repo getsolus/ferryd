@@ -27,8 +27,8 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/coreos/go-systemd/activation"
-	"github.com/coreos/go-systemd/daemon"
+	"github.com/coreos/go-systemd/v22/activation"
+	"github.com/coreos/go-systemd/v22/daemon"
 	"github.com/julienschmidt/httprouter"
 	"github.com/radu-munteanu/fsnotify"
 	log "github.com/sirupsen/logrus"
@@ -142,7 +142,7 @@ func (s *Server) Bind() error {
 
 	// Check if we're systemd activated.
 	if _, b := os.LookupEnv("LISTEN_FDS"); b {
-		listeners, err := activation.Listeners(true)
+		listeners, err := activation.Listeners()
 		if err != nil {
 			return err
 		}
