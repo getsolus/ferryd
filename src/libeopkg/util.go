@@ -92,7 +92,7 @@ func ZstdFile(inputPath string, keepOriginal bool) error {
 	cmd := []string{
 		"zstd",
 		"-3",
-		"-T", "8",
+		"-T8",
 		inputPath,
 	}
 	if keepOriginal {
@@ -108,7 +108,7 @@ func ZstdFile(inputPath string, keepOriginal bool) error {
 func UnzstdFile(inputPath string, keepOriginal bool) error {
 	cmd := []string{
 		"unzstd",
-		"-T", "8",
+		"-T8",
 		inputPath,
 	}
 	if keepOriginal {
