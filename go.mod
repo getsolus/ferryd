@@ -4,7 +4,7 @@ go 1.21
 
 require (
 	github.com/BurntSushi/toml v1.3.2
-	github.com/cloudflare/cloudflare-go v0.84.0
+	github.com/cloudflare/cloudflare-go v0.85.0
 	github.com/coreos/go-systemd/v22 v22.5.0
 	github.com/julienschmidt/httprouter v1.3.0
 	github.com/olekukonko/tablewriter v0.0.5
