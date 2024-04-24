@@ -8,6 +8,8 @@ github.com/cloudflare/cloudflare-go v0.85.0 h1:GO5Alu5ldNdPyh5i9VSSM5ZdjL57u76Y4
 github.com/cloudflare/cloudflare-go v0.85.0/go.mod h1:Cj+RG+ceGsRexXYLRydfTB7pjODi3YO5KeG6vnLV2cA=
 github.com/cloudflare/cloudflare-go v0.93.0 h1:rV0eHb42NUewfK5qa2+LKAD4v4oFA0QGDABn/lMyF78=
 github.com/cloudflare/cloudflare-go v0.93.0/go.mod h1:N1u1cLZ4lG6NeezGOWi7P6aq1DK2iVYg9ze7GZbUmZE=
+github.com/cloudflare/cloudflare-go v0.94.0 h1:WADmVhCdnn1A9sm5NU08by49Vbh4Lj/JBgTWTr7q7Qc=
+github.com/cloudflare/cloudflare-go v0.94.0/go.mod h1:N1u1cLZ4lG6NeezGOWi7P6aq1DK2iVYg9ze7GZbUmZE=
 github.com/coreos/go-systemd/v22 v22.5.0 h1:RrqgGjYQKalulkV8NGVIfkXQf6YYmOyiJKk8iXXhfZs=
 github.com/coreos/go-systemd/v22 v22.5.0/go.mod h1:Y58oyj3AT4RCenI/lSvhwexgC+NSVTIJ3seZv2GcEnc=
 github.com/cpuguy83/go-md2man/v2 v2.0.3/go.mod h1:tgQtvFlXSQOSOSIRvRPT7W67SCa46tRHOmNcaadrF8o=
