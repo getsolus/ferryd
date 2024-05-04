@@ -240,7 +240,7 @@ func (r *Repository) emitIndex(db libdb.Database, pool *Pool, file *os.File) err
 	// Ensure we'll emit in a sane order
 	sort.Strings(pkgIds)
 
-	encoder := xml.NewEncoder(file)
+	encoder := xml.NewEncoder(NewEscapedWriter(file))
 	encoder.Indent("    ", "    ")
 
 	// Ensure we have the start element
