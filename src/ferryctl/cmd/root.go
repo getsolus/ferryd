@@ -17,13 +17,16 @@
 package cmd
 
 import (
+	"os"
+	"path"
+
 	"github.com/spf13/cobra"
 )
 
 // RootCmd is the main entry point into ferry
 var RootCmd = &cobra.Command{
-	Use:   "ferry",
-	Short: "ferry is the Solus package repository tool",
+	Use:   path.Base(os.Args[0]),
+	Short: path.Base(os.Args[0]) + " is the Solus package repository tool",
 }
 
 // ListCmd is a parent for list type commands
