@@ -5,7 +5,6 @@ go 1.21
 require (
 	github.com/BurntSushi/toml v1.4.0
 	github.com/cloudflare/cloudflare-go/v2 v2.3.0
-	github.com/cloudflare/cloudflare-go/v2 v2.3.0
 	github.com/coreos/go-systemd/v22 v22.5.0
 	github.com/julienschmidt/httprouter v1.3.0
 	github.com/olekukonko/tablewriter v0.0.5
@@ -18,6 +17,7 @@ require (
 )
 
 require (
+	github.com/cloudflare/cloudflare-go v0.98.0 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/fsnotify/fsnotify v1.7.0 // indirect
 	github.com/goccy/go-json v0.10.3 // indirect
