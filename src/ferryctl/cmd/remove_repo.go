@@ -26,7 +26,7 @@ import (
 )
 
 var removeRepoCmd = &cobra.Command{
-	Use:   "remove [repoName]",
+	Use:   "repo [repoName]",
 	Short: "remove an existing repository",
 	Long:  "Remove an existing repository in the ferryd instance",
 	Run:   removeRepo,
@@ -38,7 +38,7 @@ func init() {
 
 func removeRepo(cmd *cobra.Command, args []string) {
 	if len(args) != 1 {
-		fmt.Fprintf(os.Stderr, "usage: remove [repoName]\n")
+		cmd.Help()
 		return
 	}
 

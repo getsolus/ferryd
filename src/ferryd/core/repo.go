@@ -234,7 +234,8 @@ func (r *RepositoryManager) CreateRepo(db libdb.Database, id string) (*Repositor
 	return repository, nil
 }
 
-// DeleteRepo is not yet implemented
+// DeleteRepo will remove an existing repo from the top level repo bucket
+// and clean up any paths/files associated with the deleted repo.
 func (r *RepositoryManager) DeleteRepo(db libdb.Database, pool *Pool, id string) error {
 	r.repoLock.Lock()
 	defer r.repoLock.Unlock()
