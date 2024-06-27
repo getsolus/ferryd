@@ -3,7 +3,7 @@ module github.com/getsolus/ferryd
 go 1.21
 
 require (
-	github.com/BurntSushi/toml v1.3.2
+	github.com/BurntSushi/toml v1.4.0
 	github.com/cloudflare/cloudflare-go v0.98.0
 	github.com/cloudflare/cloudflare-go/v2 v2.3.0
 	github.com/coreos/go-systemd/v22 v22.5.0
