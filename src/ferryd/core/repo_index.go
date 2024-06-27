@@ -330,7 +330,7 @@ func (r *Repository) Index(db libdb.Database, pool *Pool) error {
 	mapping[indexPathSha] = indexPathShaFinal
 
 	// Star in it
-	if errAbort = WriteSha1sum(indexPath, indexPathSha); err != nil {
+	if errAbort = WriteSha1sum(indexPath, indexPathSha); errAbort != nil {
 		return errAbort
 	}
 
@@ -339,7 +339,7 @@ func (r *Repository) Index(db libdb.Database, pool *Pool) error {
 	indexPathSha256Final := filepath.Join(r.path, "eopkg-index.xml.sha256sum")
 	mapping[indexPathSha256] = indexPathSha256Final
 
-	if errAbort = WriteSha256sum(indexPath, indexPathSha256); err != nil {
+	if errAbort = WriteSha256sum(indexPath, indexPathSha256); errAbort != nil {
 		return errAbort
 	}
 
@@ -358,7 +358,7 @@ func (r *Repository) Index(db libdb.Database, pool *Pool) error {
 	mapping[indexPathXzSha] = indexPathXzShaFinal
 
 	// xz sha1
-	if errAbort = WriteSha1sum(indexPathXz, indexPathXzSha); err != nil {
+	if errAbort = WriteSha1sum(indexPathXz, indexPathXzSha); errAbort != nil {
 		return errAbort
 	}
 
@@ -368,7 +368,7 @@ func (r *Repository) Index(db libdb.Database, pool *Pool) error {
 	mapping[indexPathXzSha256] = indexPathXzSha256Final
 
 	// xz sha256
-	if errAbort = WriteSha256sum(indexPathXz, indexPathXzSha256); err != nil {
+	if errAbort = WriteSha256sum(indexPathXz, indexPathXzSha256); errAbort != nil {
 		return errAbort
 	}
 
@@ -387,7 +387,7 @@ func (r *Repository) Index(db libdb.Database, pool *Pool) error {
 	mapping[indexPathZstSha] = indexPathZstShaFinal
 
 	// Zst sha1
-	if errAbort = WriteSha1sum(indexPathZst, indexPathZstSha); err != nil {
+	if errAbort = WriteSha1sum(indexPathZst, indexPathZstSha); errAbort != nil {
 		return errAbort
 	}
 
@@ -397,7 +397,7 @@ func (r *Repository) Index(db libdb.Database, pool *Pool) error {
 	mapping[indexPathZstSha256] = indexPathZstSha256Final
 
 	// Zst sha256
-	if errAbort = WriteSha256sum(indexPathZst, indexPathZstSha256); err != nil {
+	if errAbort = WriteSha256sum(indexPathZst, indexPathZstSha256); errAbort != nil {
 		return errAbort
 	}
 
