@@ -48,6 +48,10 @@ Add packages:
 
     ./bin/ferryctl -s ./ferryd.sock import testing path/to/eopkgs
 
+Remove a repo:
+
+    ./bin/ferryctl -s ./ferryd.sock remove repo testing
+
 License
 -------
 
