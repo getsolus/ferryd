@@ -37,9 +37,6 @@ const (
 
 	// IncomingPathComponent is the base for all per-repo incoming directories
 	IncomingPathComponent = "incoming"
-
-	// Version of the ferry client library
-	Version = "0.0.0"
 )
 
 // The Context is shared between all of the components of ferryd to provide
