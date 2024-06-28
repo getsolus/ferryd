@@ -5,7 +5,7 @@ CUR_DIR = $(shell pwd)
 # ".build" references will cause that package under src/ to be built
 %.build:
 	@mkdir -p $(CUR_DIR)/bin
-	go build -o $(CUR_DIR)/bin/ -v $(CUR_DIR)/src/$(subst .build,,$@)
+	go build -ldflags "-X github.com/getsolus/ferryd/src/libferry.Version=$(VERSION)" -o $(CUR_DIR)/bin/ -v $(CUR_DIR)/src/$(subst .build,,$@)
 
 clean:
 	test ! -d $(CUR_DIR)/pkg || rm -rvf $(CUR_DIR)/pkg; \

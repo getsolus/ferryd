@@ -1,5 +1,5 @@
 PROJECT_ROOT := src/
-VERSION = 0.0.1
+VERSION = $(shell git describe --tags 2>/dev/null || git rev-parse HEAD)
 
 .DEFAULT_GOAL := all
 

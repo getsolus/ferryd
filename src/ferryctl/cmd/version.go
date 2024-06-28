@@ -27,7 +27,7 @@ import (
 var versionCmd = &cobra.Command{
 	Use:   "version",
 	Short: "show version",
-	Long:  "Print the ferryctl version and exit",
+	Long:  "Show the version and exit",
 	Run:   printVersion,
 }
 
@@ -37,6 +37,6 @@ func init() {
 
 func printVersion(cmd *cobra.Command, args []string) {
 	// Print local version
-	fmt.Printf("ferry %v\n\nCopyright © 2017-2019 Solus Project\n", libferry.Version)
+	fmt.Printf("%v\n\nCopyright © 2017-2019 Solus Project\n", libferry.Version)
 	fmt.Printf("Licensed under the Apache License, Version 2.0\n")
 }

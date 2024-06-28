@@ -27,10 +27,9 @@ import (
 	"time"
 )
 
-const (
-	// Version of the ferry client library
-	Version = "0.0.1"
-)
+// Version is the version of this application.
+// It will be injected by ld flags.
+var Version string
 
 // A Client is used to communicate with the system ferryd
 type Client struct {
