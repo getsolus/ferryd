@@ -26,6 +26,10 @@ import (
 	"github.com/getsolus/ferryd/src/libferry"
 )
 
+var (
+	skipIndex bool
+)
+
 var copySourceCmd = &cobra.Command{
 	Use:   "source [fromRepo] [targetRepo] [sourceName] [releaseNumber]",
 	Short: "copy packages by source name",
@@ -35,6 +39,7 @@ var copySourceCmd = &cobra.Command{
 
 func init() {
 	CopyCmd.AddCommand(copySourceCmd)
+	CopyCmd.PersistentFlags().BoolVarP(&skipIndex, "skip-index", "si", false, "Skip updating the index of the target")
 }
 
 func copySource(cmd *cobra.Command, args []string) {
@@ -74,7 +79,7 @@ func copySource(cmd *cobra.Command, args []string) {
 	client := libferry.NewClient(socketPath)
 	defer client.Close()
 
-	if err := client.CopySource(repoID, targetID, sourceID, sourceRelease); err != nil {
+	if err := client.CopySource(repoID, targetID, sourceID, sourceRelease, skipIndex); err != nil {
 		fmt.Fprintf(os.Stderr, "Error while copying source: %v\n", err)
 		return
 	}

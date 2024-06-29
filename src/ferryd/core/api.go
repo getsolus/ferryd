@@ -107,7 +107,7 @@ func (m *Manager) RemoveSource(repoID, sourceID string, release int) error {
 }
 
 // CopySource will ask the repo to copy all matching source==release packages
-func (m *Manager) CopySource(repoID, target, sourceID string, release int) error {
+func (m *Manager) CopySource(repoID, target, sourceID string, release int, skipIndex bool) error {
 	sourceRepo, err := m.repo.GetRepo(m.db, repoID)
 	if err != nil {
 		return err
@@ -122,7 +122,11 @@ func (m *Manager) CopySource(repoID, target, sourceID string, release int) error
 		return err
 	}
 
-	return m.Index(target)
+	if skipIndex {
+		return m.Index(target)
+	} else {
+		return nil
+	}
 }
 
 // TrimObsolete will ask the repo to remove obsolete packages

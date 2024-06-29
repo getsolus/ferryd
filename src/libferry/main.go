@@ -201,11 +201,12 @@ func (c *Client) RemoveSource(repoID, sourceID string, relno int) error {
 }
 
 // CopySource will ask the backend to copy packages by source name
-func (c *Client) CopySource(fromID, targetID, sourceID string, relno int) error {
+func (c *Client) CopySource(fromID, targetID, sourceID string, relno int, skipIndex bool) error {
 	sq := CopySourceRequest{
-		Source:  sourceID,
-		Target:  targetID,
-		Release: relno,
+		Source:    sourceID,
+		Target:    targetID,
+		Release:   relno,
+		SkipIndex: skipIndex,
 	}
 	return c.postBasicResponse(c.formURI("api/v1/copy/source/"+fromID), &sq, &Response{})
 }

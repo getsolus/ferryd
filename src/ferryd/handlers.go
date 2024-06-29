@@ -270,9 +270,10 @@ func (s *Server) CopySource(w http.ResponseWriter, r *http.Request, p httprouter
 		"release":    req.Release,
 		"from":       sourceRepo,
 		"to":         req.Target,
+		"skipIndex":  req.SkipIndex,
 	}).Info("Source copy requested")
 
-	s.jproc.PushJob(jobs.NewCopySourceJob(sourceRepo, req.Target, req.Source, req.Release))
+	s.jproc.PushJob(jobs.NewCopySourceJob(sourceRepo, req.Target, req.Source, req.Release, req.SkipIndex))
 }
 
 // TrimPackages will proxy a job to remove excess fat from a repo

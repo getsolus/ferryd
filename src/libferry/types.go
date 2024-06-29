@@ -79,9 +79,10 @@ type RemoveSourceRequest struct {
 // given source and relno parameters
 type CopySourceRequest struct {
 	Response
-	Target  string `json:"target"`
-	Source  string `json:"source"`
-	Release int    `json:"relno"`
+	Target    string `json:"target"`
+	Source    string `json:"source"`
+	Release   int    `json:"relno"`
+	SkipIndex bool   `json:"skipIndex"`
 }
 
 // TrimPackagesRequest is sent when trimming excessive fat from a repository.
