@@ -122,7 +122,7 @@ func (m *Manager) CopySource(repoID, target, sourceID string, release int) error
 		return err
 	}
 
-	return m.Index(repoID)
+	return m.Index(target)
 }
 
 // TrimObsolete will ask the repo to remove obsolete packages
