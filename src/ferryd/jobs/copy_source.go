@@ -27,41 +27,47 @@ import (
 
 // CopySourceJobHandler is responsible for removing packages by identifiers
 type CopySourceJobHandler struct {
-	repoID  string
-	target  string
-	source  string
-	release int
+	repoID    string
+	target    string
+	source    string
+	release   int
+	skipIndex bool
 }
 
 // NewCopySourceJob will return a job suitable for adding to the job processor
-func NewCopySourceJob(repoID, target, source string, release int) *JobEntry {
+func NewCopySourceJob(repoID, target, source string, release int, skipIndex bool) *JobEntry {
 	return &JobEntry{
 		sequential: true,
 		Type:       CopySource,
-		Params:     []string{repoID, target, source, fmt.Sprintf("%d", release)},
+		Params:     []string{repoID, target, source, fmt.Sprintf("%d", release), fmt.Sprintf("%t", skipIndex)},
 	}
 }
 
 // NewCopySourceJobHandler will create a job handler for the input job and ensure it validates
 func NewCopySourceJobHandler(j *JobEntry) (*CopySourceJobHandler, error) {
-	if len(j.Params) != 4 {
+	if len(j.Params) != 5 {
 		return nil, fmt.Errorf("job has invalid parameters")
 	}
 	rel, err := strconv.ParseInt(j.Params[3], 10, 32)
 	if err != nil {
 		return nil, err
 	}
+	si, err := strconv.ParseBool(j.Params[4])
+	if err != nil {
+		return nil, err
+	}
 	return &CopySourceJobHandler{
-		repoID:  j.Params[0],
-		target:  j.Params[1],
-		source:  j.Params[2],
-		release: int(rel),
+		repoID:    j.Params[0],
+		target:    j.Params[1],
+		source:    j.Params[2],
+		release:   int(rel),
+		skipIndex: si,
 	}, nil
 }
 
 // Execute will copy the source&rel match from the repo to the target
 func (j *CopySourceJobHandler) Execute(_ *Processor, manager *core.Manager) error {
-	if err := manager.CopySource(j.repoID, j.target, j.source, j.release); err != nil {
+	if err := manager.CopySource(j.repoID, j.target, j.source, j.release, j.skipIndex); err != nil {
 		return err
 	}
 	log.WithFields(log.Fields{
@@ -69,6 +75,7 @@ func (j *CopySourceJobHandler) Execute(_ *Processor, manager *core.Manager) erro
 		"to":            j.target,
 		"source":        j.source,
 		"releaseNumber": j.release,
+		"skipIndex":     j.skipIndex,
 	}).Info("Removed source")
 	return nil
 }
