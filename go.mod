@@ -4,7 +4,8 @@ go 1.21
 
 require (
 	github.com/BurntSushi/toml v1.4.0
-	github.com/cloudflare/cloudflare-go v0.99.0
+	github.com/cloudflare/cloudflare-go v0.104.0
+	github.com/cloudflare/cloudflare-go/v3 v3.1.0
 	github.com/coreos/go-systemd/v22 v22.5.0
 	github.com/julienschmidt/httprouter v1.3.0
 	github.com/olekukonko/tablewriter v0.0.5
@@ -33,9 +34,9 @@ require (
 	github.com/onsi/gomega v1.30.0 // indirect
 	github.com/pmezard/go-difflib v1.0.0 // indirect
 	github.com/rivo/uniseg v0.4.4 // indirect
-	golang.org/x/net v0.26.0 // indirect
-	golang.org/x/sys v0.21.0 // indirect
-	golang.org/x/text v0.16.0 // indirect
-	golang.org/x/time v0.5.0 // indirect
+	golang.org/x/net v0.29.0 // indirect
+	golang.org/x/sys v0.25.0 // indirect
+	golang.org/x/text v0.18.0 // indirect
+	golang.org/x/time v0.6.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )
