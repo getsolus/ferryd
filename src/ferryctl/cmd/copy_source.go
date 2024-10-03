@@ -39,7 +39,7 @@ var copySourceCmd = &cobra.Command{
 
 func init() {
 	CopyCmd.AddCommand(copySourceCmd)
-	CopyCmd.PersistentFlags().BoolVarP(&skipIndex, "skip-index", "si", false, "Skip updating the index of the target")
+	CopyCmd.PersistentFlags().BoolVarP(&skipIndex, "skip-index", "x", false, "Skip updating the index of the target")
 }
 
 func copySource(cmd *cobra.Command, args []string) {
