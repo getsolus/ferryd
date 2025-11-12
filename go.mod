@@ -1,12 +1,12 @@
 module github.com/getsolus/ferryd
 
-go 1.21
+go 1.23
 
 require (
 	github.com/BurntSushi/toml v1.4.0
 	github.com/cloudflare/cloudflare-go v0.116.0
 	github.com/cloudflare/cloudflare-go/v3 v3.1.0
-	github.com/coreos/go-systemd/v22 v22.5.0
+	github.com/coreos/go-systemd/v22 v22.6.0
 	github.com/julienschmidt/httprouter v1.3.0
 	github.com/olekukonko/tablewriter v1.1.1
 	github.com/radu-munteanu/fsnotify v1.2020.0
