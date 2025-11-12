@@ -1,5 +1,5 @@
 //
-// Copyright © 2017-2019 Solus Project
+// Copyright © 2017-2025 Solus Project
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -249,4 +249,14 @@ func (c *Client) ResetFailed() error {
 func (c *Client) ResetCompleted() error {
 	uri := c.formURI("/api/v1/reset/completed")
 	return c.getBasicResponse(uri, &Response{})
+}
+
+// FreezeRepo asks the daemon to freeze a repository.
+func (c *Client) FreezeRepo(repoID string) error {
+	return c.postBasicResponse(c.formURI("api/v1/freeze/"+repoID), nil, &Response{})
+}
+
+// UnfreezeRepo asks the daemon to unfreeze a repository.
+func (c *Client) UnfreezeRepo(repoID string) error {
+	return c.postBasicResponse(c.formURI("api/v1/unfreeze/"+repoID), nil, &Response{})
 }

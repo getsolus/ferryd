@@ -1,5 +1,5 @@
 //
-// Copyright © 2017-2019 Solus Project
+// Copyright © 2017-2025 Solus Project
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -285,4 +285,24 @@ func (m *Manager) GetPoolEntry(pkgID string) (*libeopkg.MetaPackage, error) {
 		return nil, err
 	}
 	return entry.Meta, err
+}
+
+// FreezeRepo will mark the repository as frozen.
+func (m *Manager) FreezeRepo(repoID string) error {
+	repo, err := m.repo.GetRepo(m.db, repoID)
+	if err != nil {
+		return err
+	}
+
+	return repo.Freeze()
+}
+
+// UnfreezeRepo will unmark the repository as frozen.
+func (m *Manager) UnfreezeRepo(repoID string) error {
+	repo, err := m.repo.GetRepo(m.db, repoID)
+	if err != nil {
+		return err
+	}
+
+	return repo.Unfreeze()
 }

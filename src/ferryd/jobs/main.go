@@ -1,5 +1,5 @@
 //
-// Copyright © 2017-2019 Solus Project
+// Copyright © 2017-2025 Solus Project
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -77,6 +77,12 @@ const (
 
 	// TrimPackages is a sequential job to trim fat from a repository
 	TrimPackages = "TrimPackages"
+
+	// FreezeRepo is a sequential job to freeze a repository.
+	FreezeRepo = "FreezeRepo"
+
+	// UnfreezeRepo is a sequential job to unfreeze a repository.
+	UnfreezeRepo = "UnfreezeRepo"
 )
 
 // A JobHandler is created for each JobEntry, to provide specialised handling
@@ -160,6 +166,10 @@ func NewJobHandler(j *JobEntry) (JobHandler, error) {
 		return NewTrimObsoleteJobHandler(j)
 	case TrimPackages:
 		return NewTrimPackagesJobHandler(j)
+	case FreezeRepo:
+		return NewFreezeRepoJobHandler(j)
+	case UnfreezeRepo:
+		return NewUnfreezeRepoJobHandler(j)
 	default:
 		return nil, fmt.Errorf("unknown job type '%s'", j.Type)
 	}

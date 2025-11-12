@@ -1,5 +1,5 @@
 //
-// Copyright © 2017-2019 Solus Project
+// Copyright © 2017-2025 Solus Project
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -245,6 +245,10 @@ func (r *RepositoryManager) DeleteRepo(db libdb.Database, pool *Pool, id string)
 		return fmt.Errorf("The specified repository '%s' does not exist", id)
 	}
 
+	if err = repo.checkWrite(); err != nil {
+		return err
+	}
+
 	delete(r.repos, id)
 
 	// Let's iterate over every one of our packages here and start up an unref
@@ -335,6 +339,10 @@ func (r *Repository) RefDelta(db libdb.Database, pool *Pool, deltaID string) err
 	r.insertMut.Lock()
 	defer r.insertMut.Unlock()
 
+	if err := r.checkWrite(); err != nil {
+		return err
+	}
+
 	// Ensure we REALLY have the delta.
 	poolEntry, err := pool.GetEntry(db, deltaID)
 	if err != nil {
@@ -406,6 +414,10 @@ func (r *Repository) AddDelta(db libdb.Database, pool *Pool, filename string, ma
 func (r *Repository) AddLocalDelta(db libdb.Database, pool *Pool, pkg *libeopkg.Package, mapping *DeltaInformation) error {
 	r.insertMut.Lock()
 	defer r.insertMut.Unlock()
+
+	if err := r.checkWrite(); err != nil {
+		return err
+	}
 
 	// Find our local package entry for the delta package first
 	entry, err := r.GetEntry(db, pkg.Meta.Package.Name)
@@ -500,6 +512,10 @@ func (r *Repository) UnrefPackage(db libdb.Database, pool *Pool, pkgID string) e
 	newHighest := 0
 	var newHighestID string
 
+	if err := r.checkWrite(); err != nil {
+		return err
+	}
+
 	// Require a pool entry to remove it
 	poolEntry, err := pool.GetEntry(db, pkgID)
 	if err != nil {
@@ -580,6 +596,10 @@ func (r *Repository) UnrefPackage(db libdb.Database, pool *Pool, pkgID string) e
 func (r *Repository) RefPackage(db libdb.Database, pool *Pool, pkgID string) error {
 	r.insertMut.Lock()
 	defer r.insertMut.Unlock()
+
+	if err := r.checkWrite(); err != nil {
+		return err
+	}
 
 	// Require a pool entry to clone from
 	poolEntry, err := pool.GetEntry(db, pkgID)
@@ -671,6 +691,10 @@ func (r *Repository) buildSaneEntry(db libdb.Database, pool *Pool, newPkg *libeo
 func (r *Repository) AddLocalPackage(db libdb.Database, pool *Pool, pkg *libeopkg.Package) error {
 	r.insertMut.Lock()
 	defer r.insertMut.Unlock()
+
+	if err := r.checkWrite(); err != nil {
+		return err
+	}
 
 	pkgDir := filepath.Join(r.path, pkg.Meta.Package.GetPathComponent())
 	pkgTarget := filepath.Join(pkgDir, pkg.ID)
@@ -803,6 +827,10 @@ func (r *Repository) GetPackages(db libdb.Database, pool *Pool, pkgName string) 
 // attempt as "pointless", nor does it actually *include* the delta package
 // within the repository.
 func (r *Repository) CreateDelta(db libdb.Database, oldPkg, newPkg *libeopkg.MetaPackage) (string, error) {
+	if err := r.checkWrite(); err != nil {
+		return "", err
+	}
+
 	if !libeopkg.IsDeltaPossible(oldPkg, newPkg) {
 		return "", libeopkg.ErrMismatchedDelta
 	}
@@ -877,6 +905,10 @@ func (r *Repository) CloneFrom(db libdb.Database, pool *Pool, sourceRepo *Reposi
 	var deltaIDs []string
 
 	rootBucket := db.Bucket([]byte(DatabaseBucketRepo)).Bucket([]byte(sourceRepo.ID)).Bucket([]byte(DatabaseBucketPackage))
+
+	if err := r.checkWrite(); err != nil {
+		return err
+	}
 
 	// Before doing anything, sync the assets
 	if err := r.pullAssets(sourceRepo); err != nil {
@@ -955,6 +987,10 @@ func (r *Repository) PullFrom(db libdb.Database, pool *Pool, sourceRepo *Reposit
 
 	rootBucket := db.Bucket([]byte(DatabaseBucketRepo)).Bucket([]byte(sourceRepo.ID)).Bucket([]byte(DatabaseBucketPackage))
 
+	if err := r.checkWrite(); err != nil {
+		return nil, err
+	}
+
 	// Before doing anything, sync the assets
 	if err := r.pullAssets(sourceRepo); err != nil {
 		return nil, err
@@ -1026,6 +1062,10 @@ func (r *Repository) RemoveSource(db libdb.Database, pool *Pool, sourceID string
 
 	rootBucket := db.Bucket([]byte(DatabaseBucketRepo)).Bucket([]byte(r.ID)).Bucket([]byte(DatabaseBucketPackage))
 
+	if err := r.checkWrite(); err != nil {
+		return err
+	}
+
 	// Grab every package
 	err := rootBucket.ForEach(func(k, v []byte) error {
 		entry := RepoEntry{}
@@ -1082,6 +1122,10 @@ func (r *Repository) CopySourceFrom(db libdb.Database, pool *Pool, sourceRepo *R
 	var copyIDs []string
 
 	rootBucket := db.Bucket([]byte(DatabaseBucketRepo)).Bucket([]byte(sourceRepo.ID)).Bucket([]byte(DatabaseBucketPackage))
+
+	if err := r.checkWrite(); err != nil {
+		return err
+	}
 
 	// Grab every package
 	err := rootBucket.ForEach(func(k, v []byte) error {
@@ -1142,6 +1186,10 @@ func (r *Repository) CopySourceFrom(db libdb.Database, pool *Pool, sourceRepo *R
 func (r *Repository) TrimObsolete(db libdb.Database, pool *Pool) error {
 	r.indexMut.Lock()
 	defer r.indexMut.Unlock()
+
+	if err := r.checkWrite(); err != nil {
+		return err
+	}
 
 	if err := r.initDistribution(); err != nil {
 		return err
@@ -1217,6 +1265,10 @@ func (r *Repository) TrimObsolete(db libdb.Database, pool *Pool) error {
 // amount of packages, which helps to combat the issue of rapidly inserting
 // many builds into a repo, i.e. removing old backversions
 func (r *Repository) TrimPackages(db libdb.Database, pool *Pool, maxKeep int) error {
+	if err := r.checkWrite(); err != nil {
+		return err
+	}
+
 	// Check for valid maxKeep
 	if maxKeep < 1 {
 		return fmt.Errorf("maxKeep of %d is too small. It Must be greater than or equal to 1", maxKeep)
