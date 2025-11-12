@@ -1,5 +1,5 @@
 //
-// Copyright © 2017-2019 Solus Project
+// Copyright © 2017-2025 Solus Project
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -287,6 +287,10 @@ func (r *Repository) Index(db libdb.Database, pool *Pool) error {
 	r.indexMut.Lock()
 	defer r.indexMut.Unlock()
 	var errAbort error
+
+	if err := r.checkWrite(); err != nil {
+		return err
+	}
 
 	indexPath := filepath.Join(r.path, "eopkg-index.xml.new")
 	indexPathFinal := filepath.Join(r.path, "eopkg-index.xml")

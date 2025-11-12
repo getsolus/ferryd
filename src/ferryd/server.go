@@ -1,5 +1,5 @@
 //
-// Copyright © 2017-2019 Solus Project
+// Copyright © 2017-2025 Solus Project
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -102,6 +102,10 @@ func NewServer() (*Server, error) {
 	router.POST("/api/v1/clone/:id", s.CloneRepo)
 	router.POST("/api/v1/copy/source/:id", s.CopySource)
 	router.POST("/api/v1/pull/:id", s.PullRepo)
+
+	// Freeze commands
+	router.POST("/api/v1/freeze/:id", s.FreezeRepo)
+	router.POST("/api/v1/unfreeze/:id", s.UnfreezeRepo)
 
 	// Removal
 	router.POST("/api/v1/remove/source/:id", s.RemoveSource)

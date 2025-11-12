@@ -1,5 +1,5 @@
 //
-// Copyright © 2017-2019 Solus Project
+// Copyright © 2017-2025 Solus Project
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -316,4 +316,22 @@ func (s *Server) ResetFailed(w http.ResponseWriter, r *http.Request, p httproute
 	if err := s.store.ResetFailed(); err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 	}
+}
+
+// FreezeRepo will proxy a job to freeze an existing repository
+func (s *Server) FreezeRepo(w http.ResponseWriter, r *http.Request, p httprouter.Params) {
+	target := p.ByName("id")
+
+	log.WithFields(log.Fields{"repo": target}).Info("Repository freeze requested")
+
+	s.jproc.PushJob(jobs.NewFreezeRepoJob(target))
+}
+
+// UnfreezeRepo will proxy a job to unfreeze an existing repository
+func (s *Server) UnfreezeRepo(w http.ResponseWriter, r *http.Request, p httprouter.Params) {
+	target := p.ByName("id")
+
+	log.WithFields(log.Fields{"repo": target}).Info("Repository unfreeze requested")
+
+	s.jproc.PushJob(jobs.NewUnfreezeRepoJob(target))
 }
