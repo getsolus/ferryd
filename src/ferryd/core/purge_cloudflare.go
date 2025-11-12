@@ -19,11 +19,14 @@ package core
 import (
 	"context"
 	"errors"
-	"github.com/cloudflare/cloudflare-go"
 	"os"
 	"path/filepath"
 	"slices"
 	"strings"
+
+	"github.com/cloudflare/cloudflare-go/v6"
+	"github.com/cloudflare/cloudflare-go/v6/cache"
+	"github.com/cloudflare/cloudflare-go/v6/option"
 )
 
 const FerrydDir = "/etc/ferryd"
@@ -55,19 +58,15 @@ func purgeCloudflare(target string) error {
 		return e == ""
 	})
 
-	api, err := cloudflare.NewWithAPIToken(apiKey)
+	api := cloudflare.NewClient(option.WithAPIToken(apiKey))
+
+	_, err = api.Cache.Purge(context.Background(), cache.CachePurgeParams{
+		ZoneID: cloudflare.F(zoneId),
+		Body:   cache.CachePurgeParamsBody{Files: cloudflare.F(any(files))},
+	})
 	if err != nil {
 		return err
 	}
 
-	ctx := context.Background()
-	result, err := api.PurgeCache(ctx, zoneId, cloudflare.PurgeCacheRequest{Files: files})
-	if err != nil {
-		return err
-	}
-
-	if result.Success {
-		return nil
-	}
-	return errors.New("Cloudflare response " + result.Errors[0].Message)
+	return nil
 }
