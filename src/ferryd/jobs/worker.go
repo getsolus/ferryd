@@ -153,8 +153,9 @@ func (w *Worker) Start() {
 				}).Error("Error in retiring job")
 			}
 
-			// We had a job, so we must reset the timeout period
-			w.setTime()
+			// We had a job, so we must reset the timeout period.
+			// If we just finished a job, check again immediately
+			w.timer.Reset(0)
 		}
 	}
 }
