@@ -21,6 +21,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"slices"
 	"sort"
 	"strings"
 	"sync"
@@ -830,10 +831,8 @@ func (r *Repository) HasDelta(db libdb.Database, pkgName, deltaPath string) (boo
 	if err != nil {
 		return false, err
 	}
-	for _, pkgDelta := range entry.Deltas {
-		if deltaPath == pkgDelta {
-			return true, nil
-		}
+	if slices.Contains(entry.Deltas, deltaPath) {
+		return true, nil
 	}
 	return false, nil
 }
