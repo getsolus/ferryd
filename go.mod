@@ -6,6 +6,7 @@ require (
 	github.com/BurntSushi/toml v1.6.0
 	github.com/cloudflare/cloudflare-go v0.116.0
 	github.com/cloudflare/cloudflare-go/v3 v3.1.0
+	github.com/cloudflare/cloudflare-go/v6 v6.10.0
 	github.com/coreos/go-systemd/v22 v22.7.0
 	github.com/julienschmidt/httprouter v1.3.0
 	github.com/olekukonko/tablewriter v1.1.4
