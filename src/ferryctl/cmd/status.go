@@ -22,6 +22,8 @@ import (
 	"sort"
 
 	"github.com/olekukonko/tablewriter"
+	"github.com/olekukonko/tablewriter/renderer"
+	"github.com/olekukonko/tablewriter/tw"
 	"github.com/spf13/cobra"
 
 	"github.com/getsolus/ferryd/src/libferry"
@@ -52,9 +54,12 @@ func printActiveJobs(js []*libferry.Job) {
 		"Waited",
 		"Description",
 	}
-	table := tablewriter.NewWriter(os.Stdout)
-	table.SetHeader(header)
-	table.SetBorder(false)
+	table := tablewriter.NewTable(os.Stdout,
+		tablewriter.WithRenderer(renderer.NewBlueprint()), // Default Blueprint renderer
+		tablewriter.WithRendition(tw.Rendition{ // Custom rendition
+			Borders: tw.BorderNone,
+		}))
+	table.Header(header)
 
 	i := 0
 
@@ -88,9 +93,12 @@ func printFailedJobs(js []*libferry.Job) {
 		"Description",
 		"Error",
 	}
-	table := tablewriter.NewWriter(os.Stdout)
-	table.SetHeader(header)
-	table.SetBorder(false)
+	table := tablewriter.NewTable(os.Stdout,
+		tablewriter.WithRenderer(renderer.NewBlueprint()), // Default Blueprint renderer
+		tablewriter.WithRendition(tw.Rendition{ // Custom rendition
+			Borders: tw.BorderNone,
+		}))
+	table.Header(header)
 
 	i := 0
 
@@ -119,9 +127,12 @@ func printCompletedJobs(js []*libferry.Job) {
 		"Execution time",
 		"Description",
 	}
-	table := tablewriter.NewWriter(os.Stdout)
-	table.SetHeader(header)
-	table.SetBorder(false)
+	table := tablewriter.NewTable(os.Stdout,
+		tablewriter.WithRenderer(renderer.NewBlueprint()), // Default Blueprint renderer
+		tablewriter.WithRendition(tw.Rendition{ // Custom rendition
+			Borders: tw.BorderNone,
+		}))
+	table.Header(header)
 
 	i := 0
 
