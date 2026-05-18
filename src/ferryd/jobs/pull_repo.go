@@ -74,7 +74,7 @@ func (j *PullRepoJobHandler) Execute(jproc *Processor, manager *core.Manager) er
 	// Create delta job in this repository on the changed names
 	// Don't cause indexing because it causes noise
 	for _, pkg := range changedNames {
-		jproc.PushJob(NewDeltaIndexJob(j.targetID, pkg))
+		jproc.PushJob(NewDeltaIndexJob(j.targetID, pkg, 0))
 	}
 
 	return nil
