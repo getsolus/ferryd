@@ -1330,3 +1330,132 @@ func (r *Repository) TrimPackages(db libdb.Database, pool *Pool, maxKeep int) er
 
 	return nil
 }
+
+// TrimPackages will trim back the packages in each package entry to a maximum
+// amount of packages, which helps to combat the issue of rapidly inserting
+// many builds into a repo, i.e. removing old backversions
+func (r *Repository) TrimDeltas(db libdb.Database, pool *Pool, maxKeep int) error {
+	if err := r.checkWrite(); err != nil {
+		return err
+	}
+
+	// Check for valid maxKeep
+	if maxKeep < 0 {
+		return fmt.Errorf("maxKeep of %d is too small. It Must be greater than or equal to 0", maxKeep)
+	}
+
+	// All the guys who we're sending to the big bitsink in the sky
+	var removalIDs []string
+
+	rootBucket := db.Bucket([]byte(DatabaseBucketRepo)).Bucket([]byte(r.ID)).Bucket([]byte(DatabaseBucketPackage))
+
+	// Grab every package
+	err := rootBucket.ForEach(func(k, v []byte) error {
+		entry := RepoEntry{}
+		if err := rootBucket.Decode(v, &entry); err != nil {
+			return err
+		}
+
+		// Find the published release number
+		pubRelease := -1
+		if entry.Published != "" {
+			if pubEntry, err := pool.GetEntry(db, entry.Published); err == nil {
+				pubRelease = pubEntry.Meta.GetRelease()
+			}
+		}
+
+		log.WithFields(log.Fields{
+			"package":    entry.Name,
+			"ndeltas":    len(entry.Deltas),
+			"pubRelease": pubRelease,
+			"deltas":     entry.Deltas,
+		}).Info("Processing deltas for package")
+
+		var candidates []*PoolEntry
+
+		for _, id := range entry.Deltas {
+			poolEntry, err := pool.GetEntry(db, id)
+			if err != nil {
+				log.WithFields(log.Fields{
+					"package": entry.Name,
+					"id":      id,
+					"error":   err,
+				}).Warning("Failed to find delta in pool")
+				continue
+			}
+			if poolEntry.Delta == nil {
+				log.WithFields(log.Fields{
+					"package": entry.Name,
+					"id":      id,
+				}).Warning("Found a delta entry in pool with no delta information")
+				continue
+			}
+
+			// If it doesn't target our published version, it's stale, remove it.
+			if poolEntry.Delta.ToRelease != pubRelease {
+				log.WithFields(log.Fields{
+					"package":    entry.Name,
+					"id":         id,
+					"toRelease":  poolEntry.Delta.ToRelease,
+					"pubRelease": pubRelease,
+				}).Info("Marking stale delta for removal")
+				removalIDs = append(removalIDs, id)
+				continue
+			}
+
+			candidates = append(candidates, poolEntry)
+		}
+
+		if len(candidates) <= maxKeep {
+			return nil
+		}
+
+		sort.Slice(candidates, func(i, j int) bool {
+			// They all have the same ToRelease now, so sort by FromRelease DESC
+			return candidates[i].Delta.FromRelease > candidates[j].Delta.FromRelease
+		})
+
+		log.WithFields(log.Fields{
+			"package": entry.Name,
+			"count":   len(candidates),
+			"maxKeep": maxKeep,
+		}).Info("Candidates for delta trimming")
+
+		for idx, c := range candidates {
+			log.WithFields(log.Fields{
+				"idx":  idx,
+				"name": c.Name,
+				"to":   c.Delta.ToRelease,
+				"from": c.Delta.FromRelease,
+				"keep": idx < maxKeep,
+			}).Info("Delta candidate")
+		}
+
+		for i := maxKeep; i < len(candidates); i++ {
+			removalIDs = append(removalIDs, candidates[i].Name)
+		}
+
+		return nil
+	})
+
+	if err != nil {
+		return err
+	}
+
+	// Now attempt to unref every one of the packages marked as obsolete
+	for _, id := range removalIDs {
+		log.WithFields(log.Fields{
+			"repo": r.ID,
+			"id":   id,
+		}).Info("Trimming old delta package")
+		if err := r.UnrefPackage(db, pool, id); err != nil {
+			log.WithFields(log.Fields{
+				"repo":  r.ID,
+				"id":    id,
+				"error": err,
+			}).Warning("Failed to trim delta package")
+		}
+	}
+
+	return nil
+}
