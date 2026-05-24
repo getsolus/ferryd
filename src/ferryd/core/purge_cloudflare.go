@@ -24,9 +24,9 @@ import (
 	"slices"
 	"strings"
 
-	"github.com/cloudflare/cloudflare-go/v6"
-	"github.com/cloudflare/cloudflare-go/v6/cache"
-	"github.com/cloudflare/cloudflare-go/v6/option"
+	"github.com/cloudflare/cloudflare-go/v7"
+	"github.com/cloudflare/cloudflare-go/v7/cache"
+	"github.com/cloudflare/cloudflare-go/v7/option"
 )
 
 const FerrydDir = "/etc/ferryd"
