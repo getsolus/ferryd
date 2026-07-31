@@ -468,6 +468,10 @@ func (r *Repository) removePackageInternal(db libdb.Database, pool *Pool, id str
 	r.insertMut.Lock()
 	defer r.insertMut.Unlock()
 
+	return r.removePackageInternalLocked(db, pool, id)
+}
+
+func (r *Repository) removePackageInternalLocked(db libdb.Database, pool *Pool, id string) error {
 	poolEntry, err := pool.GetEntry(db, id)
 	if err != nil {
 		return nil
@@ -502,6 +506,10 @@ func (r *Repository) removePackageInternal(db libdb.Database, pool *Pool, id str
 // be extended to remove the skip records
 func (r *Repository) removeDeltaInternal(db libdb.Database, pool *Pool, id string) error {
 	return r.removePackageInternal(db, pool, id)
+}
+
+func (r *Repository) removeDeltaInternalLocked(db libdb.Database, pool *Pool, id string) error {
+	return r.removePackageInternalLocked(db, pool, id)
 }
 
 // UnrefPackage will remove a package from our storage, and potentially remove the
@@ -539,9 +547,16 @@ func (r *Repository) UnrefPackage(db libdb.Database, pool *Pool, pkgID string) e
 
 	// Check out all the deltas
 	for _, deltaID := range entry.Deltas {
+		if deltaID == pkgID {
+			continue
+		}
 		pkgDelta, err := pool.GetEntry(db, deltaID)
 		if err != nil {
-			return err
+			log.WithFields(log.Fields{
+				"deltaID": deltaID,
+				"error":   err,
+			}).Warning("Failed to find delta in pool during unref")
+			continue
 		}
 
 		// We found a delta that is referencing us, we must garbage collect it now
@@ -653,6 +668,7 @@ func (r *Repository) buildSaneEntry(db libdb.Database, pool *Pool, newPkg *libeo
 	if entry != nil {
 		repoEntry.Available = entry.Available
 		repoEntry.Published = entry.Published
+		repoEntry.Deltas = entry.Deltas
 
 		pkgAvail, err := pool.GetEntry(db, repoEntry.Published)
 		if err == nil {
@@ -707,6 +723,37 @@ func (r *Repository) AddLocalPackage(db libdb.Database, pool *Pool, pkg *libeopk
 	if repoEntry == nil {
 		return nil
 	}
+
+	// Proactively clean up stale deltas that don't target our new release
+	var remainDeltas []string
+	newRelease := pkg.Meta.Package.GetRelease()
+	for _, deltaID := range repoEntry.Deltas {
+		poolEntry, err := pool.GetEntry(db, deltaID)
+		if err != nil {
+			log.WithFields(log.Fields{
+				"id":    deltaID,
+				"error": err,
+			}).Warning("Failed to find delta in pool during proactive cleanup")
+			continue
+		}
+		if poolEntry.Delta == nil || poolEntry.Delta.ToRelease != newRelease {
+			log.WithFields(log.Fields{
+				"id":      deltaID,
+				"package": repoEntry.Name,
+				"repo":    r.ID,
+			}).Info("Removing stale delta during package update")
+			if err := r.removeDeltaInternalLocked(db, pool, deltaID); err != nil {
+				log.WithFields(log.Fields{
+					"id":    deltaID,
+					"error": err,
+				}).Warning("Failed to remove stale delta during package update")
+			}
+			continue
+		}
+		remainDeltas = append(remainDeltas, deltaID)
+	}
+	repoEntry.Deltas = remainDeltas
+	sort.Strings(repoEntry.Deltas)
 
 	// Construct root dirs
 	if err := os.MkdirAll(pkgDir, 00755); err != nil {
