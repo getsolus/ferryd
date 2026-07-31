@@ -110,6 +110,7 @@ func NewServer() (*Server, error) {
 	// Removal
 	router.POST("/api/v1/remove/source/:id", s.RemoveSource)
 	router.POST("/api/v1/trim/packages/:id", s.TrimPackages)
+	router.POST("/api/v1/trim/deltas/:id", s.TrimDeltas)
 	router.GET("/api/v1/trim/obsoletes/:id", s.TrimObsolete)
 
 	// Reset jobs are special and go straight to the store

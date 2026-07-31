@@ -157,6 +157,20 @@ func (m *Manager) TrimPackages(repoID string, maxKeep int) error {
 	return m.Index(repoID)
 }
 
+// TrimDeltas will ask the repo to remove excessive packages
+func (m *Manager) TrimDeltas(repoID string, maxKeep int) error {
+	repo, err := m.repo.GetRepo(m.db, repoID)
+	if err != nil {
+		return err
+	}
+
+	if err = repo.TrimDeltas(m.db, m.pool, maxKeep); err != nil {
+		return err
+	}
+
+	return m.Index(repoID)
+}
+
 // GetRepos will return all known repositories
 func (m *Manager) GetRepos() ([]*Repository, error) {
 	return m.repo.GetRepos(m.db)
