@@ -18,6 +18,7 @@ package jobs
 
 import (
 	"fmt"
+	"strconv"
 
 	log "github.com/sirupsen/logrus"
 
@@ -27,25 +28,33 @@ import (
 // DeltaRepoJobHandler is responsible for delta'ing repositories and should only
 // ever be used in sequential queues.
 type DeltaRepoJobHandler struct {
-	repoID string
+	repoID      string
+	maxGenerate int
 }
 
 // NewDeltaRepoJob will return a job suitable for adding to the job processor
-func NewDeltaRepoJob(id string) *JobEntry {
+func NewDeltaRepoJob(id string, maxGenerate int) *JobEntry {
 	return &JobEntry{
 		sequential: true,
 		Type:       DeltaRepo,
-		Params:     []string{id},
+		Params:     []string{id, fmt.Sprintf("%d", maxGenerate)},
 	}
 }
 
 // NewDeltaRepoJobHandler will create a job handler for the input job and ensure it validates
 func NewDeltaRepoJobHandler(j *JobEntry) (*DeltaRepoJobHandler, error) {
-	if len(j.Params) != 1 {
+	if len(j.Params) != 2 {
 		return nil, fmt.Errorf("job has invalid parameters")
 	}
+
+	generate, err := strconv.ParseInt(j.Params[1], 10, 32)
+	if err != nil {
+		return nil, err
+	}
+
 	return &DeltaRepoJobHandler{
-		repoID: j.Params[0],
+		repoID:      j.Params[0],
+		maxGenerate: int(generate),
 	}, nil
 }
 
@@ -72,7 +81,7 @@ func (j *DeltaRepoJobHandler) Execute(jproc *Processor, manager *core.Manager) e
 
 	// Fire off parallel delta jobs for every package in this repository
 	for _, name := range packageNames {
-		jproc.PushJob(NewDeltaJob(j.repoID, name))
+		jproc.PushJob(NewDeltaJob(j.repoID, name, j.maxGenerate))
 	}
 
 	return nil

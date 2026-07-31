@@ -19,6 +19,7 @@ package cmd
 import (
 	"fmt"
 	"os"
+	"strconv"
 
 	"github.com/spf13/cobra"
 
@@ -37,15 +38,21 @@ func init() {
 }
 
 func delta(cmd *cobra.Command, args []string) {
-	if len(args) != 1 {
-		fmt.Fprintf(os.Stderr, "Usage: delta [repoName]\n")
+	if len(args) != 2 {
+		fmt.Fprintf(os.Stderr, "Usage: delta [repoName] [maxGenerate]\n")
+		return
+	}
+
+	maxGen, err := strconv.ParseInt(args[1], 10, 32)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Invalid integer: %v\n", err)
 		return
 	}
 
 	client := libferry.NewClient(socketPath)
 	defer client.Close()
 
-	if err := client.DeltaRepo(args[0]); err != nil {
+	if err := client.DeltaRepo(args[0], int(maxGen)); err != nil {
 		fmt.Fprintf(os.Stderr, "Error while creating deltas: %v\n", err)
 		return
 	}

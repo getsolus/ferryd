@@ -91,6 +91,12 @@ type TrimPackagesRequest struct {
 	MaxKeep int `json:"maxPackages"`
 }
 
+// DeltaPackagesRequest is sent when generating deltas for a repository.
+type DeltaPackagesRequest struct {
+	Response
+	MaxGenerate int `json:"maxPackages"`
+}
+
 // TimingInformation stores relevant timing stats on jobs so we can know what
 // kind of latency we're dealing with, etc.
 //

@@ -20,6 +20,7 @@ import (
 	"fmt"
 	"os"
 	"sort"
+	"strconv"
 
 	log "github.com/sirupsen/logrus"
 
@@ -35,43 +36,51 @@ type DeltaJobHandler struct {
 	packageName string
 	indexRepo   bool
 	nDeltas     int // Track how many deltas we actually produce
+	maxGenerate int // Limit how many deltas are generated per package
 }
 
 // NewDeltaJob will return a job suitable for adding to the job processor
-func NewDeltaJob(repoID, packageID string) *JobEntry {
+func NewDeltaJob(repoID, packageID string, maxGenerate int) *JobEntry {
 	return &JobEntry{
 		sequential: false,
 		Type:       Delta,
-		Params:     []string{repoID, packageID},
+		Params:     []string{repoID, packageID, fmt.Sprintf("%d", maxGenerate)},
 	}
 }
 
 // NewDeltaIndexJob will return a new job for creating delta packages as well
 // as scheduling an index operation when complete.
-func NewDeltaIndexJob(repoID, packageID string) *JobEntry {
+func NewDeltaIndexJob(repoID, packageID string, maxGenerate int) *JobEntry {
 	return &JobEntry{
 		sequential: false,
 		Type:       DeltaIndex,
-		Params:     []string{repoID, packageID},
+		Params:     []string{repoID, packageID, fmt.Sprintf("%d", maxGenerate)},
 	}
 }
 
 // NewDeltaJobHandler will create a job handler for the input job and ensure it validates
 func NewDeltaJobHandler(j *JobEntry, indexRepo bool) (*DeltaJobHandler, error) {
-	if len(j.Params) != 2 {
+	if len(j.Params) != 3 {
 		return nil, fmt.Errorf("job has invalid parameters")
 	}
+
+	maxGen, err := strconv.ParseInt(j.Params[2], 10, 32)
+	if err != nil {
+		return nil, err
+	}
+
 	return &DeltaJobHandler{
 		repoID:      j.Params[0],
 		packageName: j.Params[1],
 		indexRepo:   indexRepo,
 		nDeltas:     0,
+		maxGenerate: int(maxGen),
 	}, nil
 }
 
 // executeInternal is the common code shared in the delta jobs, and is
 // split out to save duplication.
-func (j *DeltaJobHandler) executeInternal(manager *core.Manager) error {
+func (j *DeltaJobHandler) executeInternal(manager *core.Manager, maxGenerate int) error {
 	pkgs, err := manager.GetPackages(j.repoID, j.packageName)
 	if err != nil {
 		return err
@@ -89,8 +98,17 @@ func (j *DeltaJobHandler) executeInternal(manager *core.Manager) error {
 	sort.Sort(libeopkg.PackageSet(pkgs))
 	tip := pkgs[len(pkgs)-1]
 
+	// Determine the start index for deltas
+	startIndex := 0
+	if maxGenerate > 0 {
+		numHistorical := len(pkgs) - 1
+		if numHistorical > maxGenerate {
+			startIndex = numHistorical - maxGenerate
+		}
+	}
+
 	// Process all potential deltas
-	for i := 0; i < len(pkgs)-1; i++ {
+	for i := startIndex; i < len(pkgs)-1; i++ {
 		old := pkgs[i]
 		fields := log.Fields{
 			"old":  old.GetID(),
@@ -188,7 +206,7 @@ func (j *DeltaJobHandler) includeDelta(manager *core.Manager, mapping *core.Delt
 
 // Execute will delta the target package within the target repository.
 func (j *DeltaJobHandler) Execute(_ *Processor, manager *core.Manager) error {
-	err := j.executeInternal(manager)
+	err := j.executeInternal(manager, j.maxGenerate)
 	if err != nil {
 		return err
 	}

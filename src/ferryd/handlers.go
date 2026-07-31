@@ -161,10 +161,20 @@ func (s *Server) DeleteRepo(w http.ResponseWriter, r *http.Request, p httprouter
 // DeltaRepo will handle remote requests for repository deltaing
 func (s *Server) DeltaRepo(w http.ResponseWriter, r *http.Request, p httprouter.Params) {
 	id := p.ByName("id")
+
+	req := libferry.DeltaPackagesRequest{}
+
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
 	log.WithFields(log.Fields{
-		"id": id,
+		"id":          id,
+		"maxGenerate": req.MaxGenerate,
 	}).Info("Repository delta requested")
-	s.jproc.PushJob(jobs.NewDeltaRepoJob(id))
+
+	s.jproc.PushJob(jobs.NewDeltaRepoJob(id, req.MaxGenerate))
 }
 
 // IndexRepo will handle remote requests for repository indexing
