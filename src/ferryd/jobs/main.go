@@ -78,6 +78,9 @@ const (
 	// TrimPackages is a sequential job to trim fat from a repository
 	TrimPackages = "TrimPackages"
 
+	// TrimDeltas is a sequential job to trim fat from a repository
+	TrimDeltas = "TrimDeltas"
+
 	// FreezeRepo is a sequential job to freeze a repository.
 	FreezeRepo = "FreezeRepo"
 
@@ -170,6 +173,8 @@ func NewJobHandler(j *JobEntry) (JobHandler, error) {
 		return NewTrimObsoleteJobHandler(j)
 	case TrimPackages:
 		return NewTrimPackagesJobHandler(j)
+	case TrimDeltas:
+		return NewTrimDeltasJobHandler(j)
 	case FreezeRepo:
 		return NewFreezeRepoJobHandler(j)
 	case UnfreezeRepo:
